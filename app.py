@@ -64,7 +64,7 @@ st.markdown(
     [data-testid="stMainBlockContainer"],
     .main, .block-container,
     body, html { background-color: #0a0d14 !important; }
-    body, [class*="st"] { color: #E8EAED; }
+    body, [class*="st"] { color: #F0F2F5; }
 
     /* Streamlit 상단 헤더 / 툴바 / 데코레이션 — 흰 띠 제거 */
     header[data-testid="stHeader"],
@@ -87,8 +87,8 @@ st.markdown(
     /* 햄버거 메뉴, share 버튼 등 아이콘 색상 */
     header[data-testid="stHeader"] svg,
     header[data-testid="stHeader"] button {
-        color: #6b7689 !important;
-        fill: #6b7689 !important;
+        color: #A8AEB6 !important;
+        fill: #A8AEB6 !important;
     }
     /* 본문 영역 패딩 정돈 (헤더 가렸을 때 본문이 위로 밀리지 않게) */
     .main .block-container {
@@ -99,11 +99,11 @@ st.markdown(
     h1 {
         font-weight: 600 !important;
         letter-spacing: -0.02em !important;
-        color: #F5F7FA !important;
+        color: #F0F2F5 !important;
     }
     h2, h3, h4 {
         font-weight: 500 !important;
-        color: #F5F7FA !important;
+        color: #F0F2F5 !important;
     }
 
     /* 사이드바 완전 불투명 + 차분 */
@@ -118,7 +118,7 @@ st.markdown(
         font-size: 0.78rem !important;
         text-transform: uppercase;
         letter-spacing: 0.06em;
-        color: #6b7689 !important;
+        color: #A8AEB6 !important;
         font-weight: 500 !important;
         margin-top: 4px !important;
     }
@@ -138,7 +138,7 @@ st.markdown(
         white-space: nowrap;
         font-size: 0.86rem !important;
         font-weight: 500 !important;
-        color: #6b7689 !important;
+        color: #A8AEB6 !important;
         padding: 10px 14px !important;
         border-bottom: 2px solid transparent !important;
         transition: color 0.15s ease;
@@ -178,7 +178,7 @@ st.markdown(
         font-size: 0.66rem !important;
         text-transform: uppercase;
         letter-spacing: 0.08em;
-        color: #6b7689 !important;
+        color: #A8AEB6 !important;
         font-weight: 500 !important;
     }
     div[data-testid="stMetricLabel"] > div { font-weight: 500 !important; }
@@ -186,13 +186,13 @@ st.markdown(
         font-size: 1.35rem !important;
         font-weight: 600 !important;
         line-height: 1.2;
-        color: #F5F7FA !important;
+        color: #F0F2F5 !important;
         letter-spacing: -0.02em;
         margin-top: 4px !important;
     }
     div[data-testid="stMetricDelta"] {
         font-size: 0.7rem !important;
-        color: #9aa5b8 !important;
+        color: #D4D8DD !important;
     }
     div[data-testid="stMetricDelta"] svg { display: none; }
 
@@ -204,11 +204,11 @@ st.markdown(
         padding: 13px 16px;
         margin: 10px 0;
         border-radius: 0 8px 8px 0;
-        color: #9aa5b8;
+        color: #D4D8DD;
         font-size: 0.88rem;
         line-height: 1.65;
     }
-    .insight-box strong { color: #F5F7FA; font-weight: 500; }
+    .insight-box strong { color: #F0F2F5; font-weight: 500; }
     .insight-box.good { border-left-color: #81C784; }
     .insight-box.warn { border-left-color: #FFB74D; }
     .insight-box.bad  { border-left-color: #E57373; }
@@ -227,7 +227,7 @@ st.markdown(
         padding: 9px 14px;
         margin: 10px 0 16px 0;
         font-size: 0.8rem;
-        color: #9aa5b8;
+        color: #D4D8DD;
     }
     .omnibus-banner .new-badge {
         background: #1d2b22;
@@ -256,12 +256,12 @@ st.markdown(
         padding: 13px 16px;
         margin: 10px 0;
         font-size: 0.88rem;
-        color: #9aa5b8;
+        color: #D4D8DD;
         line-height: 1.6;
     }
     .sister-card a { color: #9b8de8; text-decoration: none; font-weight: 500; }
     .sister-card a:hover { text-decoration: underline; }
-    .sister-card h4 { color: #F5F7FA !important; font-weight: 500 !important; }
+    .sister-card h4 { color: #F0F2F5 !important; font-weight: 500 !important; }
 
     /* ─────────────────────────────────────────────────
        DataFrame — 다크모드 강제 (Streamlit이 기본 흰 배경 적용 방지)
@@ -278,13 +278,13 @@ st.markdown(
     div[data-testid="stDataFrame"] [data-testid="StyledDataFrameDataCell"],
     .stDataFrame table {
         background-color: #11161e !important;
-        color: #E8EAED !important;
+        color: #F0F2F5 !important;
     }
     div[data-testid="stDataFrame"] thead th,
     div[data-testid="stDataFrame"] [data-testid="StyledDataFrameHeaderCell"],
     .stDataFrame thead th {
         background-color: #161c26 !important;
-        color: #9aa5b8 !important;
+        color: #D4D8DD !important;
         font-weight: 500 !important;
         text-transform: uppercase;
         letter-spacing: 0.04em;
@@ -295,13 +295,13 @@ st.markdown(
     div[data-testid="stDataFrame"] tbody tr,
     .stDataFrame tbody tr td {
         background-color: #11161e !important;
-        color: #E8EAED !important;
+        color: #F0F2F5 !important;
         border-bottom: 1px solid #1a2028 !important;
     }
     /* glide-data-grid (Streamlit 신형 dataframe) 다크 강제 */
     .glide-data-grid, .gdg-wmyidgi, [class*="dvn-scroller"] {
         background-color: #11161e !important;
-        color: #E8EAED !important;
+        color: #F0F2F5 !important;
     }
 
     /* ─────────────────────────────────────────────────
@@ -311,13 +311,13 @@ st.markdown(
     div[data-baseweb="select"] > div {
         background-color: #11161e !important;
         border-color: #1f2733 !important;
-        color: #E8EAED !important;
+        color: #F0F2F5 !important;
     }
     div[data-baseweb="select"] > div:hover { border-color: #2a3346 !important; }
     div[data-baseweb="select"] > div > div,
     div[data-baseweb="select"] span,
     div[data-baseweb="select"] input {
-        color: #E8EAED !important;
+        color: #F0F2F5 !important;
         background-color: transparent !important;
     }
     /* 열린 dropdown 메뉴 (포털로 body 직속 렌더링됨) */
@@ -331,14 +331,14 @@ st.markdown(
     div[data-baseweb="menu"] li,
     ul[role="listbox"] li {
         background-color: #11161e !important;
-        color: #E8EAED !important;
+        color: #F0F2F5 !important;
     }
     div[data-baseweb="popover"] li:hover,
     div[data-baseweb="menu"] li:hover,
     ul[role="listbox"] li:hover,
     li[aria-selected="true"] {
         background-color: #1a2330 !important;
-        color: #F5F7FA !important;
+        color: #F0F2F5 !important;
     }
 
     /* Text input + number input */
@@ -351,78 +351,44 @@ st.markdown(
     div[data-baseweb="base-input"] input,
     .stNumberInput input, .stTextInput input {
         background-color: #11161e !important;
-        color: #E8EAED !important;
+        color: #F0F2F5 !important;
     }
 
     /* ─────────────────────────────────────────────────
-       Radio 버튼 — 선택 상태 명확히 보이게 강제
-       Streamlit BaseWeb 라디오 구조:
-         label > [data-baseweb="radio"]
-                   ├── input (visually hidden)
-                   └── div (외부 원)  ← 선택 시 background 바뀌어야 함
-                       └── div (내부 점)
+       Radio 버튼 — Streamlit 기본 스타일 유지하면서 색상만 정돈
+       (이전 시도가 width/height 강제로 텍스트까지 무너뜨림 → 최소 개입)
        ───────────────────────────────────────────────── */
-    .stRadio, div[data-testid="stRadio"] { background-color: transparent !important; }
-
+    /* 라벨 텍스트 — 가로 배열 + 흰색 */
     .stRadio label,
-    .stRadio div[role="radiogroup"] label,
     div[data-testid="stRadio"] label,
-    div[data-baseweb="radio"] label,
     .stRadio p {
-        color: #E8EAED !important;
+        color: #F0F2F5 !important;
         font-size: 0.86rem !important;
     }
-
-    /* ⚪ 외부 원 (라디오 동그라미) — 선택 안 된 상태 (default) */
-    div[data-baseweb="radio"] div[aria-checked="false"],
-    div[data-baseweb="radio"] div[aria-checked="false"] > div,
-    .stRadio div[role="radiogroup"] label div:first-child {
-        background-color: #0a0d14 !important;
-        border: 2px solid #4a5568 !important;
-        width: 18px !important;
-        height: 18px !important;
-        border-radius: 50% !important;
-        box-shadow: none !important;
-        position: relative;
+    /* radiogroup 컨테이너만 가로 정렬 보장 */
+    div[role="radiogroup"] {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 14px !important;
+        align-items: center !important;
     }
-
-    /* 호버 */
-    div[data-baseweb="radio"]:hover div[aria-checked="false"] {
-        border-color: #6b7689 !important;
-    }
-
-    /* 🔵 선택된 상태 — 외부 원이 cyan으로 채워짐 + inset shadow로 가운데 점 효과 */
-    div[data-baseweb="radio"] div[aria-checked="true"],
-    div[data-baseweb="radio"][aria-checked="true"] > div:first-child {
-        background-color: #4FC3F7 !important;
-        border: 2px solid #4FC3F7 !important;
-        width: 18px !important;
-        height: 18px !important;
-        border-radius: 50% !important;
-        /* inset box-shadow가 가운데 어두운 점을 만듦 — ::after 없이 안정적 */
-        box-shadow: inset 0 0 0 4px #0a0d14 !important;
-        position: relative;
-    }
-
-    /* 라디오 안의 nested div(내부 점)도 선택 시 cyan 보장 */
-    div[data-baseweb="radio"] div[aria-checked="true"] > div {
-        background-color: #4FC3F7 !important;
-    }
-
-    /* 선택된 라디오의 라벨 텍스트 강조 */
-    div[data-baseweb="radio"][aria-checked="true"] ~ div,
-    label:has(div[aria-checked="true"]) p {
-        color: #F5F7FA !important;
-        font-weight: 500 !important;
+    /* 각 옵션도 가로 정렬 (라벨이 세로로 안 무너지게) */
+    div[role="radiogroup"] > label {
+        display: inline-flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: 6px !important;
+        white-space: nowrap !important;
+        margin: 0 !important;
     }
 
     /* Checkbox */
-    .stCheckbox label { color: #E8EAED !important; }
+    .stCheckbox label { color: #F0F2F5 !important; }
 
     /* MultiSelect 칩 */
     span[data-baseweb="tag"] {
         background-color: #1a2330 !important;
-        color: #E8EAED !important;
+        color: #F0F2F5 !important;
         border-color: #2a3346 !important;
     }
 
@@ -432,7 +398,7 @@ st.markdown(
         border-color: #4FC3F7 !important;
     }
     div[data-baseweb="slider"] [data-testid="stTickBar"] {
-        color: #6b7689 !important;
+        color: #A8AEB6 !important;
     }
 
     /* Expander — 차분 */
@@ -441,12 +407,12 @@ st.markdown(
         border: 1px solid #1f2733 !important;
         border-radius: 8px !important;
     }
-    div[data-testid="stExpander"] summary { color: #9aa5b8 !important; }
-    div[data-testid="stExpander"] details > summary:hover { color: #E8EAED !important; }
+    div[data-testid="stExpander"] summary { color: #D4D8DD !important; }
+    div[data-testid="stExpander"] details > summary:hover { color: #F0F2F5 !important; }
 
     /* 캡션 — 명도 보장 */
     .stCaption, [data-testid="stCaptionContainer"] {
-        color: #6b7689 !important;
+        color: #A8AEB6 !important;
     }
 
     /* Help (?) 아이콘 툴팁 */
@@ -557,19 +523,37 @@ PLOTLY_CONFIG = {
 
 
 def lock_static(fig):
-    """차트를 완전 정적으로 잠금 — 모든 update_layout 호출 후 한 번 더 호출.
-    PLOTLY_CONFIG의 staticPlot=True가 모바일에서 가끔 무시되는 케이스 대비."""
+    """차트 정적 잠금 + 톤다운된 흰색 텍스트 강제 (다크모드 가독성).
+    모든 fig 직전에 호출."""
     fig.update_layout(
         dragmode=False,
         hovermode=False,
         clickmode="none",
+        # 텍스트 색상 — 톤다운된 흰색 통일
+        font=dict(color=C_TEXT2, family="-apple-system, sans-serif", size=12),
+        title=dict(font=dict(color=C_TEXT, size=14)),
+        legend=dict(font=dict(color=C_TEXT2, size=11)),
+        # 배경 — 카드와 자연스럽게 녹게
+        paper_bgcolor=C_BG,
+        plot_bgcolor=C_BG,
     )
-    fig.update_xaxes(fixedrange=True)
-    fig.update_yaxes(fixedrange=True)
+    # 축 라벨/눈금/그리드 — 회색 격자 대신 어두운 톤다운된 흰색
+    axis_style = dict(
+        color=C_TEXT2,
+        tickfont=dict(color=C_TEXT3, size=11),
+        title_font=dict(color=C_TEXT2, size=12),
+        gridcolor="#1f2733",
+        linecolor="#252b36",
+        zerolinecolor="#252b36",
+        fixedrange=True,
+    )
+    fig.update_xaxes(**axis_style)
+    fig.update_yaxes(**axis_style)
     return fig
 
-# 색상 팔레트 (차분 다크모드 v2 — Linear/Vercel 톤)
-C_BG       = "#0a0d14"   # 본문 배경 (더 진한 navy black)
+# 색상 팔레트 (차분 다크모드 v3 — 톤다운된 흰색 통일)
+# 모든 텍스트는 흰색 계열, 명도만 단계 — 회색 일절 사용 X
+C_BG       = "#0a0d14"   # 본문 배경
 C_CARD     = "#11161e"   # 카드 배경
 C_PRIMARY  = "#4FC3F7"   # 정보 (cyan)
 C_ACCENT   = "#9575CD"   # 보조 강조 (soft purple)
@@ -577,9 +561,11 @@ C_GOOD     = "#81C784"   # 좋음 (녹색)
 C_WARN     = "#FFB74D"   # 주의 (주황)
 C_BAD      = "#E57373"   # 나쁨 (빨강)
 C_HIGH     = "#FFEB3B"   # 강조 (노랑)
-C_TEXT     = "#F5F7FA"   # 본문 텍스트 (더 밝은 white)
-C_MUTED    = "#6b7689"   # 보조 텍스트 (slightly cooler)
-C_BORDER   = "#1f2733"   # 테두리 (cooler)
+C_TEXT     = "#F0F2F5"   # primary text (90% white)
+C_TEXT2    = "#D4D8DD"   # secondary text (75% white) — 부제, 설명
+C_TEXT3    = "#A8AEB6"   # tertiary text (60% white) — caption, label
+C_TEXT4    = "#7A8089"   # quaternary text (45% white) — placeholder, footer
+C_BORDER   = "#252b36"   # 테두리
 
 # 지역 색상 코딩
 REGION_COLORS = {
@@ -1618,7 +1604,7 @@ with st.sidebar:
         currency_mode_key = "Both"
     # 시각적으로 선택 상태를 즉시 인지할 수 있도록 배지 형식
     st.markdown(
-        f"<div style='font-size:0.78rem; color:#9aa5b8; margin-top:6px;'>"
+        f"<div style='font-size:0.78rem; color:#D4D8DD; margin-top:6px;'>"
         f"현재 표시: <span style='background:#1a2330; color:#4FC3F7; "
         f"padding:2px 8px; border-radius:4px; font-weight:500;'>"
         f"{currency_mode_key}</span></div>",
@@ -1679,11 +1665,15 @@ with st.sidebar:
     )
 
     # SEE (사용자 자체 데이터 우선)
-    st.markdown(f"**📊 {tip('SEE')} 입력**", unsafe_allow_html=True)
     see_mode = st.radio(
-        "SEE 입력 방식",
+        "📊 SEE 입력 방식",
         ["EU Default 사용 (mark-up 적용)", "한국 평균 사용", "Verified 자체 데이터"],
-        index=2, label_visibility="collapsed",
+        index=2,
+        key="see_mode_radio",
+        help=("SEE = Specific Embedded Emissions, 단위 제품당 내재 탄소배출량 [tCO₂/t]. "
+              "Direct(Scope 1) + Indirect(Scope 2, 일부 sector) 합산. "
+              "2024.7 이후 verified 데이터 의무, 미제출 시 default + mark-up. "
+              "출처: EU Reg 2023/956 Annex IV, IR 2025/2621"),
     )
     if see_mode == "EU Default 사용 (mark-up 적용)":
         user_SEE = sector["default_SEE"]
@@ -1714,10 +1704,13 @@ with st.sidebar:
     # EUA 자동 fetch
     eua_default, eua_date, eua_mode = load_eua_price()
     eua_price = st.slider(
-        f"{tip('EUA')} 가격 (€/tCO₂)",
+        "EUA 가격 (€/tCO₂)",
         min_value=40.0, max_value=200.0,
         value=float(eua_default), step=1.0,
-        help="EU ETS 탄소배출권 가격. CBAM 인증서 가격 = EUA 주간 평균.",
+        help=("EU Emissions Allowance — EU ETS 탄소배출권 가격 [€/tCO₂]. "
+              "CBAM 인증서 가격 = EUA 주간 평균. "
+              "2025 평균 ~€75, 2026 예상 ~€85, 2030 컨센서스 €126. "
+              "출처: ICE / EEX, Sandbag, GMK Center"),
     )
     if eua_mode == "auto":
         st.caption(f"✅ 자동 fetch (`{eua_date}`)")
@@ -1756,17 +1749,17 @@ with st.sidebar:
         """
 <div style='background:#11161e; border:1px solid #1f2733; border-left:2px solid #4FC3F7;
             border-radius:0 8px 8px 0; padding:12px 14px; margin-top:8px;'>
-    <div style='font-size:0.66rem; color:#6b7689; text-transform:uppercase;
+    <div style='font-size:0.66rem; color:#A8AEB6; text-transform:uppercase;
                 letter-spacing:0.08em; font-weight:500;'>Built by</div>
-    <div style='font-size:0.95rem; font-weight:500; color:#F5F7FA; margin-top:4px;'>송봉관 / Song BK</div>
-    <div style='font-size:0.72rem; color:#9aa5b8; margin:3px 0 8px;'>DAC & CCUS 기술사업화 전문가</div>
-    <div style='font-size:0.74rem; line-height:1.8; color:#9aa5b8;'>
+    <div style='font-size:0.95rem; font-weight:500; color:#F0F2F5; margin-top:4px;'>송봉관 / Song BK</div>
+    <div style='font-size:0.72rem; color:#D4D8DD; margin:3px 0 8px;'>DAC & CCUS 기술사업화 전문가</div>
+    <div style='font-size:0.74rem; line-height:1.8; color:#D4D8DD;'>
         <a href='https://github.com/cafeon90-oss' style='color:#81C784; text-decoration:none;'>↗ GitHub</a> &nbsp;
         <a href='https://www.linkedin.com/in/bongkwan-song-95a0213ba/' style='color:#81C784; text-decoration:none;'>↗ LinkedIn</a><br>
         <a href='https://cdrmaster.tistory.com/' style='color:#81C784; text-decoration:none;'>↗ Blog</a> &nbsp;
         <a href='mailto:cafeon90@gmail.com' style='color:#81C784; text-decoration:none;'>↗ Email</a>
     </div>
-    <div style='font-size:0.66rem; color:#5a6473; margin-top:8px; padding-top:8px;
+    <div style='font-size:0.66rem; color:#7A8089; margin-top:8px; padding-top:8px;
                 border-top:1px solid #1f2733;'>
         © 2026 Song BK · MIT License
     </div>
@@ -1789,8 +1782,8 @@ st.markdown(
                 font-size: 20px; flex-shrink: 0;'>🌍</div>
     <div style='min-width: 0;'>
         <div style='font-size: 1.55rem; font-weight: 600; letter-spacing: -0.02em;
-                    color: #F5F7FA; line-height: 1.2;'>EU CBAM 영향 계산기</div>
-        <div style='font-size: 0.8rem; color: #6b7689; margin-top: 3px;'>
+                    color: #F0F2F5; line-height: 1.2;'>EU CBAM 영향 계산기</div>
+        <div style='font-size: 0.8rem; color: #A8AEB6; margin-top: 3px;'>
             한국 기업의 EU 탄소국경조정제도(CBAM) 부담 시뮬레이션 ·
             본격 시행 2026.1.1 → 2034 ·
             자매 도구: <a href='{CCUS_REPO_URL}' style='color:#9b8de8; text-decoration:none;'>🌫️ CCUS 벤치마크 ↗</a>
@@ -1876,7 +1869,7 @@ st.markdown(
     f"""
 <div class='insight-box {insight_class}'>
     <div style='display: flex; align-items: center; gap: 10px; margin-bottom: 6px;'>
-        <div style='font-weight: 500; font-size: 0.95rem; color: #F5F7FA;'>{insight_header}</div>
+        <div style='font-weight: 500; font-size: 0.95rem; color: #F0F2F5;'>{insight_header}</div>
         <div style='margin-left: auto; background: #1a2028; font-size: 0.7rem; padding: 2px 8px; border-radius: 4px;'>{insight_badge}</div>
     </div>
     <div>{insight_msg}</div>
@@ -2599,11 +2592,11 @@ st.markdown(
                     display: flex; align-items: center; justify-content: center;
                     font-size: 18px; flex-shrink: 0;'>🌍</div>
         <div>
-            <div style='font-size: 1.0rem; font-weight: 500; color:#F5F7FA; line-height: 1.2;'>EU CBAM 영향 계산기</div>
-            <div style='font-size: 0.78rem; color:#6b7689; margin-top: 2px;'>Built by 송봉관 / Song BK · DAC & CCUS 기술사업화 전문가</div>
+            <div style='font-size: 1.0rem; font-weight: 500; color:#F0F2F5; line-height: 1.2;'>EU CBAM 영향 계산기</div>
+            <div style='font-size: 0.78rem; color:#A8AEB6; margin-top: 2px;'>Built by 송봉관 / Song BK · DAC & CCUS 기술사업화 전문가</div>
         </div>
     </div>
-    <div style='font-size:0.84rem; color:#9aa5b8; margin: 8px 0 12px 0;'>
+    <div style='font-size:0.84rem; color:#D4D8DD; margin: 8px 0 12px 0;'>
         자매 도구:
         <a href='{CCUS_REPO_URL}' style='color:#9b8de8; text-decoration:none;'>🌫️ CCUS 벤치마크 ↗</a>
     </div>
@@ -2614,7 +2607,7 @@ st.markdown(
         <a href='mailto:cafeon90@gmail.com' style='color:#81C784; text-decoration:none;'>↗ Email</a>
     </div>
     <div style='padding-top: 12px; border-top: 1px solid #1f2733;
-                color:#5a6473; font-size:0.72rem; line-height: 1.6;'>
+                color:#7A8089; font-size:0.72rem; line-height: 1.6;'>
         © 2026 Song BK · MIT License<br>
         Data sources: EU Commission · ICAP · KOTRA · KCCI SGI · IEA · IEAGHG · NETL · World Steel Association
     </div>
