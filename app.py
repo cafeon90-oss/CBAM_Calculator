@@ -583,46 +583,87 @@ DEFAULT_CCUS_METRICS = {
     "currency": "USD",
     "year_basis": 2025,
     "source_tool": CCUS_REPO_URL,
+    "note": ("자매 CCUS 도구의 9개 기술을 모두 포함 (MEA + 3 Advanced Amine + 5 Non-amine). "
+             "COCA·CAPEX·OPEX는 placeholder — Phase 2에서 자매 도구 LIT과 자동 동기화."),
     "technologies": {
+        # ─── 1세대 amine baseline ───
         "MEA_30wt": {
             "display_name": "MEA 30wt% (baseline)", "short_name": "MEA",
+            "category": "Amine (1st gen)",
             "COCA_USD_per_tCO2": 60, "CAPEX_USD_per_tpy": 950, "OPEX_USD_per_tCO2": 35,
             "TRL": 9, "capture_rate": 0.90,
         },
+        # ─── 2세대 advanced amine (상용) ───
+        "MHI_KS21": {
+            "display_name": "MHI KS-21™", "short_name": "KS-21",
+            "category": "Advanced Amine",
+            "COCA_USD_per_tCO2": 52, "CAPEX_USD_per_tpy": 920, "OPEX_USD_per_tCO2": 30,
+            "TRL": 9, "capture_rate": 0.90,
+        },
+        "Cansolv_DC103": {
+            "display_name": "Shell Cansolv DC-103", "short_name": "DC-103",
+            "category": "Advanced Amine",
+            "COCA_USD_per_tCO2": 48, "CAPEX_USD_per_tpy": 880, "OPEX_USD_per_tCO2": 28,
+            "TRL": 9, "capture_rate": 0.90,
+        },
+        "Aker_S26": {
+            "display_name": "Aker S26", "short_name": "Aker S26",
+            "category": "Advanced Amine",
+            "COCA_USD_per_tCO2": 53, "CAPEX_USD_per_tpy": 1000, "OPEX_USD_per_tCO2": 31,
+            "TRL": 9, "capture_rate": 0.90,
+        },
+        # ─── Non-amine 5종 ───
         "K2CO3_KIERSOL": {
-            "display_name": "KIERSOL (KIER)", "short_name": "KIERSOL",
+            "display_name": "KIERSOL (KIER 한국)", "short_name": "KIERSOL",
+            "category": "Hot Carbonate",
             "COCA_USD_per_tCO2": 50, "CAPEX_USD_per_tpy": 1050, "OPEX_USD_per_tCO2": 28,
             "TRL": 7, "capture_rate": 0.90,
         },
         "Chilled_NH3_CAP": {
             "display_name": "Chilled Ammonia (CAP)", "short_name": "CAP",
+            "category": "Chilled NH₃",
             "COCA_USD_per_tCO2": 55, "CAPEX_USD_per_tpy": 1200, "OPEX_USD_per_tCO2": 30,
             "TRL": 8, "capture_rate": 0.90,
         },
         "Biphasic_DMX": {
             "display_name": "Biphasic DMX™", "short_name": "DMX",
+            "category": "Biphasic",
             "COCA_USD_per_tCO2": 42, "CAPEX_USD_per_tpy": 1100, "OPEX_USD_per_tCO2": 22,
             "TRL": 7, "capture_rate": 0.90,
         },
         "Solid_TSA": {
             "display_name": "Solid Sorbent TSA", "short_name": "TSA",
+            "category": "Solid Sorbent",
             "COCA_USD_per_tCO2": 70, "CAPEX_USD_per_tpy": 1400, "OPEX_USD_per_tCO2": 40,
             "TRL": 6, "capture_rate": 0.90,
         },
         "Calcium_Looping": {
             "display_name": "Calcium Looping (CaL)", "short_name": "CaL",
+            "category": "Calcium Looping",
             "COCA_USD_per_tCO2": 38, "CAPEX_USD_per_tpy": 1300, "OPEX_USD_per_tCO2": 20,
             "TRL": 7, "capture_rate": 0.95,
         },
     },
+    # 적합도 기준: flue gas CO₂ 농도, 온도, 열원 가용성, retrofit 용이성
     "sector_fit": {
-        "steel_BF_BOF":   ["MEA_30wt", "Chilled_NH3_CAP", "Calcium_Looping"],
-        "steel_EAF":      ["Solid_TSA", "Biphasic_DMX"],
-        "cement":         ["Calcium_Looping", "Chilled_NH3_CAP", "MEA_30wt"],
-        "aluminum":       ["MEA_30wt", "Biphasic_DMX"],
-        "fertilizer_NH3": ["MEA_30wt", "K2CO3_KIERSOL"],
-        "hydrogen_SMR":   ["MEA_30wt", "Biphasic_DMX", "K2CO3_KIERSOL"],
-        "power":          ["MEA_30wt", "Chilled_NH3_CAP", "Calcium_Looping"],
+        # 철강 BF-BOF (CO₂ 25~30%, retrofit 어려움)
+        "steel_BF_BOF":   ["MHI_KS21", "Cansolv_DC103", "Aker_S26",
+                            "Chilled_NH3_CAP", "Calcium_Looping", "MEA_30wt"],
+        # 철강 EAF (CO₂ 5~10%, 저농도)
+        "steel_EAF":      ["Solid_TSA", "Biphasic_DMX", "MEA_30wt"],
+        # 시멘트 (CO₂ 14~20%, calcination 공정 자체에서 발생, CaL이 자연 통합)
+        "cement":         ["Calcium_Looping", "Aker_S26", "MHI_KS21",
+                            "Chilled_NH3_CAP", "MEA_30wt"],
+        # 알루미늄 (anode 공정 CO₂ + 전력 grid factor)
+        "aluminum":       ["MEA_30wt", "Cansolv_DC103", "Biphasic_DMX"],
+        # NH₃ 비료 (고농도 CO₂ 99%+ 부생, 가장 저렴)
+        "fertilizer_NH3": ["MEA_30wt", "K2CO3_KIERSOL", "Cansolv_DC103"],
+        # 수소 SMR (PSA off-gas 고농도 CO₂)
+        "hydrogen_SMR":   ["MEA_30wt", "Cansolv_DC103", "Biphasic_DMX",
+                            "K2CO3_KIERSOL", "MHI_KS21"],
+        # 발전 (CO₂ 12~15%, 표준 케이스)
+        "power":          ["MHI_KS21", "Cansolv_DC103", "Aker_S26",
+                            "Chilled_NH3_CAP", "Calcium_Looping", "MEA_30wt"],
     },
 }
 
@@ -2002,63 +2043,54 @@ with tabs[0]:
         })
     df_overview = pd.DataFrame(rows).sort_values("Unit cost (€/t)", ascending=False)
 
-    # 2x2 비교 차트
-    c1, c2 = st.columns(2)
-
-    with c1:
-        # 차트 1: SEE vs Benchmark gap
-        fig1 = go.Figure()
-        fig1.add_trace(go.Bar(
-            y=df_overview["Short"], x=df_overview["SEE (kr)"],
-            name="한국 평균 SEE", orientation="h",
-            marker_color="#E57373",
-        ))
-        fig1.add_trace(go.Bar(
-            y=df_overview["Short"], x=df_overview["Benchmark"],
-            name="EU Benchmark", orientation="h",
-            marker_color="#81C784",
-        ))
-        fig1.update_layout(
-            title=f"한국 평균 SEE vs EU Benchmark",
-            barmode="group", template="plotly_dark",
-            height=420, margin=dict(l=10, r=10, t=50, b=30),
-            xaxis_title="tCO₂/단위제품",
-            paper_bgcolor=C_BG, plot_bgcolor=C_BG,
-            legend=dict(orientation="h", yanchor="bottom", y=-0.2),
-        )
-        lock_static(fig1)
-        st.plotly_chart(fig1, use_container_width=True, config=PLOTLY_CONFIG)
-
-    with c2:
-        # 차트 2: 단위당 CBAM cost (정렬된 df_overview의 색상 사용 — 버그 수정)
-        fig2 = go.Figure()
-        fig2.add_trace(go.Bar(
-            y=df_overview["Short"], x=df_overview["Unit cost (€/t)"],
+    # ────────────── 좌측 차트: SEE vs Benchmark (겹침 해결) ──────────────
+    st.markdown("##### 📊 한국 평균 SEE vs EU Benchmark")
+    fig1 = go.Figure()
+    fig1.add_trace(go.Bar(
+        y=df_overview["Short"], x=df_overview["SEE (kr)"],
+        name="한국 평균 SEE", orientation="h",
+        marker_color="#E57373",
+    ))
+    fig1.add_trace(go.Bar(
+        y=df_overview["Short"], x=df_overview["Benchmark"],
+        name="EU Benchmark", orientation="h",
+        marker_color="#81C784",
+    ))
+    fig1.update_layout(
+        barmode="group", template="plotly_dark",
+        height=440,
+        # 라벨·범례·차트 겹침 방지: 하단 패딩 확대 + xaxis_title 제거 (범례 옆)
+        margin=dict(l=10, r=10, t=10, b=70),
+        paper_bgcolor=C_BG, plot_bgcolor=C_BG,
+        xaxis=dict(title=dict(text="tCO₂/단위제품", standoff=12)),
+        legend=dict(
             orientation="h",
-            marker_color=df_overview["color"].tolist(),
-            text=[f"€{v:.1f}" for v in df_overview["Unit cost (€/t)"]],
-            textposition="outside",
-        ))
-        fig2.update_layout(
-            title=f"{analysis_year}년 단위 CBAM cost (€/t)",
-            template="plotly_dark", height=420,
-            margin=dict(l=10, r=40, t=50, b=30),
-            xaxis_title="€/단위제품",
-            paper_bgcolor=C_BG, plot_bgcolor=C_BG,
-            showlegend=False,
-        )
-        lock_static(fig2)
-        st.plotly_chart(fig2, use_container_width=True, config=PLOTLY_CONFIG)
+            yanchor="bottom", y=-0.28,
+            xanchor="center", x=0.5,
+            bgcolor="rgba(0,0,0,0)",
+        ),
+    )
+    lock_static(fig1)
+    st.plotly_chart(fig1, use_container_width=True, config=PLOTLY_CONFIG)
 
-    # 데이터 테이블
-    st.markdown("##### 📊 6개 sector 상세 비교 (한국 평균 기준)")
-    df_show = df_overview[["Sector", "SEE (kr)", "Benchmark", "Gap", "Unit cost (€/t)", "Unit cost (USD/t)"]].copy()
+    # ────────────── 우측: 막대그래프 → 표 (정보 효율 ↑) ──────────────
+    st.markdown(f"##### 💰 {analysis_year}년 단위 CBAM cost — 6개 sector 비교")
+    df_show = df_overview[[
+        "Sector", "SEE (kr)", "Benchmark", "Gap",
+        "Unit cost (€/t)", "Unit cost (USD/t)"
+    ]].copy()
     df_show["SEE (kr)"] = df_show["SEE (kr)"].map(lambda x: f"{x:.3f}")
     df_show["Benchmark"] = df_show["Benchmark"].map(lambda x: f"{x:.3f}")
     df_show["Gap"] = df_show["Gap"].map(lambda x: f"{x:.3f}")
     df_show["Unit cost (€/t)"] = df_show["Unit cost (€/t)"].map(lambda x: f"€{x:.2f}")
     df_show["Unit cost (USD/t)"] = df_show["Unit cost (USD/t)"].map(lambda x: f"${x:.2f}")
+    df_show.columns = ["Sector", "한국 SEE", "EU benchmark", "Gap",
+                        f"단가 €/t ({analysis_year})", f"단가 $/t ({analysis_year})"]
     st.dataframe(df_show, hide_index=True, use_container_width=True)
+    st.caption(
+        f"↑ {analysis_year}년 phase-in {phase_in(analysis_year)*100:.1f}% × EUA €{eua_price:.0f}/tCO₂ 적용. "
+        f"Unit cost 내림차순 정렬 — 부담 큰 sector가 위."
+    )
 
 
 # ────────────── 탭 ② Sector별 분석 ──────────────
@@ -2239,50 +2271,55 @@ with tabs[3]:
     df_abate = pd.DataFrame(rows)
     st.dataframe(df_abate, hide_index=True, use_container_width=True)
 
-    # 4-C: CCS BEP (자매 CCUS COCA × 회피액)
-    st.markdown("##### 💰 4-C. CCS 도입 시 BEP 분석")
+    # 4-C: CCS BEP — 자매 CCUS 도구 6개 기술 모두 평가
+    st.markdown("##### 💰 4-C. CCS 도입 시 BEP 분석 — 전체 6개 기술 비교")
 
     ccus_data, ccus_mode = load_ccus_metrics()
-    fit_techs = ccus_data["sector_fit"].get(sector["ccus_sector"], [])
-    if not fit_techs:
-        st.info(f"이 sector ({sector['ccus_sector']})에 대한 CCUS 적합 기술이 정의되지 않았습니다.")
-    else:
-        bep_rows = []
-        for tk in fit_techs:
-            tdata = ccus_data["technologies"].get(tk)
-            if not tdata:
-                continue
-            cap_rate = tdata["capture_rate"]
-            avoided = ccs_avoided_cbam(
-                SEE=user_SEE, benchmark=sector["eu_benchmark"],
-                capture_rate=cap_rate, eua_price_eur=eua_price,
-                year=analysis_year, eu_export_t=result["eu_export_t"],
-                mark_up_pct=mark_up_pct,
-            )
-            ccs_cost_usd = tdata["COCA_USD_per_tCO2"] * avoided["captured_co2_t"]
-            avoided_usd = avoided["avoided_annual_eur"] / fx_eur_usd
-            net_usd = avoided_usd - ccs_cost_usd
-            bep_rows.append({
-                "CCUS 기술": tdata["display_name"],
-                "Capture η": f"{cap_rate*100:.0f}%",
-                "COCA (USD/t)": f"${tdata['COCA_USD_per_tCO2']}",
-                "포집 CO₂ (t/yr)": f"{avoided['captured_co2_t']:,.0f}",
-                "CCS 비용 (USD M/yr)": f"${ccs_cost_usd/1e6:,.2f}",
-                "CBAM 회피 (USD M/yr)": f"${avoided_usd/1e6:,.2f}",
-                "순익 (USD M/yr)": f"${net_usd/1e6:+,.2f}",
-                "TRL": tdata["TRL"],
-            })
-        df_bep = pd.DataFrame(bep_rows)
-        st.dataframe(df_bep, hide_index=True, use_container_width=True)
+    fit_techs = set(ccus_data["sector_fit"].get(sector["ccus_sector"], []))
+    all_techs = list(ccus_data["technologies"].keys())
 
-        st.markdown(
-            f"""
-> 💡 **해석**: 위 표는 자매 CCUS 도구의 COCA 값을 mirror 하여 자동 계산.
-> 순익이 양수 → CCS 도입이 CBAM 부담보다 저렴.
-> 자세한 기술 비교는 [{ref_link("EU_CBAM_TaxCustoms", "자매 CCUS 벤치마크 도구")}]({CCUS_REPO_URL}) 참조.
+    bep_rows = []
+    for tk in all_techs:
+        tdata = ccus_data["technologies"].get(tk)
+        if not tdata:
+            continue
+        cap_rate = tdata["capture_rate"]
+        is_recommended = tk in fit_techs
+        avoided = ccs_avoided_cbam(
+            SEE=user_SEE, benchmark=sector["eu_benchmark"],
+            capture_rate=cap_rate, eua_price_eur=eua_price,
+            year=analysis_year, eu_export_t=result["eu_export_t"],
+            mark_up_pct=mark_up_pct,
+        )
+        ccs_cost_usd = tdata["COCA_USD_per_tCO2"] * avoided["captured_co2_t"]
+        avoided_usd = avoided["avoided_annual_eur"] / fx_eur_usd
+        net_usd = avoided_usd - ccs_cost_usd
+        bep_rows.append({
+            "추천": "⭐" if is_recommended else "",
+            "CCUS 기술": tdata["display_name"],
+            "Capture η": f"{cap_rate*100:.0f}%",
+            "COCA (USD/t)": f"${tdata['COCA_USD_per_tCO2']}",
+            "포집 CO₂ (t/yr)": f"{avoided['captured_co2_t']:,.0f}",
+            "CCS 비용 ($M/yr)": f"${ccs_cost_usd/1e6:,.2f}",
+            "CBAM 회피 ($M/yr)": f"${avoided_usd/1e6:,.2f}",
+            "_net": net_usd,
+            "순익 ($M/yr)": f"${net_usd/1e6:+,.2f}",
+            "TRL": tdata["TRL"],
+        })
+    df_bep = pd.DataFrame(bep_rows)
+    # 순익 내림차순 정렬 후 정렬용 _net 컬럼 제거
+    df_bep = df_bep.sort_values("_net", ascending=False).drop(columns=["_net"])
+    st.dataframe(df_bep, hide_index=True, use_container_width=True)
+
+    n_recommended = len(fit_techs)
+    st.markdown(
+        f"""
+> 💡 **해석**: 자매 CCUS 도구의 **6개 기술 모두** mirror하여 자동 계산. ⭐는 sector 적합 기술 ({n_recommended}개).
+> 순익 내림차순 정렬 — 가장 위가 가장 경제적. 순익 양수 → CCS 도입이 CBAM 부담보다 저렴.
+> 자세한 기술 비교는 [자매 CCUS 벤치마크 도구]({CCUS_REPO_URL}) 참조.
 > 데이터 모드: `{ccus_mode}` (Phase 2에서 live fetch 활성화 예정)
 """
-        )
+    )
 
 
 # ────────────── 탭 ⑤ CCUS 연계 (stub) ──────────────
@@ -2305,28 +2342,36 @@ Phase 2 예정: <code>data/ccus_metrics.json</code> live fetch</small>
         unsafe_allow_html=True,
     )
 
-    st.markdown(f"##### 🔌 현재 sector ({sector['name']}) 에 적합한 CCUS 기술")
+    st.markdown(f"##### 🔌 자매 CCUS 도구의 6개 기술 — 전체 비교 (현재 sector: {sector['name']})")
 
-    fit_techs = ccus_data["sector_fit"].get(sector["ccus_sector"], [])
-    if not fit_techs:
-        st.info(f"이 sector ({sector['ccus_sector']})는 CCUS sector_fit 매핑에 정의되지 않았습니다.")
-    else:
-        rec_rows = []
-        for tk in fit_techs:
-            tdata = ccus_data["technologies"].get(tk)
-            if not tdata:
-                continue
-            rec_rows.append({
-                "기술": tdata["display_name"],
-                "Short": tdata["short_name"],
-                "COCA (USD/t)": f"${tdata['COCA_USD_per_tCO2']}",
-                "CAPEX (USD/tpy)": f"${tdata['CAPEX_USD_per_tpy']}",
-                "OPEX (USD/t)": f"${tdata['OPEX_USD_per_tCO2']}",
-                "Capture η": f"{tdata['capture_rate']*100:.0f}%",
-                "TRL": tdata["TRL"],
-            })
-        df_rec = pd.DataFrame(rec_rows)
-        st.dataframe(df_rec, hide_index=True, use_container_width=True)
+    fit_techs = set(ccus_data["sector_fit"].get(sector["ccus_sector"], []))
+    all_techs = list(ccus_data["technologies"].keys())
+
+    rec_rows = []
+    for tk in all_techs:
+        tdata = ccus_data["technologies"].get(tk)
+        if not tdata:
+            continue
+        is_recommended = tk in fit_techs
+        rec_rows.append({
+            "추천": "⭐" if is_recommended else "",
+            "기술": tdata["display_name"],
+            "Short": tdata["short_name"],
+            "COCA (USD/t)": f"${tdata['COCA_USD_per_tCO2']}",
+            "CAPEX (USD/tpy)": f"${tdata['CAPEX_USD_per_tpy']}",
+            "OPEX (USD/t)": f"${tdata['OPEX_USD_per_tCO2']}",
+            "Capture η": f"{tdata['capture_rate']*100:.0f}%",
+            "TRL": tdata["TRL"],
+            "_coca": tdata["COCA_USD_per_tCO2"],
+        })
+    df_rec = pd.DataFrame(rec_rows).sort_values("_coca", ascending=True).drop(columns=["_coca"])
+    st.dataframe(df_rec, hide_index=True, use_container_width=True)
+    n_recommended = len(fit_techs)
+    st.caption(
+        f"⭐ 표시: 현재 sector({sector['name']})에 적합한 기술 {n_recommended}개. "
+        f"COCA 오름차순 정렬 — 가장 저렴한 기술이 위. "
+        f"적합도는 sector별 flue gas 농도·온도·열원 가용성 기반."
+    )
 
     st.markdown("---")
     st.markdown(
