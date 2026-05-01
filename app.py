@@ -1645,12 +1645,13 @@ with st.sidebar:
     st.caption(f"≈ {annual_production_mt * 1e6:,.0f} {prod_unit_caption}")
 
     # EU 수출 비중
-    eu_export_share_pct = st.slider(
+    eu_export_share_pct = st.number_input(
         "EU 수출 비중 (%)",
         min_value=0.0, max_value=100.0,
         value=float(st.session_state.get("eu_export_share_pct", 5.0)),
-        step=0.5, key="eu_export_share_pct",
-        help="총 생산량 중 EU 수출분 비율. CBAM 부과 대상 base.",
+        step=0.5, format="%.2f",
+        key="eu_export_share_pct",
+        help="총 생산량 중 EU 수출분 비율 (0 ~ 100). CBAM 부과 대상 base.",
     )
 
     # SEE (사용자 자체 데이터 우선)
@@ -1692,10 +1693,10 @@ with st.sidebar:
 
     # EUA 자동 fetch
     eua_default, eua_date, eua_mode = load_eua_price()
-    eua_price = st.slider(
+    eua_price = st.number_input(
         "EUA 가격 (€/tCO₂)",
-        min_value=40.0, max_value=200.0,
-        value=float(eua_default), step=1.0,
+        min_value=20.0, max_value=300.0,
+        value=float(eua_default), step=1.0, format="%.1f",
         help=("EU Emissions Allowance — EU ETS 탄소배출권 가격 [€/tCO₂]. "
               "CBAM 인증서 가격 = EUA 주간 평균. "
               "2025 평균 ~€75, 2026 예상 ~€85, 2030 컨센서스 €126. "
@@ -1724,12 +1725,13 @@ with st.sidebar:
     fx_eur_krw = fx_eur_usd * fx_usd_krw   # 파생값
 
     # 분석 연도
-    analysis_year = st.slider(
+    analysis_year = st.selectbox(
         "분석 연도 (Phase-in 적용)",
-        min_value=2026, max_value=2034, value=2026, step=1,
-        help=f"CBAM phase-in factor 자동 적용. 2026: 2.5% → 2034: 100%",
+        options=list(range(2026, 2035)),
+        index=0,
+        format_func=lambda y: f"{y}년 (phase-in {phase_in(y)*100:.1f}%)",
+        help="CBAM phase-in factor 자동 적용. 2026: 2.5% → 2034: 100%",
     )
-    st.caption(f"📌 {analysis_year}년 phase-in factor: **{phase_in(analysis_year)*100:.1f}%**")
 
     st.markdown("---")
 
@@ -2432,11 +2434,22 @@ with tabs[6]:
 
     st.markdown("---")
     st.markdown("##### ⚡ EUA 가격 민감도")
-    eua_range = st.slider(
-        "EUA 가격 범위 (€/tCO₂)",
-        min_value=40, max_value=200, value=(60, 130), step=5,
-    )
-    eua_grid = list(range(eua_range[0], eua_range[1] + 1, 10))
+    st.markdown("**EUA 가격 범위 (€/tCO₂)** — 민감도 분석")
+    cmin, cmax = st.columns(2)
+    with cmin:
+        eua_min = st.number_input(
+            "최저", min_value=20, max_value=300, value=60, step=5,
+            key="eua_min_input",
+        )
+    with cmax:
+        eua_max = st.number_input(
+            "최고", min_value=20, max_value=300, value=130, step=5,
+            key="eua_max_input",
+        )
+    if eua_min >= eua_max:
+        st.warning("최저값은 최고값보다 작아야 합니다.")
+        eua_min, eua_max = 60, 130
+    eua_grid = list(range(int(eua_min), int(eua_max) + 1, 10))
     sens_rows = []
     for ep in eua_grid:
         r = calc_total_cbam(
