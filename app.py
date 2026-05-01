@@ -2043,7 +2043,7 @@ with tabs[0]:
         })
     df_overview = pd.DataFrame(rows).sort_values("Unit cost (€/t)", ascending=False)
 
-    # ────────────── 좌측 차트: SEE vs Benchmark (겹침 해결) ──────────────
+    # ────────────── 차트: SEE vs Benchmark ──────────────
     st.markdown("##### 📊 한국 평균 SEE vs EU Benchmark")
     fig1 = go.Figure()
     fig1.add_trace(go.Bar(
@@ -2057,12 +2057,13 @@ with tabs[0]:
         marker_color="#81C784",
     ))
     fig1.update_layout(
+        title=None,                   # 'undefined' 텍스트 노출 방지
         barmode="group", template="plotly_dark",
         height=440,
-        # 라벨·범례·차트 겹침 방지: 하단 패딩 확대 + xaxis_title 제거 (범례 옆)
-        margin=dict(l=10, r=10, t=10, b=70),
+        margin=dict(l=10, r=10, t=20, b=70),
         paper_bgcolor=C_BG, plot_bgcolor=C_BG,
         xaxis=dict(title=dict(text="tCO₂/단위제품", standoff=12)),
+        yaxis=dict(title=None),
         legend=dict(
             orientation="h",
             yanchor="bottom", y=-0.28,
@@ -2073,8 +2074,9 @@ with tabs[0]:
     lock_static(fig1)
     st.plotly_chart(fig1, use_container_width=True, config=PLOTLY_CONFIG)
 
-    # ────────────── 우측: 막대그래프 → 표 (정보 효율 ↑) ──────────────
-    st.markdown(f"##### 💰 {analysis_year}년 단위 CBAM cost — 6개 sector 비교")
+    # ────────────── 표: 9개 sector 단위 CBAM cost (스크롤하지 않아도 보이게) ──────────────
+    st.markdown("---")
+    st.markdown(f"##### 💰 {analysis_year}년 단위 CBAM cost — 9개 sector 비교")
     df_show = df_overview[[
         "Sector", "SEE (kr)", "Benchmark", "Gap",
         "Unit cost (€/t)", "Unit cost (USD/t)"
