@@ -229,23 +229,150 @@ st.markdown(
     .sister-card a:hover { text-decoration: underline; }
     .sister-card h4 { color: #F5F7FA !important; font-weight: 500 !important; }
 
-    /* 본문 표 헤더 + DataFrame 정돈 */
-    .stDataFrame thead th {
+    /* ─────────────────────────────────────────────────
+       DataFrame — 다크모드 강제 (Streamlit이 기본 흰 배경 적용 방지)
+       ───────────────────────────────────────────────── */
+    div[data-testid="stDataFrame"],
+    div[data-testid="stTable"],
+    .stDataFrame {
         background-color: #11161e !important;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    div[data-testid="stDataFrame"] table,
+    div[data-testid="stDataFrame"] [data-testid="StyledDataFrameBody"],
+    div[data-testid="stDataFrame"] [data-testid="StyledDataFrameDataCell"],
+    .stDataFrame table {
+        background-color: #11161e !important;
+        color: #E8EAED !important;
+    }
+    div[data-testid="stDataFrame"] thead th,
+    div[data-testid="stDataFrame"] [data-testid="StyledDataFrameHeaderCell"],
+    .stDataFrame thead th {
+        background-color: #161c26 !important;
         color: #9aa5b8 !important;
         font-weight: 500 !important;
         text-transform: uppercase;
         letter-spacing: 0.04em;
         font-size: 0.72rem !important;
+        border-bottom: 1px solid #1f2733 !important;
     }
-    .stDataFrame { border-radius: 8px; overflow: hidden; }
+    div[data-testid="stDataFrame"] tbody tr td,
+    div[data-testid="stDataFrame"] tbody tr,
+    .stDataFrame tbody tr td {
+        background-color: #11161e !important;
+        color: #E8EAED !important;
+        border-bottom: 1px solid #1a2028 !important;
+    }
+    /* glide-data-grid (Streamlit 신형 dataframe) 다크 강제 */
+    .glide-data-grid, .gdg-wmyidgi, [class*="dvn-scroller"] {
+        background-color: #11161e !important;
+        color: #E8EAED !important;
+    }
 
-    /* 입력 위젯 — 차분 톤 */
-    div[data-baseweb="select"] > div, div[data-baseweb="input"] > div {
+    /* ─────────────────────────────────────────────────
+       Select / Dropdown — 텍스트 안 보이는 문제 수정
+       ───────────────────────────────────────────────── */
+    /* 닫힌 select 박스 */
+    div[data-baseweb="select"] > div {
+        background-color: #11161e !important;
+        border-color: #1f2733 !important;
+        color: #E8EAED !important;
+    }
+    div[data-baseweb="select"] > div:hover { border-color: #2a3346 !important; }
+    div[data-baseweb="select"] > div > div,
+    div[data-baseweb="select"] span,
+    div[data-baseweb="select"] input {
+        color: #E8EAED !important;
+        background-color: transparent !important;
+    }
+    /* 열린 dropdown 메뉴 (포털로 body 직속 렌더링됨) */
+    div[data-baseweb="popover"],
+    div[data-baseweb="menu"],
+    ul[role="listbox"] {
+        background-color: #11161e !important;
+        border: 1px solid #1f2733 !important;
+    }
+    div[data-baseweb="popover"] li,
+    div[data-baseweb="menu"] li,
+    ul[role="listbox"] li {
+        background-color: #11161e !important;
+        color: #E8EAED !important;
+    }
+    div[data-baseweb="popover"] li:hover,
+    div[data-baseweb="menu"] li:hover,
+    ul[role="listbox"] li:hover,
+    li[aria-selected="true"] {
+        background-color: #1a2330 !important;
+        color: #F5F7FA !important;
+    }
+
+    /* Text input + number input */
+    div[data-baseweb="input"] > div,
+    div[data-baseweb="base-input"] {
         background-color: #11161e !important;
         border-color: #1f2733 !important;
     }
-    div[data-baseweb="select"] > div:hover, div[data-baseweb="input"] > div:hover {
+    div[data-baseweb="input"] input,
+    div[data-baseweb="base-input"] input,
+    .stNumberInput input, .stTextInput input {
+        background-color: #11161e !important;
+        color: #E8EAED !important;
+    }
+
+    /* ─────────────────────────────────────────────────
+       Radio 버튼 — 동그라미 + 텍스트 모두 보이게 강제
+       ───────────────────────────────────────────────── */
+    .stRadio, div[data-testid="stRadio"] { background-color: transparent !important; }
+
+    /* 라벨 텍스트 */
+    .stRadio label,
+    .stRadio div[role="radiogroup"] label,
+    div[data-testid="stRadio"] label,
+    div[data-baseweb="radio"] label,
+    .stRadio p {
+        color: #E8EAED !important;
+        font-size: 0.86rem !important;
+    }
+
+    /* 라디오 동그라미 — 외부 원 (선택 안 된 상태) */
+    div[data-baseweb="radio"] > div:first-child,
+    .stRadio div[role="radiogroup"] label > div:first-child {
+        background-color: #0a0d14 !important;
+        border: 1.5px solid #4a5568 !important;
+        width: 16px !important;
+        height: 16px !important;
+        border-radius: 50% !important;
+        display: inline-block !important;
+        flex-shrink: 0 !important;
+    }
+    /* 라디오 동그라미 — 호버 */
+    div[data-baseweb="radio"]:hover > div:first-child {
+        border-color: #6b7689 !important;
+    }
+    /* 라디오 동그라미 — 선택된 상태 */
+    div[data-baseweb="radio"][aria-checked="true"] > div:first-child,
+    div[data-baseweb="radio"] input:checked + div {
+        background-color: #4FC3F7 !important;
+        border-color: #4FC3F7 !important;
+    }
+    /* 선택 시 가운데 점 */
+    div[data-baseweb="radio"][aria-checked="true"] > div:first-child::after {
+        content: "";
+        display: block;
+        width: 6px; height: 6px;
+        border-radius: 50%;
+        background: #0a0d14;
+        margin: 4px auto;
+    }
+
+    /* Checkbox */
+    .stCheckbox label { color: #E8EAED !important; }
+
+    /* MultiSelect 칩 */
+    span[data-baseweb="tag"] {
+        background-color: #1a2330 !important;
+        color: #E8EAED !important;
         border-color: #2a3346 !important;
     }
 
@@ -253,6 +380,9 @@ st.markdown(
     div[data-baseweb="slider"] [role="slider"] {
         background-color: #4FC3F7 !important;
         border-color: #4FC3F7 !important;
+    }
+    div[data-baseweb="slider"] [data-testid="stTickBar"] {
+        color: #6b7689 !important;
     }
 
     /* Expander — 차분 */
@@ -262,6 +392,15 @@ st.markdown(
         border-radius: 8px !important;
     }
     div[data-testid="stExpander"] summary { color: #9aa5b8 !important; }
+    div[data-testid="stExpander"] details > summary:hover { color: #E8EAED !important; }
+
+    /* 캡션 — 명도 보장 */
+    .stCaption, [data-testid="stCaptionContainer"] {
+        color: #6b7689 !important;
+    }
+
+    /* Help (?) 아이콘 툴팁 */
+    [data-testid="stTooltipIcon"] svg { fill: #6b7689 !important; }
 
     /* 모바일 폰트 축소 */
     @media (max-width: 640px) {
@@ -1414,14 +1553,20 @@ with st.sidebar:
     # 통화 표시
     st.markdown("### 💱 표시 통화")
     currency_mode = st.radio(
-        "통화", ["Both (USD+KRW)", "USD만", "KRW만"],
-        horizontal=True, label_visibility="collapsed",
+        "통화 표시 모드",
+        ["Both (USD+KRW)", "USD만", "KRW만"],
+        index=0,
+        horizontal=True,
+        label_visibility="collapsed",
+        key="currency_mode_radio",
     )
-    currency_mode_key = (
-        "USD" if "USD만" in currency_mode
-        else "KRW" if "KRW만" in currency_mode
-        else "Both"
-    )
+    if "USD만" in currency_mode:
+        currency_mode_key = "USD"
+    elif "KRW만" in currency_mode:
+        currency_mode_key = "KRW"
+    else:
+        currency_mode_key = "Both"
+    st.caption(f"현재 모드: **{currency_mode_key}**")
 
     st.markdown("---")
 
