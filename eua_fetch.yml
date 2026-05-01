@@ -1,0 +1,134 @@
+name: Fetch EUA Price (Weekly)
+
+# 매주 월요일 09:00 KST (= 00:00 UTC)에 실행
+on:
+  schedule:
+    - cron: '0 0 * * 1'
+  workflow_dispatch:    # 수동 트리거 가능
+
+jobs:
+  fetch-eua:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write    # repo에 commit 권한 필요
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests beautifulsoup4
+
+      - name: Fetch EUA price
+        id: fetch
+        run: |
+          python <<'EOF'
+          import json, os, datetime, urllib.request, re
+
+          # ─────────────────────────────────────────────
+          # 다중 소스 시도 (실패 시 fallback)
+          # ─────────────────────────────────────────────
+          sources_tried = []
+          price = None
+          source = None
+
+          # 1순위: Sandbag carbon-price-viewer (HTML scraping)
+          try:
+              req = urllib.request.Request(
+                  "https://sandbag.be/carbon-price-viewer/",
+                  headers={"User-Agent": "Mozilla/5.0 CBAM-Calculator-Bot"},
+              )
+              html = urllib.request.urlopen(req, timeout=10).read().decode("utf-8", errors="ignore")
+              # 가격 패턴: € 숫자.숫자 또는 EUR 숫자
+              m = re.search(r'€\s*(\d{2,3}\.?\d{0,2})', html)
+              if m:
+                  price = float(m.group(1))
+                  source = "sandbag.be"
+              sources_tried.append(("sandbag", "ok" if price else "no_match"))
+          except Exception as e:
+              sources_tried.append(("sandbag", f"err:{e}"))
+
+          # 2순위: TradingEconomics (RSS-style query)
+          if price is None:
+              try:
+                  req = urllib.request.Request(
+                      "https://tradingeconomics.com/commodity/carbon",
+                      headers={"User-Agent": "Mozilla/5.0 CBAM-Calculator-Bot"},
+                  )
+                  html = urllib.request.urlopen(req, timeout=10).read().decode("utf-8", errors="ignore")
+                  m = re.search(r'<span[^>]*data-symbol="CO2"[^>]*>(\d{2,3}\.?\d{0,2})', html)
+                  if not m:
+                      m = re.search(r'(\d{2,3}\.\d{2})\s*EUR/Tonne', html)
+                  if m:
+                      price = float(m.group(1))
+                      source = "tradingeconomics.com"
+                  sources_tried.append(("tradingeconomics", "ok" if price else "no_match"))
+              except Exception as e:
+                  sources_tried.append(("tradingeconomics", f"err:{e}"))
+
+          # Fallback: 기존값 유지
+          if price is None:
+              try:
+                  with open("data/eua_price.json", "r", encoding="utf-8") as f:
+                      old = json.load(f)
+                      price = old.get("price_eur_per_tco2", 80.0)
+                      source = "fallback_existing"
+              except Exception:
+                  price = 80.0
+                  source = "fallback_default"
+
+          # 합리성 체크 (40~200 €/tCO₂ 범위)
+          if not (40 <= price <= 200):
+              price = 80.0
+              source = "fallback_out_of_range"
+
+          today = datetime.date.today().isoformat()
+
+          # 기존 history 로드
+          history = []
+          try:
+              with open("data/eua_price.json", "r", encoding="utf-8") as f:
+                  old = json.load(f)
+                  history = old.get("history", [])
+          except Exception:
+              pass
+
+          # 중복 날짜 제외 후 추가
+          history = [h for h in history if h.get("date") != today]
+          history.append({"date": today, "price": price, "source": source})
+          history = history[-52:]    # 최근 52주만 보존
+
+          out = {
+              "price_eur_per_tco2": price,
+              "date": today,
+              "source": source,
+              "sources_tried": sources_tried,
+              "note": "Auto-fetched by GitHub Actions weekly.",
+              "history": history,
+          }
+
+          os.makedirs("data", exist_ok=True)
+          with open("data/eua_price.json", "w", encoding="utf-8") as f:
+              json.dump(out, f, ensure_ascii=False, indent=2)
+
+          print(f"✅ EUA price: €{price}/tCO₂ from {source} ({today})")
+          EOF
+
+      - name: Commit & Push
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/eua_price.json
+          if git diff --staged --quiet; then
+            echo "No changes — skipping commit."
+          else
+            git commit -m "chore(eua): weekly EUA price update [skip ci]"
+            git push
+          fi

@@ -1,6 +1,6 @@
 MIT License
 
-Copyright (c) 2026 cafeon90-oss
+Copyright (c) 2026 송봉관 / Song BK (Bongkwan Song)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -19,3 +19,22 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+──────────────────────────────────────────────────────────────────────────
+DATA & METHODOLOGY DISCLAIMER
+
+This software uses publicly available regulatory documents, industry reports,
+and market data including but not limited to:
+
+  - EU Regulation (EU) 2023/956 and Implementing Regulations
+  - ICAP (International Carbon Action Partnership) data
+  - KOTRA, 한국무역협회 (KITA), 대한상공회의소 SGI reports
+  - POSCO, Hyundai Steel, Hanwha, SK ESG / Climate Risk disclosures
+  - IEA, IEAGHG, NETL, World Steel Association technical reports
+  - EEX, ICE, Sandbag carbon market data
+
+All numbers are estimates based on publicly available information at the
+time of last update. Users should validate with their own verified data
+before making business decisions. This tool is for educational and
+analytical purposes only and does not constitute financial, legal, or
+regulatory advice.

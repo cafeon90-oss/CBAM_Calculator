@@ -1,0 +1,12 @@
+{
+  "price_eur_per_tco2": 80.0,
+  "date": "2026-05-01",
+  "source": "manual_initial",
+  "note": "Initial seed value. GitHub Actions will overwrite weekly.",
+  "history": [
+    {"date": "2025-12-15", "price": 83.79, "source": "carboncredits.com"},
+    {"date": "2025-09-30", "price": 71.5, "source": "EEX"},
+    {"date": "2025-06-30", "price": 68.0, "source": "EEX"},
+    {"date": "2026-05-01", "price": 80.0, "source": "manual_initial"}
+  ]
+}
