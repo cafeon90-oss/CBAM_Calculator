@@ -355,24 +355,22 @@ st.markdown(
     }
 
     /* ─────────────────────────────────────────────────
-       Radio 버튼 — Streamlit 기본 스타일 유지하면서 색상만 정돈
-       (이전 시도가 width/height 강제로 텍스트까지 무너뜨림 → 최소 개입)
+       Radio 버튼 — 텍스트 + 동그라미 둘 다 보이게
        ───────────────────────────────────────────────── */
-    /* 라벨 텍스트 — 가로 배열 + 흰색 */
+    /* 라벨 텍스트 */
     .stRadio label,
     div[data-testid="stRadio"] label,
     .stRadio p {
         color: #F0F2F5 !important;
         font-size: 0.86rem !important;
     }
-    /* radiogroup 컨테이너만 가로 정렬 보장 */
+    /* radiogroup 가로 정렬 */
     div[role="radiogroup"] {
         display: flex !important;
         flex-wrap: wrap !important;
         gap: 14px !important;
         align-items: center !important;
     }
-    /* 각 옵션도 가로 정렬 (라벨이 세로로 안 무너지게) */
     div[role="radiogroup"] > label {
         display: inline-flex !important;
         flex-direction: row !important;
@@ -380,6 +378,24 @@ st.markdown(
         gap: 6px !important;
         white-space: nowrap !important;
         margin: 0 !important;
+    }
+
+    /* 동그라미 가시성 — Streamlit 기본 동그라미가 어두운 배경에 묻히는 문제 해결 */
+    /* 외부 원: 흰색 1.5px 테두리 + 본문보다 살짝 밝은 채움으로 윤곽 살림 */
+    div[data-baseweb="radio"] > div:first-child {
+        border-color: #A8AEB6 !important;
+        border-width: 1.5px !important;
+        background-color: #1a2028 !important;
+    }
+    /* 호버 시 테두리 더 밝게 */
+    div[data-baseweb="radio"]:hover > div:first-child {
+        border-color: #F0F2F5 !important;
+    }
+    /* 선택 시: cyan으로 채움 */
+    div[data-baseweb="radio"] > div[aria-checked="true"],
+    div[data-baseweb="radio"] > div:first-child:has(input:checked) {
+        background-color: #4FC3F7 !important;
+        border-color: #4FC3F7 !important;
     }
 
     /* Checkbox */
@@ -502,6 +518,26 @@ st.markdown(
 # ======================================================================
 # Plotly 정적화 config (모든 차트 공통)
 # ======================================================================
+# ─────────────────────────────────────────────────
+# 색상 팔레트 (차분 다크모드 v3 — 톤다운된 흰색 통일)
+# 모든 텍스트는 흰색 계열, 명도만 단계 — 회색 일절 사용 X
+# ─────────────────────────────────────────────────
+C_BG       = "#0a0d14"   # 본문 배경
+C_CARD     = "#11161e"   # 카드 배경
+C_PRIMARY  = "#4FC3F7"   # 정보 (cyan)
+C_ACCENT   = "#9575CD"   # 보조 강조 (soft purple)
+C_GOOD     = "#81C784"   # 좋음 (녹색)
+C_WARN     = "#FFB74D"   # 주의 (주황)
+C_BAD      = "#E57373"   # 나쁨 (빨강)
+C_HIGH     = "#FFEB3B"   # 강조 (노랑)
+C_TEXT     = "#F0F2F5"   # primary text (90% white)
+C_TEXT2    = "#D4D8DD"   # secondary text (75% white) — 부제, 설명
+C_TEXT3    = "#A8AEB6"   # tertiary text (60% white) — caption, label
+C_TEXT4    = "#7A8089"   # quaternary text (45% white) — placeholder, footer
+C_BORDER   = "#252b36"   # 테두리
+# 호환용 alias (구버전에서 C_MUTED 참조 시 안전)
+C_MUTED    = C_TEXT4
+
 PLOTLY_CONFIG = {
     "displayModeBar": False,
     "scrollZoom": False,
@@ -537,7 +573,7 @@ def lock_static(fig):
         paper_bgcolor=C_BG,
         plot_bgcolor=C_BG,
     )
-    # 축 라벨/눈금/그리드 — 회색 격자 대신 어두운 톤다운된 흰색
+    # 축 라벨/눈금/그리드
     axis_style = dict(
         color=C_TEXT2,
         tickfont=dict(color=C_TEXT3, size=11),
@@ -550,22 +586,6 @@ def lock_static(fig):
     fig.update_xaxes(**axis_style)
     fig.update_yaxes(**axis_style)
     return fig
-
-# 색상 팔레트 (차분 다크모드 v3 — 톤다운된 흰색 통일)
-# 모든 텍스트는 흰색 계열, 명도만 단계 — 회색 일절 사용 X
-C_BG       = "#0a0d14"   # 본문 배경
-C_CARD     = "#11161e"   # 카드 배경
-C_PRIMARY  = "#4FC3F7"   # 정보 (cyan)
-C_ACCENT   = "#9575CD"   # 보조 강조 (soft purple)
-C_GOOD     = "#81C784"   # 좋음 (녹색)
-C_WARN     = "#FFB74D"   # 주의 (주황)
-C_BAD      = "#E57373"   # 나쁨 (빨강)
-C_HIGH     = "#FFEB3B"   # 강조 (노랑)
-C_TEXT     = "#F0F2F5"   # primary text (90% white)
-C_TEXT2    = "#D4D8DD"   # secondary text (75% white) — 부제, 설명
-C_TEXT3    = "#A8AEB6"   # tertiary text (60% white) — caption, label
-C_TEXT4    = "#7A8089"   # quaternary text (45% white) — placeholder, footer
-C_BORDER   = "#252b36"   # 테두리
 
 # 지역 색상 코딩
 REGION_COLORS = {
@@ -2369,7 +2389,7 @@ with tabs[5]:
         legend=dict(orientation="h", yanchor="bottom", y=-0.18),
         margin=dict(l=10, r=10, t=50, b=60),
     )
-    fig_time.add_vrect(x0=2022.5, x1=2025.5, fillcolor=C_MUTED, opacity=0.15,
+    fig_time.add_vrect(x0=2022.5, x1=2025.5, fillcolor=C_TEXT4, opacity=0.15,
                       annotation_text="전이기간 (보고만)", annotation_position="top left")
     fig_time.add_vline(x=2026, line_dash="dash", line_color=C_HIGH,
                       annotation_text="본격 시행 시작")
