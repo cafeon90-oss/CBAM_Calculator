@@ -805,8 +805,12 @@ LIT = {
         "sector_key": "aluminum",
         "process": "Hall-Héroult",
         "product": "Primary aluminum ingot",
-        "default_SEE": 10.0,           # 한국은 수입 ingot 가공 위주, 해외 ingot의 경우 grid factor가 dominant
-        "kr_avg_SEE": 10.0,
+        # IAI 2023 글로벌 평균 14.8 tCO₂/t (전년 15.1 → 2023 14.8 감소 추세)
+        # 한국은 primary smelter 없이 ingot 수입(중국·러시아·중동) → 수입품 SEE가 적용됨
+        # 중국 평균 ~18 (석탄 grid 의존), 중동 ~9 (가스 + 수력 mix), 러시아 ~3 (수력)
+        # 가중평균(중국 비중 큼) 약 16
+        "default_SEE": 16.0,
+        "kr_avg_SEE": 16.0,            # 한국 수입품의 가중평균 (중국 ingot 의존도 큼)
         "eu_benchmark": 1.514,
         "unit": "tCO₂/t Al",
         "product_unit": "ton",
@@ -839,8 +843,11 @@ LIT = {
         "sector_key": "hydrogen",
         "process": "SMR (no CCS)",
         "product": "H₂",
-        "default_SEE": 9.5,
-        "kr_avg_SEE": 10.0,
+        # IEA Global Hydrogen Review 2024: SMR with unabated NG → 10~14 tCO₂/t H₂
+        # (process 8~9 + upstream methane/NG 2~5)
+        # 한국 SMR은 LNG 기반(상대적으로 낮은 upstream) → ~11
+        "default_SEE": 11.0,
+        "kr_avg_SEE": 11.0,
         "eu_benchmark": 8.85,
         "unit": "tCO₂/t H₂",
         "product_unit": "ton",
@@ -947,12 +954,15 @@ PRESETS = {
     },
     "kr_novelis": {
         "label": "🇰🇷 노벨리스 코리아 (Al, ~1.5 Mt/yr)",
-        "description": "재활용 기반 알루미늄 (그러나 ingot은 import) · EU 수출",
+        "description": "재활용 기반 알루미늄 (재활용 비중 60%+) · EU 수출",
         "sector_lit": "aluminum_primary",
         "settings": {
             "annual_production_mt": 1.5,
             "eu_export_share_pct": 15.0,
-            "user_SEE": 8.0,    # 재활용 비중 반영 — 아직 primary 평균보다는 낮음
+            # 재활용 알루미늄 SEE = 0.5~3.0 (primary의 5% 에너지)
+            # 노벨리스는 재활용 60%+ 비중 → primary 16 × 0.4 + recycled 1.5 × 0.6 ≈ 7.3
+            # 더 보수적으로 6.0 (실제 verified 값 입력 권장)
+            "user_SEE": 6.0,
             "company_name": "노벨리스 코리아",
         },
     },
@@ -974,7 +984,7 @@ PRESETS = {
         "settings": {
             "annual_production_mt": 0.1,
             "eu_export_share_pct": 5.0,
-            "user_SEE": 10.0,
+            "user_SEE": 11.0,
             "company_name": "SK E&S (Gray)",
         },
     },
