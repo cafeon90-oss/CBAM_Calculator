@@ -264,44 +264,13 @@ st.markdown(
     .sister-card h4 { color: #F0F2F5 !important; font-weight: 500 !important; }
 
     /* ─────────────────────────────────────────────────
-       DataFrame — 다크모드 강제 (Streamlit이 기본 흰 배경 적용 방지)
+       DataFrame — Streamlit 자동 다크모드에 맡기되, 외곽만 정돈
+       (canvas 기반 glide-data-grid는 CSS color가 안 먹힘 — 강제 X)
        ───────────────────────────────────────────────── */
-    div[data-testid="stDataFrame"],
-    div[data-testid="stTable"],
-    .stDataFrame {
-        background-color: #11161e !important;
+    div[data-testid="stDataFrame"] {
+        border: 1px solid #1f2733;
         border-radius: 8px;
         overflow: hidden;
-    }
-    div[data-testid="stDataFrame"] table,
-    div[data-testid="stDataFrame"] [data-testid="StyledDataFrameBody"],
-    div[data-testid="stDataFrame"] [data-testid="StyledDataFrameDataCell"],
-    .stDataFrame table {
-        background-color: #11161e !important;
-        color: #F0F2F5 !important;
-    }
-    div[data-testid="stDataFrame"] thead th,
-    div[data-testid="stDataFrame"] [data-testid="StyledDataFrameHeaderCell"],
-    .stDataFrame thead th {
-        background-color: #161c26 !important;
-        color: #D4D8DD !important;
-        font-weight: 500 !important;
-        text-transform: uppercase;
-        letter-spacing: 0.04em;
-        font-size: 0.72rem !important;
-        border-bottom: 1px solid #1f2733 !important;
-    }
-    div[data-testid="stDataFrame"] tbody tr td,
-    div[data-testid="stDataFrame"] tbody tr,
-    .stDataFrame tbody tr td {
-        background-color: #11161e !important;
-        color: #F0F2F5 !important;
-        border-bottom: 1px solid #1a2028 !important;
-    }
-    /* glide-data-grid (Streamlit 신형 dataframe) 다크 강제 */
-    .glide-data-grid, .gdg-wmyidgi, [class*="dvn-scroller"] {
-        background-color: #11161e !important;
-        color: #F0F2F5 !important;
     }
 
     /* ─────────────────────────────────────────────────
