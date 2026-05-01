@@ -55,79 +55,223 @@ st.set_page_config(
 st.markdown(
     """
 <style>
-    /* 사이드바 완전 불투명 (모바일 투명도 이슈) */
-    section[data-testid="stSidebar"] {
-        background-color: #0E1117 !important;
-        opacity: 1 !important;
-    }
-    section[data-testid="stSidebar"] > div:first-child {
-        background-color: #0E1117 !important;
-    }
-    section[data-testid="stSidebar"] * { background-color: transparent; }
+    /* ─────────────────────────────────────────────────
+       전역 — 차분한 다크모드 (Linear/Vercel 톤)
+       ───────────────────────────────────────────────── */
+    .stApp { background-color: #0a0d14; }
+    body, [class*="st"] { color: #E8EAED; }
 
-    /* 탭 가로 스크롤 (모바일) */
+    /* 본문 헤더 */
+    h1 {
+        font-weight: 600 !important;
+        letter-spacing: -0.02em !important;
+        color: #F5F7FA !important;
+    }
+    h2, h3, h4 {
+        font-weight: 500 !important;
+        color: #F5F7FA !important;
+    }
+
+    /* 사이드바 완전 불투명 + 차분 */
+    section[data-testid="stSidebar"] {
+        background-color: #0a0d14 !important;
+        opacity: 1 !important;
+        border-right: 1px solid #1f2733;
+    }
+    section[data-testid="stSidebar"] > div:first-child { background-color: #0a0d14 !important; }
+    section[data-testid="stSidebar"] * { background-color: transparent; }
+    section[data-testid="stSidebar"] h3 {
+        font-size: 0.78rem !important;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: #6b7689 !important;
+        font-weight: 500 !important;
+        margin-top: 4px !important;
+    }
+
+    /* 탭 — 모던 underline 스타일 */
     div[data-baseweb="tab-list"] {
         overflow-x: auto !important;
         flex-wrap: nowrap !important;
         scrollbar-width: thin;
+        gap: 0 !important;
+        border-bottom: 1px solid #1f2733;
     }
     div[data-baseweb="tab-list"]::-webkit-scrollbar { height: 4px; }
-    div[data-baseweb="tab-list"]::-webkit-scrollbar-thumb { background: #4a5160; border-radius: 2px; }
-    div[data-baseweb="tab-list"] button { flex-shrink: 0 !important; white-space: nowrap; }
+    div[data-baseweb="tab-list"]::-webkit-scrollbar-thumb { background: #2a3346; border-radius: 2px; }
+    div[data-baseweb="tab-list"] button {
+        flex-shrink: 0 !important;
+        white-space: nowrap;
+        font-size: 0.86rem !important;
+        font-weight: 500 !important;
+        color: #6b7689 !important;
+        padding: 10px 14px !important;
+        border-bottom: 2px solid transparent !important;
+        transition: color 0.15s ease;
+    }
+    div[data-baseweb="tab-list"] button[aria-selected="true"] {
+        color: #4FC3F7 !important;
+        border-bottom-color: #4FC3F7 !important;
+    }
+    div[data-baseweb="tab-list"] button:hover { color: #B0BEC5 !important; }
 
-    /* 메트릭 카드 (3단계 축소) */
+    /* 메트릭 카드 — 좌측 strip + flat */
     div[data-testid="stMetric"] {
-        background-color: #1E2128;
-        padding: 8px 10px;
-        border-radius: 8px;
-        border: 1px solid #2C313C;
+        background-color: #11161e;
+        padding: 13px 16px 13px 18px;
+        border-radius: 10px;
+        border: 1px solid #1f2733;
+        position: relative;
+        overflow: hidden;
+        transition: border-color 0.15s ease;
     }
-    div[data-testid="stMetricLabel"] { font-size: 0.7rem !important; color: #8b95a7; }
+    div[data-testid="stMetric"]:hover { border-color: #2a3346; }
+    /* KPI 카드 좌측 strip은 nth-child로 색상 부여 */
+    div[data-testid="stMetric"]::before {
+        content: "";
+        position: absolute;
+        top: 0; left: 0; bottom: 0;
+        width: 2px;
+        background: #4FC3F7;
+    }
+    /* 4개 컬럼 KPI 카드의 색상 strip 다양화 */
+    div[data-testid="stHorizontalBlock"] > div:nth-child(1) div[data-testid="stMetric"]::before { background: #4FC3F7; }
+    div[data-testid="stHorizontalBlock"] > div:nth-child(2) div[data-testid="stMetric"]::before { background: #9575CD; }
+    div[data-testid="stHorizontalBlock"] > div:nth-child(3) div[data-testid="stMetric"]::before { background: #FFB74D; }
+    div[data-testid="stHorizontalBlock"] > div:nth-child(4) div[data-testid="stMetric"]::before { background: #81C784; }
+
+    div[data-testid="stMetricLabel"] {
+        font-size: 0.66rem !important;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #6b7689 !important;
+        font-weight: 500 !important;
+    }
+    div[data-testid="stMetricLabel"] > div { font-weight: 500 !important; }
     div[data-testid="stMetricValue"] {
-        font-size: 1.0rem !important;
-        font-weight: 600;
+        font-size: 1.35rem !important;
+        font-weight: 600 !important;
         line-height: 1.2;
+        color: #F5F7FA !important;
+        letter-spacing: -0.02em;
+        margin-top: 4px !important;
     }
-    div[data-testid="stMetricDelta"] { font-size: 0.7rem !important; }
+    div[data-testid="stMetricDelta"] {
+        font-size: 0.7rem !important;
+        color: #9aa5b8 !important;
+    }
+    div[data-testid="stMetricDelta"] svg { display: none; }
 
-    /* 인사이트 박스 */
+    /* 인사이트 박스 — flat + 좌측 strip */
     .insight-box {
-        background: linear-gradient(90deg, #1a2332 0%, #15202b 100%);
-        border-left: 4px solid #4FC3F7;
-        padding: 12px 16px;
+        background: #11161e;
+        border: 1px solid #1f2733;
+        border-left: 2px solid #4FC3F7;
+        padding: 13px 16px;
         margin: 10px 0;
-        border-radius: 4px;
-        color: #E8EAED;
-        font-size: 0.92rem;
-        line-height: 1.55;
-    }
-    .insight-box strong { color: #4FC3F7; }
-    .insight-box .good { color: #81C784; font-weight: 700; }
-    .insight-box .warn { color: #FFB74D; font-weight: 700; }
-    .insight-box .bad  { color: #E57373; font-weight: 700; }
-
-    /* 자매도구 안내 카드 */
-    .sister-card {
-        background: linear-gradient(135deg, #2a1f3d 0%, #1a2942 100%);
-        border-left: 3px solid #B388FF;
-        border-radius: 6px;
-        padding: 10px 14px;
-        margin: 8px 0;
+        border-radius: 0 8px 8px 0;
+        color: #9aa5b8;
         font-size: 0.88rem;
-        color: #E8EAED;
+        line-height: 1.65;
     }
-    .sister-card a { color: #B388FF; text-decoration: none; font-weight: 600; }
-    .sister-card a:hover { text-decoration: underline; }
+    .insight-box strong { color: #F5F7FA; font-weight: 500; }
+    .insight-box.good { border-left-color: #81C784; }
+    .insight-box.warn { border-left-color: #FFB74D; }
+    .insight-box.bad  { border-left-color: #E57373; }
+    .insight-box .good { color: #A5D6A7; font-weight: 500; }
+    .insight-box .warn { color: #FFCC80; font-weight: 500; }
+    .insight-box .bad  { color: #EF9A9A; font-weight: 500; }
 
-    /* 본문 표 헤더 */
-    .stDataFrame thead th { background-color: #1E2128 !important; }
+    /* Omnibus 알림 — 컴팩트 */
+    .omnibus-banner {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        background: #11161e;
+        border: 1px solid #1f2733;
+        border-radius: 8px;
+        padding: 9px 14px;
+        margin: 10px 0 16px 0;
+        font-size: 0.8rem;
+        color: #9aa5b8;
+    }
+    .omnibus-banner .new-badge {
+        background: #1d2b22;
+        color: #81C784;
+        font-size: 0.66rem;
+        font-weight: 500;
+        padding: 2px 7px;
+        border-radius: 4px;
+        letter-spacing: 0.04em;
+        flex-shrink: 0;
+    }
+    .omnibus-banner a {
+        color: #81C784;
+        text-decoration: none;
+        font-size: 0.78rem;
+        margin-left: auto;
+        flex-shrink: 0;
+    }
+
+    /* 자매도구 안내 카드 — 차분 톤 */
+    .sister-card {
+        background: #11161e;
+        border: 1px solid #1f2733;
+        border-left: 2px solid #9b8de8;
+        border-radius: 0 8px 8px 0;
+        padding: 13px 16px;
+        margin: 10px 0;
+        font-size: 0.88rem;
+        color: #9aa5b8;
+        line-height: 1.6;
+    }
+    .sister-card a { color: #9b8de8; text-decoration: none; font-weight: 500; }
+    .sister-card a:hover { text-decoration: underline; }
+    .sister-card h4 { color: #F5F7FA !important; font-weight: 500 !important; }
+
+    /* 본문 표 헤더 + DataFrame 정돈 */
+    .stDataFrame thead th {
+        background-color: #11161e !important;
+        color: #9aa5b8 !important;
+        font-weight: 500 !important;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        font-size: 0.72rem !important;
+    }
+    .stDataFrame { border-radius: 8px; overflow: hidden; }
+
+    /* 입력 위젯 — 차분 톤 */
+    div[data-baseweb="select"] > div, div[data-baseweb="input"] > div {
+        background-color: #11161e !important;
+        border-color: #1f2733 !important;
+    }
+    div[data-baseweb="select"] > div:hover, div[data-baseweb="input"] > div:hover {
+        border-color: #2a3346 !important;
+    }
+
+    /* 슬라이더 — cyan accent */
+    div[data-baseweb="slider"] [role="slider"] {
+        background-color: #4FC3F7 !important;
+        border-color: #4FC3F7 !important;
+    }
+
+    /* Expander — 차분 */
+    div[data-testid="stExpander"] {
+        background-color: #11161e;
+        border: 1px solid #1f2733 !important;
+        border-radius: 8px !important;
+    }
+    div[data-testid="stExpander"] summary { color: #9aa5b8 !important; }
 
     /* 모바일 폰트 축소 */
     @media (max-width: 640px) {
-        h1 { font-size: 1.4rem !important; }
+        h1 { font-size: 1.35rem !important; }
         h2 { font-size: 1.1rem !important; }
-        div[data-testid="stMetricValue"] { font-size: 0.9rem !important; }
-        div[data-testid="stMetricLabel"] { font-size: 0.65rem !important; }
+        div[data-testid="stMetricValue"] { font-size: 1.05rem !important; }
+        div[data-testid="stMetricLabel"] { font-size: 0.62rem !important; }
+        .insight-box, .sister-card { font-size: 0.82rem; }
+        .omnibus-banner { font-size: 0.75rem; padding: 8px 12px; }
+        div[data-baseweb="tab-list"] button { font-size: 0.78rem !important; padding: 9px 11px !important; }
     }
 
     /* 그래프 완전 정적화 — 모바일 핀치/터치 줌 차단 강화 */
@@ -178,13 +322,22 @@ st.markdown(
         section[data-testid="stSidebar"] > div { min-width: 360px !important; }
     }
 
-    /* 푸터 그라디언트 카드 */
+    /* 푸터 카드 — 차분 */
     .footer-card {
-        background: linear-gradient(135deg, #1a2540 0%, #2a1a3d 50%, #1a2942 100%);
+        background: #11161e;
         border-radius: 12px;
         padding: 18px 22px;
         margin: 24px 0 8px 0;
-        border: 1px solid #3a4660;
+        border: 1px solid #1f2733;
+        position: relative;
+    }
+    .footer-card::before {
+        content: "";
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 2px;
+        background: linear-gradient(90deg, #4FC3F7 0%, #9b8de8 100%);
+        border-radius: 12px 12px 0 0;
     }
 </style>
 """,
@@ -226,17 +379,18 @@ def lock_static(fig):
     fig.update_yaxes(fixedrange=True)
     return fig
 
-# 색상 팔레트 (다크모드 통일)
-C_BG       = "#0E1117"
-C_CARD     = "#1E2128"
-C_PRIMARY  = "#4FC3F7"   # 정보 (파랑)
+# 색상 팔레트 (차분 다크모드 v2 — Linear/Vercel 톤)
+C_BG       = "#0a0d14"   # 본문 배경 (더 진한 navy black)
+C_CARD     = "#11161e"   # 카드 배경
+C_PRIMARY  = "#4FC3F7"   # 정보 (cyan)
+C_ACCENT   = "#9575CD"   # 보조 강조 (soft purple)
 C_GOOD     = "#81C784"   # 좋음 (녹색)
 C_WARN     = "#FFB74D"   # 주의 (주황)
 C_BAD      = "#E57373"   # 나쁨 (빨강)
 C_HIGH     = "#FFEB3B"   # 강조 (노랑)
-C_TEXT     = "#E8EAED"
-C_MUTED    = "#8b95a7"
-C_BORDER   = "#2C313C"
+C_TEXT     = "#F5F7FA"   # 본문 텍스트 (더 밝은 white)
+C_MUTED    = "#6b7689"   # 보조 텍스트 (slightly cooler)
+C_BORDER   = "#1f2733"   # 테두리 (cooler)
 
 # 지역 색상 코딩
 REGION_COLORS = {
@@ -1395,21 +1549,23 @@ with st.sidebar:
 
     st.markdown("---")
 
-    # 작성자 카드 (항상 사이드바 하단)
+    # 작성자 카드 (항상 사이드바 하단) — 차분 톤
     st.markdown(
         """
-<div style='background:#1E2128; border-left:3px solid #4FC3F7;
-            border-radius:6px; padding:10px 12px; margin-top:8px;'>
-    <div style='font-size:0.78rem; color:#8b95a7;'>👤 Built by</div>
-    <div style='font-size:0.95rem; font-weight:700; color:#E8EAED;'>송봉관 / Song BK</div>
-    <div style='font-size:0.72rem; color:#B0BEC5; margin:2px 0 6px;'>DAC & CCUS 기술사업화 전문가</div>
-    <div style='font-size:0.72rem; line-height:1.7;'>
-        🐙 <a href='https://github.com/cafeon90-oss' style='color:#81C784;'>GitHub</a> &nbsp;
-        💼 <a href='https://www.linkedin.com/in/bongkwan-song-95a0213ba/' style='color:#81C784;'>LinkedIn</a><br>
-        📝 <a href='https://cdrmaster.tistory.com/' style='color:#81C784;'>Blog</a> &nbsp;
-        📧 <a href='mailto:cafeon90@gmail.com' style='color:#81C784;'>Email</a>
+<div style='background:#11161e; border:1px solid #1f2733; border-left:2px solid #4FC3F7;
+            border-radius:0 8px 8px 0; padding:12px 14px; margin-top:8px;'>
+    <div style='font-size:0.66rem; color:#6b7689; text-transform:uppercase;
+                letter-spacing:0.08em; font-weight:500;'>Built by</div>
+    <div style='font-size:0.95rem; font-weight:500; color:#F5F7FA; margin-top:4px;'>송봉관 / Song BK</div>
+    <div style='font-size:0.72rem; color:#9aa5b8; margin:3px 0 8px;'>DAC & CCUS 기술사업화 전문가</div>
+    <div style='font-size:0.74rem; line-height:1.8; color:#9aa5b8;'>
+        <a href='https://github.com/cafeon90-oss' style='color:#81C784; text-decoration:none;'>↗ GitHub</a> &nbsp;
+        <a href='https://www.linkedin.com/in/bongkwan-song-95a0213ba/' style='color:#81C784; text-decoration:none;'>↗ LinkedIn</a><br>
+        <a href='https://cdrmaster.tistory.com/' style='color:#81C784; text-decoration:none;'>↗ Blog</a> &nbsp;
+        <a href='mailto:cafeon90@gmail.com' style='color:#81C784; text-decoration:none;'>↗ Email</a>
     </div>
-    <div style='font-size:0.65rem; color:#6e7888; margin-top:6px;'>
+    <div style='font-size:0.66rem; color:#5a6473; margin-top:8px; padding-top:8px;
+                border-top:1px solid #1f2733;'>
         © 2026 Song BK · MIT License
     </div>
 </div>
@@ -1421,24 +1577,35 @@ with st.sidebar:
 # ======================================================================
 # 메인 화면 — 헤더
 # ======================================================================
-st.title("🌍 EU CBAM 영향 계산기")
-st.caption(
-    f"한국 기업의 EU 탄소국경조정제도(CBAM) 부담 시뮬레이션 · "
-    f"본격 시행 2026.1.1 → 완전 시행 2034 · "
-    f"자매 도구: [🌫️ CCUS 벤치마크]({CCUS_REPO_URL})"
+# 헤더 — 그라디언트 아이콘 + 본문
+st.markdown(
+    f"""
+<div style='display: flex; align-items: center; gap: 14px; margin-bottom: 4px;'>
+    <div style='width: 40px; height: 40px; border-radius: 10px;
+                background: linear-gradient(135deg, #4FC3F7 0%, #7C4DFF 100%);
+                display: flex; align-items: center; justify-content: center;
+                font-size: 20px; flex-shrink: 0;'>🌍</div>
+    <div style='min-width: 0;'>
+        <div style='font-size: 1.55rem; font-weight: 600; letter-spacing: -0.02em;
+                    color: #F5F7FA; line-height: 1.2;'>EU CBAM 영향 계산기</div>
+        <div style='font-size: 0.8rem; color: #6b7689; margin-top: 3px;'>
+            한국 기업의 EU 탄소국경조정제도(CBAM) 부담 시뮬레이션 ·
+            본격 시행 2026.1.1 → 2034 ·
+            자매 도구: <a href='{CCUS_REPO_URL}' style='color:#9b8de8; text-decoration:none;'>🌫️ CCUS 벤치마크 ↗</a>
+        </div>
+    </div>
+</div>
+""",
+    unsafe_allow_html=True,
 )
 
-# Omnibus 2025 변경사항 알림 (한 번만 노출 — 탭 ⑧ 방법론에서 상세 표 제공)
+# Omnibus 2025 알림 — 컴팩트 한 줄
 st.markdown(
     """
-<div style='background: linear-gradient(90deg, #1a3a2e 0%, #15302b 100%);
-            border-left: 4px solid #81C784; border-radius: 4px;
-            padding: 10px 14px; margin: 8px 0 14px 0;
-            color: #C8E6C9; font-size: 0.86rem;'>
-🆕 <strong>2025-10-17 Omnibus 시행 반영</strong> · 50t 소액 면제(H₂·전력 제외) · 인증서 판매 2027.2.1 개시 ·
-연간 declaration 9-30 마감 · 분기 holding 50%로 완화 ·
-<a href='https://taxation-customs.ec.europa.eu/carbon-border-adjustment-mechanism/cbam-legislation-and-guidance_en'
-   style='color:#81C784;'>EU 공식 가이드</a>
+<div class='omnibus-banner'>
+    <div class='new-badge'>NEW</div>
+    <div>Omnibus 2025-10-17 시행 · 50t 면제(H₂·전력 제외) · 인증서 2027.2.1 개시 · 분기 holding 50%</div>
+    <a href='https://taxation-customs.ec.europa.eu/carbon-border-adjustment-mechanism/cbam-legislation-and-guidance_en'>자세히 →</a>
 </div>
 """,
     unsafe_allow_html=True,
@@ -1470,34 +1637,51 @@ already_zero = result["below_benchmark"]
 
 if already_zero:
     insight_class = "good"
+    insight_header = f"✓ {company_name} ({sector['name']})"
+    insight_badge = f"<span class='good'>CBAM 0</span>"
     insight_msg = (
-        f"<strong>✅ {company_name} ({sector['name']})</strong>은 EU benchmark "
-        f"<span class='good'>{sector['eu_benchmark']:.3f}</span> {sector['unit']} "
-        f"<span class='good'>이하</span>이므로 "
-        f"<span class='good'>{analysis_year}년 CBAM 부담 0</span>입니다. "
-        f"이 sector·공정에서 한국 기업이 EU 시장에서 가질 수 있는 가장 강력한 경쟁우위입니다."
+        f"SEE <strong>{user_SEE:.3f}</strong> ≤ benchmark "
+        f"<strong>{sector['eu_benchmark']:.3f}</strong> {sector['unit']} — "
+        f"{analysis_year}년 CBAM 부담 없음. 이 sector·공정은 한국 기업이 "
+        f"EU 시장에서 가질 수 있는 가장 강력한 경쟁우위입니다."
     )
 elif gap_pct < 20:
     insight_class = "warn"
+    insight_header = f"⚠ {company_name}"
+    insight_badge = f"<span class='warn'>+{gap_pct:.1f}% 초과</span>"
     insight_msg = (
-        f"<strong>⚠️ {company_name}</strong>의 SEE는 EU benchmark 대비 "
-        f"<span class='warn'>+{gap_pct:.1f}%</span> 초과입니다. "
-        f"{analysis_year}년 연간 CBAM 부담: <strong>{fmt_eur(result['annual_cost_eur'])}</strong> "
+        f"SEE <strong>{user_SEE:.3f}</strong> vs benchmark "
+        f"<strong>{sector['eu_benchmark']:.3f}</strong>. "
+        f"{analysis_year}년 연간 부담 <span class='warn'>{fmt_eur(result['annual_cost_eur'])}</span> "
         f"(≈ {fmt_money(annual_usd, fx_usd_krw, currency_mode_key)}). "
-        f"<span class='warn'>에너지 효율 개선·부분 CCS</span>로도 benchmark 이하 달성 가능."
+        f"<span class='warn'>에너지 효율 개선</span> · <span class='warn'>부분 CCS</span>로도 "
+        f"benchmark 이하 달성 가능."
     )
 else:
     insight_class = "bad"
+    insight_header = f"⚠ {company_name}"
+    insight_badge = f"<span class='bad'>+{gap_pct:.1f}% 초과</span>"
     insight_msg = (
-        f"<strong>🚨 {company_name}</strong>의 SEE {user_SEE:.3f}는 EU benchmark "
-        f"{sector['eu_benchmark']:.3f} 대비 <span class='bad'>+{gap_pct:.1f}%</span> 초과 — "
-        f"{analysis_year}년 연간 부담 <strong>{fmt_eur(result['annual_cost_eur'])}</strong> "
+        f"SEE <strong>{user_SEE:.3f}</strong> vs benchmark "
+        f"<strong>{sector['eu_benchmark']:.3f}</strong>. "
+        f"{analysis_year}년 연간 부담 <span class='bad'>{fmt_eur(result['annual_cost_eur'])}</span> "
         f"(≈ {fmt_money(annual_usd, fx_usd_krw, currency_mode_key)}). "
-        f"<span class='bad'>CCS 90% 이상</span> 또는 <span class='bad'>공정 전환(DRI-H₂/EAF)</span> 필요. "
-        f"→ 탭 <strong>④ 탄소감축 시뮬레이터</strong>에서 정확한 회피액 계산."
+        f"<span class='warn'>CCS 90%</span> 또는 <span class='warn'>공정 전환(DRI-H₂/EAF)</span> 권장 → "
+        f"탭 <strong>④ 감축 시뮬레이터</strong>에서 회피액 정밀 계산."
     )
 
-st.markdown(f'<div class="insight-box">{insight_msg}</div>', unsafe_allow_html=True)
+st.markdown(
+    f"""
+<div class='insight-box {insight_class}'>
+    <div style='display: flex; align-items: center; gap: 10px; margin-bottom: 6px;'>
+        <div style='font-weight: 500; font-size: 0.95rem; color: #F5F7FA;'>{insight_header}</div>
+        <div style='margin-left: auto; background: #1a2028; font-size: 0.7rem; padding: 2px 8px; border-radius: 4px;'>{insight_badge}</div>
+    </div>
+    <div>{insight_msg}</div>
+</div>
+""",
+    unsafe_allow_html=True,
+)
 
 # ======================================================================
 # 핵심 KPI 카드 (4대)
@@ -1506,10 +1690,10 @@ col1, col2, col3, col4 = st.columns(4)
 
 with col1:
     st.metric(
-        f"💰 연간 CBAM 부담 ({analysis_year})",
+        f"연간 CBAM ({analysis_year})",
         fmt_money(annual_usd, fx_usd_krw, currency_mode_key),
         delta=f"€{result['annual_cost_eur']/1e6:,.2f}M",
-        delta_color="inverse",
+        delta_color="off",
     )
 
 with col2:
@@ -1517,7 +1701,7 @@ with col2:
         "단위 제품당 CBAM",
         fmt_money(unit_usd, fx_usd_krw, currency_mode_key, per_t=True),
         delta=f"€{result['unit_cost_eur']:.2f}/t",
-        delta_color="inverse",
+        delta_color="off",
     )
 
 with col3:
@@ -1531,10 +1715,10 @@ with col3:
     cbam_unit_usd = result["unit_cost_eur"] / fx_eur_usd
     price_uplift_pct = (cbam_unit_usd / ref_unit_price) * 100.0
     st.metric(
-        "📈 EU 수출가 인상률",
+        "EU 수출가 인상률",
         f"{price_uplift_pct:+.2f}%",
-        delta=f"≈ ${cbam_unit_usd:.1f}/t / ${ref_unit_price}/t base",
-        delta_color="inverse",
+        delta=f"≈ ${cbam_unit_usd:.1f}/t / ${ref_unit_price} base",
+        delta_color="off",
         help=f"가정: {sector['name']} 평균 EU 수출가 ${ref_unit_price}/t",
     )
 
@@ -1548,10 +1732,10 @@ with col4:
     )
     avoided_usd = avoided["avoided_annual_eur"] / fx_eur_usd
     st.metric(
-        "🟦 CCS 90% 회피 가능액",
+        "CCS 90% 회피 가능",
         fmt_money(avoided_usd, fx_usd_krw, currency_mode_key),
         delta=f"€{avoided['avoided_annual_eur']/1e6:,.2f}M/yr",
-        delta_color="normal",
+        delta_color="off",
         help="자매 CCUS 도구로 deep-dive (탭 ⑤ 참조)",
     )
 
@@ -2207,23 +2391,31 @@ with tabs[8]:
 st.markdown(
     f"""
 <div class='footer-card'>
-    <h4 style='margin:0 0 6px 0; color:#E8EAED;'>🌍 EU CBAM 영향 계산기 — Built by 송봉관 / Song BK</h4>
-    <p style='margin:4px 0 12px 0; color:#B0BEC5; font-size:0.92rem;'>
-        DAC & CCUS 기술사업화 전문가 · 자매 도구:
-        <a href='{CCUS_REPO_URL}' style='color:#B388FF;'>🌫️ CCUS 벤치마크</a>
-    </p>
-    <p style='margin:0 0 4px 0; font-size:0.95rem;'>
-        🐙 <a href='https://github.com/cafeon90-oss' style='color:#81C784; text-decoration:none;'><strong>GitHub</strong></a>
-        &nbsp; · &nbsp;
-        💼 <a href='https://www.linkedin.com/in/bongkwan-song-95a0213ba/' style='color:#81C784; text-decoration:none;'><strong>LinkedIn</strong></a>
-        &nbsp; · &nbsp;
-        📝 <a href='https://cdrmaster.tistory.com/' style='color:#81C784; text-decoration:none;'><strong>Blog</strong></a>
-        &nbsp; · &nbsp;
-        📧 <a href='mailto:cafeon90@gmail.com' style='color:#81C784; text-decoration:none;'><strong>Email</strong></a>
-    </p>
-    <p style='margin:8px 0 0 0; color:#8b95a7; font-size:0.78rem;'>
-        © 2026 Song BK · MIT License · Data sources: EU Commission, ICAP, KOTRA, KCCI SGI, IEA, IEAGHG, NETL, World Steel Association
-    </p>
+    <div style='display: flex; align-items: center; gap: 12px; margin-bottom: 10px;'>
+        <div style='width: 36px; height: 36px; border-radius: 9px;
+                    background: linear-gradient(135deg, #4FC3F7 0%, #7C4DFF 100%);
+                    display: flex; align-items: center; justify-content: center;
+                    font-size: 18px; flex-shrink: 0;'>🌍</div>
+        <div>
+            <div style='font-size: 1.0rem; font-weight: 500; color:#F5F7FA; line-height: 1.2;'>EU CBAM 영향 계산기</div>
+            <div style='font-size: 0.78rem; color:#6b7689; margin-top: 2px;'>Built by 송봉관 / Song BK · DAC & CCUS 기술사업화 전문가</div>
+        </div>
+    </div>
+    <div style='font-size:0.84rem; color:#9aa5b8; margin: 8px 0 12px 0;'>
+        자매 도구:
+        <a href='{CCUS_REPO_URL}' style='color:#9b8de8; text-decoration:none;'>🌫️ CCUS 벤치마크 ↗</a>
+    </div>
+    <div style='display: flex; flex-wrap: wrap; gap: 14px; font-size:0.84rem; margin-bottom: 12px;'>
+        <a href='https://github.com/cafeon90-oss' style='color:#81C784; text-decoration:none;'>↗ GitHub</a>
+        <a href='https://www.linkedin.com/in/bongkwan-song-95a0213ba/' style='color:#81C784; text-decoration:none;'>↗ LinkedIn</a>
+        <a href='https://cdrmaster.tistory.com/' style='color:#81C784; text-decoration:none;'>↗ Blog</a>
+        <a href='mailto:cafeon90@gmail.com' style='color:#81C784; text-decoration:none;'>↗ Email</a>
+    </div>
+    <div style='padding-top: 12px; border-top: 1px solid #1f2733;
+                color:#5a6473; font-size:0.72rem; line-height: 1.6;'>
+        © 2026 Song BK · MIT License<br>
+        Data sources: EU Commission · ICAP · KOTRA · KCCI SGI · IEA · IEAGHG · NETL · World Steel Association
+    </div>
 </div>
 """,
     unsafe_allow_html=True,
