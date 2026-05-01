@@ -58,8 +58,42 @@ st.markdown(
     /* ─────────────────────────────────────────────────
        전역 — 차분한 다크모드 (Linear/Vercel 톤)
        ───────────────────────────────────────────────── */
-    .stApp { background-color: #0a0d14; }
+    .stApp,
+    [data-testid="stAppViewContainer"],
+    [data-testid="stMain"],
+    [data-testid="stMainBlockContainer"],
+    .main, .block-container,
+    body, html { background-color: #0a0d14 !important; }
     body, [class*="st"] { color: #E8EAED; }
+
+    /* Streamlit 상단 헤더 / 툴바 / 데코레이션 — 흰 띠 제거 */
+    header[data-testid="stHeader"],
+    [data-testid="stToolbar"],
+    [data-testid="stDecoration"],
+    [data-testid="stStatusWidget"],
+    .stApp > header {
+        background-color: #0a0d14 !important;
+        background: #0a0d14 !important;
+    }
+    /* 헤더 안의 모든 흰색 배경 요소 차단 */
+    header[data-testid="stHeader"] * {
+        background-color: transparent !important;
+    }
+    /* Streamlit 상단의 가는 흰색 띠 (deploy bar / running bar) */
+    [data-testid="stDecoration"] {
+        background-image: none !important;
+        height: 0 !important;
+    }
+    /* 햄버거 메뉴, share 버튼 등 아이콘 색상 */
+    header[data-testid="stHeader"] svg,
+    header[data-testid="stHeader"] button {
+        color: #6b7689 !important;
+        fill: #6b7689 !important;
+    }
+    /* 본문 영역 패딩 정돈 (헤더 가렸을 때 본문이 위로 밀리지 않게) */
+    .main .block-container {
+        padding-top: 2rem !important;
+    }
 
     /* 본문 헤더 */
     h1 {
@@ -321,11 +355,15 @@ st.markdown(
     }
 
     /* ─────────────────────────────────────────────────
-       Radio 버튼 — 동그라미 + 텍스트 모두 보이게 강제
+       Radio 버튼 — 선택 상태 명확히 보이게 강제
+       Streamlit BaseWeb 라디오 구조:
+         label > [data-baseweb="radio"]
+                   ├── input (visually hidden)
+                   └── div (외부 원)  ← 선택 시 background 바뀌어야 함
+                       └── div (내부 점)
        ───────────────────────────────────────────────── */
     .stRadio, div[data-testid="stRadio"] { background-color: transparent !important; }
 
-    /* 라벨 텍스트 */
     .stRadio label,
     .stRadio div[role="radiogroup"] label,
     div[data-testid="stRadio"] label,
@@ -335,35 +373,47 @@ st.markdown(
         font-size: 0.86rem !important;
     }
 
-    /* 라디오 동그라미 — 외부 원 (선택 안 된 상태) */
-    div[data-baseweb="radio"] > div:first-child,
-    .stRadio div[role="radiogroup"] label > div:first-child {
+    /* ⚪ 외부 원 (라디오 동그라미) — 선택 안 된 상태 (default) */
+    div[data-baseweb="radio"] div[aria-checked="false"],
+    div[data-baseweb="radio"] div[aria-checked="false"] > div,
+    .stRadio div[role="radiogroup"] label div:first-child {
         background-color: #0a0d14 !important;
-        border: 1.5px solid #4a5568 !important;
-        width: 16px !important;
-        height: 16px !important;
+        border: 2px solid #4a5568 !important;
+        width: 18px !important;
+        height: 18px !important;
         border-radius: 50% !important;
-        display: inline-block !important;
-        flex-shrink: 0 !important;
+        box-shadow: none !important;
+        position: relative;
     }
-    /* 라디오 동그라미 — 호버 */
-    div[data-baseweb="radio"]:hover > div:first-child {
+
+    /* 호버 */
+    div[data-baseweb="radio"]:hover div[aria-checked="false"] {
         border-color: #6b7689 !important;
     }
-    /* 라디오 동그라미 — 선택된 상태 */
-    div[data-baseweb="radio"][aria-checked="true"] > div:first-child,
-    div[data-baseweb="radio"] input:checked + div {
+
+    /* 🔵 선택된 상태 — 외부 원이 cyan으로 채워짐 + inset shadow로 가운데 점 효과 */
+    div[data-baseweb="radio"] div[aria-checked="true"],
+    div[data-baseweb="radio"][aria-checked="true"] > div:first-child {
         background-color: #4FC3F7 !important;
-        border-color: #4FC3F7 !important;
+        border: 2px solid #4FC3F7 !important;
+        width: 18px !important;
+        height: 18px !important;
+        border-radius: 50% !important;
+        /* inset box-shadow가 가운데 어두운 점을 만듦 — ::after 없이 안정적 */
+        box-shadow: inset 0 0 0 4px #0a0d14 !important;
+        position: relative;
     }
-    /* 선택 시 가운데 점 */
-    div[data-baseweb="radio"][aria-checked="true"] > div:first-child::after {
-        content: "";
-        display: block;
-        width: 6px; height: 6px;
-        border-radius: 50%;
-        background: #0a0d14;
-        margin: 4px auto;
+
+    /* 라디오 안의 nested div(내부 점)도 선택 시 cyan 보장 */
+    div[data-baseweb="radio"] div[aria-checked="true"] > div {
+        background-color: #4FC3F7 !important;
+    }
+
+    /* 선택된 라디오의 라벨 텍스트 강조 */
+    div[data-baseweb="radio"][aria-checked="true"] ~ div,
+    label:has(div[aria-checked="true"]) p {
+        color: #F5F7FA !important;
+        font-weight: 500 !important;
     }
 
     /* Checkbox */
@@ -1566,7 +1616,14 @@ with st.sidebar:
         currency_mode_key = "KRW"
     else:
         currency_mode_key = "Both"
-    st.caption(f"현재 모드: **{currency_mode_key}**")
+    # 시각적으로 선택 상태를 즉시 인지할 수 있도록 배지 형식
+    st.markdown(
+        f"<div style='font-size:0.78rem; color:#9aa5b8; margin-top:6px;'>"
+        f"현재 표시: <span style='background:#1a2330; color:#4FC3F7; "
+        f"padding:2px 8px; border-radius:4px; font-weight:500;'>"
+        f"{currency_mode_key}</span></div>",
+        unsafe_allow_html=True,
+    )
 
     st.markdown("---")
 
