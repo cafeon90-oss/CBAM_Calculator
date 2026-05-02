@@ -592,7 +592,8 @@ def region_icon(key: str) -> str:
 # ======================================================================
 # 자매 CCUS 도구 연계 (Phase 2 — 현재는 stub + placeholder)
 # ======================================================================
-CCUS_REPO_URL = "https://github.com/cafeon90-oss/CCUS_benchmark"
+CCUS_APP_URL = "https://ccusamineanalysis-9z3cxdmxmd3muuepqlhaqb.streamlit.app/"   # 사용자 노출용 (라이브 앱)
+CCUS_REPO_URL = "https://github.com/cafeon90-oss/CCUS_benchmark"                       # GitHub raw fetch 용 (Phase 2)
 CCUS_JSON_URL = "https://raw.githubusercontent.com/cafeon90-oss/CCUS_benchmark/main/data/ccus_metrics.json"
 
 # Phase 2에서 위 URL로 fetch — 현재는 placeholder mirror
@@ -1164,15 +1165,15 @@ PRESETS = {
             "company_name": "SK E&S + CCS (Blue)",
         },
     },
-    "eu_dri_h2": {
-        "label": "🌍 EU 베스트 (DRI-H₂ 철강, 참조용)",
-        "description": "H2 Green Steel형 (스웨덴) — 한국 vs 최첨단 비교",
+    "se_h2gs": {
+        "label": "🇸🇪 H2 Green Steel (DRI-H₂ 글로벌 베스트)",
+        "description": "스웨덴 H2GS — Green H₂ DRI-EAF · 한국 기업 비교 기준 (EU 수출 100% 가정 = CBAM 회피)",
         "sector_lit": "steel_DRI_EAF",
         "settings": {
             "annual_production_mt": 5.0,
-            "eu_export_share_pct": 0.0,
+            "eu_export_share_pct": 100.0,    # EU 내 생산자 — CBAM 0
             "user_SEE": 0.40,
-            "company_name": "H2 Green Steel (참조)",
+            "company_name": "H2 Green Steel (SE)",
         },
     },
     "custom": {
@@ -1596,45 +1597,77 @@ TOOLTIPS = {
 # ======================================================================
 # 핵심 계산 함수
 # ======================================================================
-def calc_unit_cbam(SEE: float, benchmark: float, eua_price_eur: float,
-                   year: int, mark_up_pct: float = 0.0) -> dict:
+
+def get_markup(sector_key: str, year: int) -> float:
+    """EU IR 2025/2621 sector × year mark-up.
+    철강·시멘트·알루미늄: 2026-2027 10% → 2028+ 30%
+    비료: 1% (계속)
+    수소·전력: 0% (default 값 신뢰도 높음)
     """
-    단위 제품당 CBAM 부담 계산.
-    Returns: {'gap', 'phase_in', 'effective_eua', 'unit_cost_eur', 'detail'}
+    if sector_key == "fertilizer":
+        return 1.0
+    if sector_key in ("hydrogen", "electricity"):
+        return 0.0
+    if sector_key in ("steel", "cement", "aluminum"):
+        return 10.0 if year < 2028 else 30.0
+    return 10.0   # 기본값
+
+
+def calc_unit_cbam(SEE: float, benchmark: float, eua_price_eur: float,
+                   year: int, mark_up_pct: float = 0.0,
+                   k_ets_credit_eur: float = 0.0) -> dict:
+    """
+    단위 제품당 CBAM 부담.
+    k_ets_credit_eur: 한국 K-ETS 등 수출국 carbon price 차감액 (€/t product).
+                     EU CBAM Reg 2023/956 Art.9에 따라 verified 지불액 차감 가능.
     """
     pi = phase_in(year)
-    gap = max(0.0, SEE - benchmark)        # benchmark 이하는 0
-    effective_SEE = gap * (1.0 + mark_up_pct / 100.0)   # default 사용 시 mark-up
-    unit_cost_eur = effective_SEE * pi * eua_price_eur
+    gap = max(0.0, SEE - benchmark)
+    effective_SEE = gap * (1.0 + mark_up_pct / 100.0)
+    gross_unit_cost_eur = effective_SEE * pi * eua_price_eur
+    # K-ETS 차감 (음수 방지)
+    net_unit_cost_eur = max(0.0, gross_unit_cost_eur - k_ets_credit_eur)
     return {
         "gap": gap,
         "phase_in": pi,
         "effective_SEE": effective_SEE,
-        "unit_cost_eur": unit_cost_eur,
+        "gross_unit_cost_eur": gross_unit_cost_eur,
+        "k_ets_credit_eur": k_ets_credit_eur,
+        "unit_cost_eur": net_unit_cost_eur,    # K-ETS 차감 후
         "below_benchmark": SEE <= benchmark,
     }
 
 
+def calc_kets_credit(SEE: float, kets_price_krw: float, fx_eur_krw: float,
+                     credit_share_pct: float = 100.0) -> float:
+    """K-ETS 차감액 (€/t product) = SEE × K-ETS 가격 × verified 비율
+    fx_eur_krw: KRW/EUR 환율
+    credit_share_pct: verified 100% / partial 50% / none 0%
+    """
+    kets_price_eur = kets_price_krw / fx_eur_krw   # KRW/tCO₂ → EUR/tCO₂
+    return SEE * kets_price_eur * (credit_share_pct / 100.0)
+
+
 def calc_total_cbam(annual_production_mt: float, eu_export_share_pct: float,
                     SEE: float, benchmark: float, eua_price_eur: float,
-                    year: int, mark_up_pct: float = 0.0) -> dict:
-    """
-    연간 CBAM 총 부담.
-    """
+                    year: int, mark_up_pct: float = 0.0,
+                    k_ets_credit_eur: float = 0.0) -> dict:
+    """연간 CBAM 총 부담."""
     eu_export_t = annual_production_mt * 1e6 * (eu_export_share_pct / 100.0)
-    unit = calc_unit_cbam(SEE, benchmark, eua_price_eur, year, mark_up_pct)
+    unit = calc_unit_cbam(SEE, benchmark, eua_price_eur, year, mark_up_pct, k_ets_credit_eur)
     annual_eur = unit["unit_cost_eur"] * eu_export_t
+    annual_gross_eur = unit["gross_unit_cost_eur"] * eu_export_t
+    annual_kets_credit_eur = unit["k_ets_credit_eur"] * eu_export_t
     return {
         **unit,
         "eu_export_t": eu_export_t,
-        "annual_cost_eur": annual_eur,
+        "annual_cost_eur": annual_eur,             # K-ETS 차감 후 net
+        "annual_gross_cost_eur": annual_gross_eur, # K-ETS 차감 전 gross
+        "annual_kets_credit_eur": annual_kets_credit_eur,
     }
 
 
 def required_SEE_reduction(SEE: float, benchmark: float) -> dict:
-    """
-    CBAM=0 만들기 위해 필요한 SEE 감축량.
-    """
     if SEE <= benchmark:
         return {"required": 0.0, "required_pct": 0.0, "already_zero": True}
     gap = SEE - benchmark
@@ -1647,13 +1680,12 @@ def required_SEE_reduction(SEE: float, benchmark: float) -> dict:
 
 def ccs_avoided_cbam(SEE: float, benchmark: float, capture_rate: float,
                      eua_price_eur: float, year: int,
-                     eu_export_t: float, mark_up_pct: float = 0.0) -> dict:
-    """
-    CCS 도입 시 CBAM 회피액.
-    """
+                     eu_export_t: float, mark_up_pct: float = 0.0,
+                     k_ets_credit_eur: float = 0.0) -> dict:
+    """CCS 도입 시 CBAM 회피액. K-ETS 차감 후 net 비교."""
     new_SEE = SEE * (1.0 - capture_rate)
-    base = calc_unit_cbam(SEE, benchmark, eua_price_eur, year, mark_up_pct)
-    new = calc_unit_cbam(new_SEE, benchmark, eua_price_eur, year, mark_up_pct)
+    base = calc_unit_cbam(SEE, benchmark, eua_price_eur, year, mark_up_pct, k_ets_credit_eur)
+    new = calc_unit_cbam(new_SEE, benchmark, eua_price_eur, year, mark_up_pct, k_ets_credit_eur)
     avoided_unit = base["unit_cost_eur"] - new["unit_cost_eur"]
     avoided_annual = avoided_unit * eu_export_t
     return {
@@ -1666,15 +1698,112 @@ def ccs_avoided_cbam(SEE: float, benchmark: float, capture_rate: float,
     }
 
 
+def ccs_npv_analysis(SEE: float, benchmark: float, capture_rate: float,
+                     eua_price_eur: float, eu_export_t: float,
+                     ccs_capex_usd_per_tpy: float, ccs_opex_usd_per_tco2: float,
+                     fx_eur_usd: float,
+                     start_year: int = 2026, ccs_online_year: int = 2030,
+                     ccs_lifetime_yr: int = 20, discount_rate: float = 0.08,
+                     ramping_curve: list = None,
+                     mark_up_pct: float = 10.0,
+                     k_ets_credit_eur: float = 0.0) -> dict:
+    """CCS 도입 NPV 분석 — 가동개시 연도 + ramping + 할인율 반영.
+
+    가정:
+      - CCS 가동 전(start_year~ccs_online_year-1): 회피액 0, CAPEX 분할 지출 없음
+        (단순화 — CAPEX는 ccs_online_year에 일시 집중)
+      - 가동 후: ramping_curve에 따라 점진 capture rate
+      - 수명 종료(ccs_online_year + ccs_lifetime_yr) 후 분석 종료
+    """
+    if ramping_curve is None:
+        # 기본 ramping: 1년차 70%, 2년차 85%, 3년차+ 100% capture (target 대비)
+        ramping_curve = [0.70, 0.85, 1.00]
+
+    # 포집 plant 규모 = 이론 최대 = SEE × 수출량 × capture_rate (target)
+    target_capture_t_yr = SEE * capture_rate * eu_export_t
+    capex_total_usd = ccs_capex_usd_per_tpy * target_capture_t_yr
+    capex_total_eur = capex_total_usd / fx_eur_usd
+
+    end_year = ccs_online_year + ccs_lifetime_yr
+    yearly = []
+    npv_avoided = 0.0
+    npv_cost = 0.0
+
+    for y in range(start_year, end_year + 1):
+        t = y - start_year
+        df = 1.0 / ((1.0 + discount_rate) ** t)
+
+        if y < ccs_online_year:
+            avoided = 0.0
+            cost = 0.0
+        elif y == ccs_online_year:
+            # CAPEX 일시 집중 (단순화)
+            ramp_idx = 0
+            ramp = ramping_curve[ramp_idx]
+            actual_capture_rate = capture_rate * ramp
+            avoided_dict = ccs_avoided_cbam(
+                SEE, benchmark, actual_capture_rate, eua_price_eur, y,
+                eu_export_t, mark_up_pct, k_ets_credit_eur,
+            )
+            avoided = avoided_dict["avoided_annual_eur"]
+            opex_usd = ccs_opex_usd_per_tco2 * avoided_dict["captured_co2_t"]
+            cost = capex_total_eur + opex_usd / fx_eur_usd
+        else:
+            # 가동 중
+            ramp_idx = min(y - ccs_online_year, len(ramping_curve) - 1)
+            ramp = ramping_curve[ramp_idx]
+            actual_capture_rate = capture_rate * ramp
+            avoided_dict = ccs_avoided_cbam(
+                SEE, benchmark, actual_capture_rate, eua_price_eur, y,
+                eu_export_t, mark_up_pct, k_ets_credit_eur,
+            )
+            avoided = avoided_dict["avoided_annual_eur"]
+            opex_usd = ccs_opex_usd_per_tco2 * avoided_dict["captured_co2_t"]
+            cost = opex_usd / fx_eur_usd
+
+        npv_avoided += avoided * df
+        npv_cost += cost * df
+        yearly.append({
+            "year": y,
+            "phase_in": phase_in(y),
+            "avoided_eur": avoided,
+            "cost_eur": cost,
+            "df": df,
+        })
+
+    npv_net = npv_avoided - npv_cost
+    bep_year = None
+    cum_avoided = 0.0
+    cum_cost = 0.0
+    for row in yearly:
+        cum_avoided += row["avoided_eur"]
+        cum_cost += row["cost_eur"]
+        if cum_avoided >= cum_cost and bep_year is None and row["year"] > ccs_online_year:
+            bep_year = row["year"]
+
+    return {
+        "yearly": yearly,
+        "capex_total_eur": capex_total_eur,
+        "npv_avoided_eur": npv_avoided,
+        "npv_cost_eur": npv_cost,
+        "npv_net_eur": npv_net,
+        "bep_year": bep_year,
+        "ccs_online_year": ccs_online_year,
+        "lifetime": ccs_lifetime_yr,
+        "discount_rate": discount_rate,
+    }
+
+
 # 감축 수단 라이브러리 (탭 ④ 시뮬레이터용)
 ABATEMENT_OPTIONS = [
     {
         "key": "ccs_90",
         "label": "🟦 CCS 90% (자매 CCUS 도구)",
-        "applies_to": ["steel_BF_BOF", "cement_clinker", "fertilizer_NH3", "hydrogen_gray", "electricity"],
+        "applies_to": ["steel_BF_BOF", "cement_clinker", "fertilizer_NH3",
+                        "hydrogen_gray", "electricity", "aluminum_primary"],
         "reduction_pct": 90.0,
         "trl": 9,
-        "note": "Post-combustion amine 표준. POSCO·시멘트·NH₃ 모두 적용 가능.",
+        "note": "Post-combustion amine 표준. 자매 CCUS 도구의 9개 기술 비교 가능.",
     },
     {
         "key": "ccs_95",
@@ -1684,13 +1813,30 @@ ABATEMENT_OPTIONS = [
         "trl": 7,
         "note": "Calcium Looping은 시멘트와 자연 통합 (CaO 공유). 자매 도구 참조.",
     },
+    # ─── DRI-H₂ 3분할 (수소 색깔별) ───
     {
-        "key": "dri_h2_50",
-        "label": "🟢 DRI-H₂ 전환 (-50%)",
+        "key": "dri_h2_gray",
+        "label": "🟧 DRI-H₂ Gray (-30%)",
         "applies_to": ["steel_BF_BOF"],
-        "reduction_pct": 50.0,
+        "reduction_pct": 30.0,
+        "trl": 9,
+        "note": "Gray H₂(SMR) 기반 DRI. SMR 자체 배출 때문에 감축 효과 제한적.",
+    },
+    {
+        "key": "dri_h2_blue",
+        "label": "🟦 DRI-H₂ Blue (-76%)",
+        "applies_to": ["steel_BF_BOF"],
+        "reduction_pct": 76.0,
         "trl": 7,
-        "note": "수소 환원철 (H2 Green Steel형). 그린수소 가용성 의존.",
+        "note": "Blue H₂(SMR + CCS 90%) 기반 DRI. 중간 단계 솔루션.",
+    },
+    {
+        "key": "dri_h2_green",
+        "label": "🟢 DRI-H₂ Green (-95%)",
+        "applies_to": ["steel_BF_BOF"],
+        "reduction_pct": 95.0,
+        "trl": 6,
+        "note": "Green H₂(전해, RE 기반) 기반 DRI. H2 Green Steel 모델. 그린수소 가용성·가격 의존.",
     },
     {
         "key": "eaf_full",
@@ -1703,26 +1849,31 @@ ABATEMENT_OPTIONS = [
     {
         "key": "re100",
         "label": "🟡 RE100 / Grid 청정화 (-15%)",
-        "applies_to": ["aluminum_primary", "electricity", "hydrogen_gray", "steel_scrap_EAF"],
+        "applies_to": ["aluminum_primary", "electricity", "hydrogen_gray",
+                        "steel_scrap_EAF", "steel_DRI_EAF"],
         "reduction_pct": 15.0,
         "trl": 9,
         "note": "전력 grid factor 감축. 알루미늄·전기로에 효과 큼. 한국 grid 의존.",
     },
+    # ─── Bio-CCS sector 확장 (시멘트·철강 추가) ───
     {
         "key": "beccs",
         "label": "🌱 Bio-CCS (-110%, 음의 배출)",
-        "applies_to": ["fertilizer_NH3", "electricity"],
+        "applies_to": ["fertilizer_NH3", "electricity",
+                        "cement_clinker", "steel_BF_BOF"],
         "reduction_pct": 110.0,
         "trl": 6,
-        "note": "바이오매스 + CCS. 음의 배출 가능. 바이오매스 공급 제약.",
+        "note": "Biomass + CCS. 음의 배출 가능. 시멘트(LafargeHolcim CHRYSALIS), "
+                "철강(Vale charcoal) 사례. 바이오매스 공급 제약.",
     },
     {
         "key": "energy_eff",
         "label": "🟧 에너지 효율 개선 (-10%)",
-        "applies_to": ["steel_BF_BOF", "cement_clinker", "fertilizer_NH3", "aluminum_primary"],
+        "applies_to": ["steel_BF_BOF", "cement_clinker", "fertilizer_NH3",
+                        "aluminum_primary", "hydrogen_gray"],
         "reduction_pct": 10.0,
         "trl": 9,
-        "note": "공정 최적화·열회수. 단기 적용 가능.",
+        "note": "공정 최적화·열회수. 단기 적용 가능. 가장 빠른 개선책.",
     },
 ]
 
@@ -1840,10 +1991,11 @@ with st.sidebar:
               "2024.7 이후 verified 데이터 의무, 미제출 시 default + mark-up. "
               "출처: EU Reg 2023/956 Annex IV, IR 2025/2621"),
     )
+    # Mark-up은 사이드바 하단의 analysis_year 결정 후 자동 적용 (get_markup)
     if see_mode == "EU Default 사용 (mark-up 적용)":
         user_SEE = sector["default_SEE"]
-        mark_up_pct = 10.0
-        st.caption(f"⚠️ Default {user_SEE:.3f} {sector['unit']} + 10% mark-up (2026 기준)")
+        mark_up_pct = 10.0   # 임시값 — analysis_year 입력 후 자동 갱신
+        st.caption(f"⚠️ Default {user_SEE:.3f} {sector['unit']} (mark-up은 분석연도 따라 자동)")
     elif see_mode == "한국 평균 사용":
         user_SEE = sector["kr_avg_SEE"]
         mark_up_pct = 0.0
@@ -1860,6 +2012,47 @@ with st.sidebar:
         mark_up_pct = 0.0
 
     st.caption(f"📌 EU benchmark: **{sector['eu_benchmark']:.3f}** {sector['unit']}")
+
+    # ─── Scope 2 (전력 간접배출) — 알루미늄·수소·전력 sector 한정 ───
+    SCOPE2_INTENSIVE = {
+        "aluminum_primary": {"kwh_per_unit": 14000, "label": "알루미늄 (~14,000 kWh/t)"},
+        "hydrogen_gray": {"kwh_per_unit": 50000,
+                            "label": "수소 SMR (전력+가스, ~50,000 kWh/t equivalent)"},
+        "electricity": {"kwh_per_unit": 0, "label": "전력 (자체)"},
+        "steel_scrap_EAF": {"kwh_per_unit": 600, "label": "Scrap-EAF (~600 kWh/t)"},
+        "steel_DRI_EAF": {"kwh_per_unit": 800, "label": "DRI-EAF (~800 kWh/t)"},
+    }
+    if sector_lit in SCOPE2_INTENSIVE:
+        with st.expander("⚡ Scope 2 (전력 간접배출) 상세 입력 — 선택"):
+            sc2_meta = SCOPE2_INTENSIVE[sector_lit]
+            st.caption(
+                f"이 sector는 전력 사용이 SEE에 큰 영향을 줍니다. "
+                f"표준 사용량: {sc2_meta['label']}. "
+                f"한국 grid 기본값 {KR_GRID_FACTOR} tCO₂/MWh."
+            )
+            override_grid = st.checkbox(
+                "전력 배출계수 직접 입력 (RE100·계약 청정전력 등)",
+                value=False, key="override_grid",
+            )
+            if override_grid and sector_lit != "electricity":
+                custom_grid = st.number_input(
+                    "전력 배출계수 (tCO₂/MWh)",
+                    min_value=0.0, max_value=1.5,
+                    value=KR_GRID_FACTOR, step=0.01, format="%.3f",
+                    help=("한국 평균 0.443. RE100 ~0.05. 100% 그린파워 0. "
+                          "중국 grid 0.85. 계약 청정전력 인증 시 차감 가능."),
+                )
+                # SEE 자동 재계산 (kwh × grid_factor / 1000)
+                see_grid_component = sc2_meta["kwh_per_unit"] * custom_grid / 1000.0
+                see_direct_estimate = max(0, user_SEE - sc2_meta["kwh_per_unit"]
+                                            * KR_GRID_FACTOR / 1000.0)
+                user_SEE_recalc = see_direct_estimate + see_grid_component
+                st.caption(
+                    f"🔄 SEE 재산정: direct ~{see_direct_estimate:.2f} + "
+                    f"electricity {see_grid_component:.2f} = "
+                    f"**{user_SEE_recalc:.3f}** {sector['unit']}"
+                )
+                user_SEE = user_SEE_recalc
 
     st.markdown("---")
 
@@ -1908,6 +2101,67 @@ with st.sidebar:
         help="CBAM phase-in factor 자동 적용. 2026: 2.5% → 2034: 100%",
     )
 
+    # ─── Mark-up 자동 결정 (sector × year) ─────────────────────
+    # EU IR 2025/2621: 철강·시멘트·알루미늄 2026-2027 10% → 2028+ 30%
+    auto_markup = get_markup(sector["sector_key"], analysis_year)
+    if see_mode == "EU Default 사용 (mark-up 적용)":
+        mark_up_pct = auto_markup
+        st.caption(f"📌 자동 mark-up: **{mark_up_pct:.0f}%** "
+                   f"({sector['sector_key']}, {analysis_year}년 기준 — IR 2025/2621)")
+
+    st.markdown("---")
+
+    # ─── K-ETS 차감 (한국 할당대상업체) ─────────────────────
+    st.markdown("### 🇰🇷 K-ETS 차감")
+    use_kets = st.checkbox(
+        "K-ETS 지불액 차감 (Reg 2023/956 Art.9)",
+        value=False,
+        help=("한국 K-ETS 할당대상업체는 K-ETS에서 이미 지불한 carbon price를 "
+              "EU CBAM에서 verified 차감 가능. Reg 2023/956 Art.9. "
+              "POSCO·현대제철 등 대형 배출원에 적용."),
+    )
+    if use_kets:
+        kets_price_krw = st.number_input(
+            "K-ETS 가격 (₩/tCO₂)",
+            min_value=1000, max_value=50000,
+            value=8000, step=500,
+            help="K-ETS 시장 가격. 2024-2025 평균 ~₩7,000~10,000.",
+        )
+        kets_credit_share = st.slider(
+            "Verified 차감 비율 (%)",
+            min_value=0, max_value=100, value=50, step=5,
+            help=("실제 차감 가능 비율. EU 협상·MRV 호환·검증 절차에 따라 변동. "
+                  "보수적: 50%, 낙관적: 80~100%, 비관적: 0~30%."),
+        )
+        k_ets_credit_eur = calc_kets_credit(
+            user_SEE, kets_price_krw,
+            fx_eur_krw, kets_credit_share,
+        )
+        st.caption(f"📌 차감액: **€{k_ets_credit_eur:.2f}/t product**")
+    else:
+        k_ets_credit_eur = 0.0
+        kets_price_krw = 8000
+        kets_credit_share = 0
+
+    st.markdown("---")
+
+    # ─── EU 수출 평균가 (인상률 KPI 계산용) ───────────────────
+    st.markdown("### 📈 EU 수출 평균가")
+    DEFAULT_REF_PRICES = {
+        "steel_BF_BOF": 700, "steel_DRI_EAF": 800, "steel_scrap_EAF": 650,
+        "cement_clinker": 100, "aluminum_primary": 2400,
+        "fertilizer_NH3": 500, "hydrogen_gray": 2500, "hydrogen_blue": 4000,
+        "electricity": 100,
+    }
+    ref_unit_price = st.number_input(
+        f"평균 수출가 (USD/{sector['product_unit']})",
+        min_value=10, max_value=10000,
+        value=DEFAULT_REF_PRICES.get(sector_lit, 700),
+        step=10,
+        help=("EU 수출가 인상률 KPI 산정용 분모. LME(알루미늄), "
+              "SBB(철강), CemNet(시멘트) 등 시장가 기준. 본인의 실제 수출가로 조정."),
+    )
+
     st.markdown("---")
 
     # 작성자 카드 (항상 사이드바 하단) — 차분 톤
@@ -1952,7 +2206,7 @@ st.markdown(
         <div style='font-size: 0.8rem; color: #A8AEB6; margin-top: 3px;'>
             한국 기업의 EU 탄소국경조정제도(CBAM) 부담 시뮬레이션 ·
             본격 시행 2026.1.1 → 2034 ·
-            자매 도구: <a href='{CCUS_REPO_URL}' style='color:#9b8de8; text-decoration:none;'>🌫️ CCUS 벤치마크 ↗</a>
+            자매 도구: <a href='{CCUS_APP_URL}' target='_blank' style='color:#9b8de8; text-decoration:none;'>🌫️ CCUS 벤치마크 ↗</a>
         </div>
     </div>
 </div>
@@ -1992,7 +2246,7 @@ if _news_items:
         )
 
 # ======================================================================
-# 메인 계산 (사이드바 입력 기반)
+# 메인 계산 (사이드바 입력 기반) — K-ETS 차감 포함
 # ======================================================================
 result = calc_total_cbam(
     annual_production_mt=annual_production_mt,
@@ -2002,6 +2256,7 @@ result = calc_total_cbam(
     eua_price_eur=eua_price,
     year=analysis_year,
     mark_up_pct=mark_up_pct,
+    k_ets_credit_eur=k_ets_credit_eur,
 )
 
 # 통화 변환 helper
@@ -2085,30 +2340,25 @@ with col2:
     )
 
 with col3:
-    # EU 수출가 인상률 추정 — 단위 가격 가정 시 비교
-    ref_unit_price = {
-        "steel_BF_BOF": 700, "steel_DRI_EAF": 800, "steel_scrap_EAF": 650,
-        "cement_clinker": 80, "aluminum_primary": 2400,
-        "fertilizer_NH3": 500, "hydrogen_gray": 2500, "hydrogen_blue": 4000,
-        "electricity": 100,
-    }.get(sector_lit, 700)
+    # EU 수출가 인상률 — 사이드바에서 받은 사용자 입력 ref_unit_price 사용
     cbam_unit_usd = result["unit_cost_eur"] / fx_eur_usd
-    price_uplift_pct = (cbam_unit_usd / ref_unit_price) * 100.0
+    price_uplift_pct = (cbam_unit_usd / max(ref_unit_price, 1)) * 100.0
     st.metric(
         "EU 수출가 인상률",
         f"{price_uplift_pct:+.2f}%",
         delta=f"≈ ${cbam_unit_usd:.1f}/t / ${ref_unit_price} base",
         delta_color="off",
-        help=f"가정: {sector['name']} 평균 EU 수출가 ${ref_unit_price}/t",
+        help=f"기준: 사이드바에서 입력한 EU 수출가 ${ref_unit_price}/{sector['product_unit']}",
     )
 
 with col4:
-    # CCS 90% 도입 시 회피액
+    # CCS 90% 도입 시 회피액 — K-ETS 차감 후 net 비교
     avoided = ccs_avoided_cbam(
         SEE=user_SEE, benchmark=sector["eu_benchmark"],
         capture_rate=0.90, eua_price_eur=eua_price,
         year=analysis_year, eu_export_t=result["eu_export_t"],
         mark_up_pct=mark_up_pct,
+        k_ets_credit_eur=k_ets_credit_eur,
     )
     avoided_usd = avoided["avoided_annual_eur"] / fx_eur_usd
     st.metric(
@@ -2443,6 +2693,7 @@ with tabs[3]:
             capture_rate=cap_rate, eua_price_eur=eua_price,
             year=analysis_year, eu_export_t=result["eu_export_t"],
             mark_up_pct=mark_up_pct,
+            k_ets_credit_eur=k_ets_credit_eur,
         )
         ccs_cost_usd = tdata["COCA_USD_per_tCO2"] * avoided["captured_co2_t"]
         avoided_usd = avoided["avoided_annual_eur"] / fx_eur_usd
@@ -2460,18 +2711,140 @@ with tabs[3]:
             "TRL": tdata["TRL"],
         })
     df_bep = pd.DataFrame(bep_rows)
-    # 순익 내림차순 정렬 후 정렬용 _net 컬럼 제거
     df_bep = df_bep.sort_values("_net", ascending=False).drop(columns=["_net"])
     st.dataframe(df_bep, hide_index=True, use_container_width=True)
 
     n_recommended = len(fit_techs)
     st.markdown(
         f"""
-> 💡 **해석**: 자매 CCUS 도구의 **6개 기술 모두** mirror하여 자동 계산. ⭐는 sector 적합 기술 ({n_recommended}개).
+> 💡 **해석**: 자매 CCUS 도구의 **{n_total_techs}개 기술 모두** mirror하여 자동 계산. ⭐는 sector 적합 기술 ({n_recommended}개).
 > 순익 내림차순 정렬 — 가장 위가 가장 경제적. 순익 양수 → CCS 도입이 CBAM 부담보다 저렴.
-> 자세한 기술 비교는 [자매 CCUS 벤치마크 도구]({CCUS_REPO_URL}) 참조.
-> 데이터 모드: `{ccus_mode}` (Phase 2에서 live fetch 활성화 예정)
+> 단, 위 분석은 **단년도 정태 분석** — 실제로는 가동개시 연도·ramping·할인율을 고려해야. 아래 4-D 참조.
+> 자세한 기술 비교는 [자매 CCUS 벤치마크 도구 ↗]({CCUS_APP_URL}) 에서 직접 시뮬레이션 가능.
 """
+    )
+
+    # 4-D: NPV 기반 동태 BEP 분석 (CCS ramping + 할인율)
+    st.markdown("##### 📅 4-D. NPV 기반 동태 BEP 분석 (CCS 가동개시·ramping·할인율 반영)")
+    st.caption(
+        "단년도 정태(static) 분석은 'CCS가 분석 연도에 즉시 100% 가동 중'을 가정합니다. "
+        "현실은 FID → 건설 → 가동까지 4~6년이 걸리고, 가동 후에도 ramping이 필요합니다. "
+        "여기서는 가동 개시 연도와 ramping 곡선을 반영한 NPV 분석을 제공합니다."
+    )
+
+    npv_c1, npv_c2, npv_c3 = st.columns(3)
+    with npv_c1:
+        ccs_online_year = st.number_input(
+            "CCS 가동 개시 연도",
+            min_value=2027, max_value=2034, value=2030, step=1,
+            key="ccs_online_year",
+            help="FID 후 EPC 4~6년. POSCO·Norcem 사례상 2030년이 현실적.",
+        )
+    with npv_c2:
+        discount_rate_pct = st.number_input(
+            "할인율 (%)",
+            min_value=3.0, max_value=15.0, value=8.0, step=0.5, format="%.1f",
+            key="discount_rate_pct",
+            help="WACC 기반. 한국 산업평균 7~9%, 보수적 평가는 10%+.",
+        )
+    with npv_c3:
+        ccs_lifetime = st.number_input(
+            "CCS 수명 (년)",
+            min_value=10, max_value=30, value=20, step=1,
+            key="ccs_lifetime",
+            help="회계 감가상각 기준. 일반 화학플랜트 25년, CCS retrofit 15~20년 일반.",
+        )
+
+    npv_tech = st.selectbox(
+        "NPV 분석할 기술 선택",
+        options=all_techs,
+        index=0,
+        format_func=lambda k: ccus_data["technologies"][k]["display_name"],
+        key="npv_tech_select",
+    )
+    npv_tdata = ccus_data["technologies"][npv_tech]
+    npv_result = ccs_npv_analysis(
+        SEE=user_SEE, benchmark=sector["eu_benchmark"],
+        capture_rate=npv_tdata["capture_rate"],
+        eua_price_eur=eua_price,
+        eu_export_t=result["eu_export_t"],
+        ccs_capex_usd_per_tpy=npv_tdata["CAPEX_USD_per_tpy"],
+        ccs_opex_usd_per_tco2=npv_tdata["OPEX_USD_per_tCO2"],
+        fx_eur_usd=fx_eur_usd,
+        start_year=2026,
+        ccs_online_year=int(ccs_online_year),
+        ccs_lifetime_yr=int(ccs_lifetime),
+        discount_rate=discount_rate_pct / 100.0,
+        mark_up_pct=mark_up_pct,
+        k_ets_credit_eur=k_ets_credit_eur,
+    )
+
+    # NPV KPI 4개
+    npv_k1, npv_k2, npv_k3, npv_k4 = st.columns(4)
+    with npv_k1:
+        st.metric("CCS CAPEX (총)",
+                  fmt_money(npv_result["capex_total_eur"] / fx_eur_usd, fx_usd_krw, currency_mode_key))
+    with npv_k2:
+        st.metric("NPV 회피액 (수명누적)",
+                  fmt_money(npv_result["npv_avoided_eur"] / fx_eur_usd, fx_usd_krw, currency_mode_key))
+    with npv_k3:
+        st.metric("NPV 비용 (CAPEX+OPEX)",
+                  fmt_money(npv_result["npv_cost_eur"] / fx_eur_usd, fx_usd_krw, currency_mode_key))
+    with npv_k4:
+        net_color = "normal" if npv_result["npv_net_eur"] > 0 else "inverse"
+        st.metric("NPV 순익", fmt_money(npv_result["npv_net_eur"] / fx_eur_usd, fx_usd_krw, currency_mode_key),
+                  delta=f"BEP {npv_result['bep_year'] or 'N/A'}",
+                  delta_color="off")
+
+    # 연도별 trajectory 차트
+    df_npv = pd.DataFrame(npv_result["yearly"])
+    df_npv["avoided_M_eur"] = df_npv["avoided_eur"] / 1e6
+    df_npv["cost_M_eur"] = df_npv["cost_eur"] / 1e6
+    df_npv["cum_avoided_M"] = df_npv["avoided_M_eur"].cumsum()
+    df_npv["cum_cost_M"] = df_npv["cost_M_eur"].cumsum()
+    df_npv["cum_net_M"] = df_npv["cum_avoided_M"] - df_npv["cum_cost_M"]
+
+    fig_npv = go.Figure()
+    fig_npv.add_trace(go.Scatter(x=df_npv["year"], y=df_npv["cum_avoided_M"],
+                                  mode="lines+markers", name="누적 CBAM 회피",
+                                  line=dict(color=C_GOOD, width=2.5)))
+    fig_npv.add_trace(go.Scatter(x=df_npv["year"], y=df_npv["cum_cost_M"],
+                                  mode="lines+markers", name="누적 CCS 비용",
+                                  line=dict(color=C_BAD, width=2.5)))
+    fig_npv.add_trace(go.Scatter(x=df_npv["year"], y=df_npv["cum_net_M"],
+                                  mode="lines+markers", name="누적 순익",
+                                  line=dict(color=C_PRIMARY, width=3, dash="solid")))
+    fig_npv.add_hline(y=0, line_dash="dash", line_color=C_TEXT4)
+    fig_npv.add_vline(x=int(ccs_online_year), line_dash="dot", line_color=C_HIGH,
+                      annotation_text=f"가동 {int(ccs_online_year)}", annotation_position="top right")
+    fig_npv.update_layout(
+        title=None, template="plotly_dark", height=380,
+        margin=dict(l=10, r=10, t=20, b=40),
+        xaxis_title="연도", yaxis_title="누적 €M (할인 미적용)",
+        legend=dict(orientation="h", yanchor="bottom", y=-0.25, xanchor="center", x=0.5),
+    )
+    lock_static(fig_npv)
+    st.plotly_chart(fig_npv, use_container_width=True, config=PLOTLY_CONFIG)
+
+    if npv_result["npv_net_eur"] > 0:
+        st.success(
+            f"✅ {npv_tdata['display_name']} 도입 권장 — "
+            f"NPV 순익 €{npv_result['npv_net_eur']/1e6:+,.1f}M, "
+            f"BEP {npv_result['bep_year'] or 'N/A'}년."
+        )
+    else:
+        st.warning(
+            f"⚠️ {npv_tdata['display_name']} 도입 시 NPV 적자 "
+            f"€{npv_result['npv_net_eur']/1e6:,.1f}M. "
+            f"다른 기술 선택 또는 EUA 가격·할인율 가정 점검 필요."
+        )
+
+    st.caption(
+        f"가정: 분석기간 2026 ~ {int(ccs_online_year) + int(ccs_lifetime)}년 · "
+        f"가동개시 일시 CAPEX (단순화) · ramping 1년차 70% / 2년차 85% / 3년차+ 100% · "
+        f"phase-in factor 연도별 자동 적용 · "
+        f"K-ETS 차감 {'적용' if use_kets else '미적용'} · "
+        f"할인율 {discount_rate_pct:.1f}%."
     )
 
 
@@ -2485,9 +2858,12 @@ with tabs[4]:
         f"""
 <div class='sister-card'>
 <h4 style='margin:0 0 8px 0;'>🌫️ 자매 도구: CCUS 기술 벤치마크</h4>
-한국·미국·EU의 5+1개 CCUS 흡수제·공정 기술의 COCA·SPECCA·CAPEX 비교 도구.<br>
+한국·미국·EU의 9개 CCUS 흡수제·공정 기술의 COCA·SPECCA·CAPEX 비교 도구.<br>
 이 CBAM 계산기와 데이터 연계되어 sector별 적합 기술 자동 추천 + BEP 분석 제공.<br><br>
-<strong>🔗 <a href='{CCUS_REPO_URL}' target='_blank'>{CCUS_REPO_URL}</a></strong><br><br>
+<strong>🚀 <a href='{CCUS_APP_URL}' target='_blank'>라이브 앱에서 직접 시뮬레이션 ↗</a></strong>
+&nbsp;·&nbsp;
+<a href='{CCUS_REPO_URL}' target='_blank' style='font-size:0.82rem;'>📦 GitHub repo ↗</a>
+<br><br>
 <small>📌 현재 Phase 1: Stub mode (placeholder 값 사용 중) ·
 Phase 2 예정: <code>data/ccus_metrics.json</code> live fetch</small>
 </div>
@@ -2897,7 +3273,7 @@ st.markdown(
     </div>
     <div style='font-size:0.84rem; color:#D4D8DD; margin: 8px 0 12px 0;'>
         자매 도구:
-        <a href='{CCUS_REPO_URL}' style='color:#9b8de8; text-decoration:none;'>🌫️ CCUS 벤치마크 ↗</a>
+        <a href='{CCUS_APP_URL}' target='_blank' style='color:#9b8de8; text-decoration:none;'>🌫️ CCUS 벤치마크 ↗</a>
     </div>
     <div style='display: flex; flex-wrap: wrap; gap: 14px; font-size:0.84rem; margin-bottom: 12px;'>
         <a href='https://github.com/cafeon90-oss' style='color:#81C784; text-decoration:none;'>↗ GitHub</a>

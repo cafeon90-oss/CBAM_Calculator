@@ -1,0 +1,163 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 720" role="img" aria-label="EU CBAM 작동 메커니즘 다이어그램">
+<title>EU CBAM 작동 메커니즘</title>
+<desc>한국 수출자 → EU 시장 → CBAM 부담 계산 → K-ETS 차감 → 최종 net 부담까지의 흐름</desc>
+
+<defs>
+<marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+<path d="M0,0 L10,5 L0,10 z" fill="#9aa5b8"/>
+</marker>
+<marker id="arrG" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+<path d="M0,0 L10,5 L0,10 z" fill="#81C784"/>
+</marker>
+<marker id="arrR" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+<path d="M0,0 L10,5 L0,10 z" fill="#E57373"/>
+</marker>
+</defs>
+
+<!-- background -->
+<rect width="1100" height="720" fill="#0a0d14"/>
+
+<!-- Title -->
+<text x="550" y="36" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="22" font-weight="600" fill="#F0F2F5">EU CBAM 작동 메커니즘 — 한국 수출자 관점</text>
+<text x="550" y="62" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="13" fill="#A8AEB6">제품 수출 → SEE 보고 → CBAM 인증서 → K-ETS 차감 → Net 부담</text>
+
+<!-- ─────────── 좌측: 한국 수출자 영역 ─────────── -->
+<rect x="40" y="100" width="280" height="540" rx="10" fill="#11161e" stroke="#FFB74D" stroke-width="1.5"/>
+<text x="180" y="130" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="15" font-weight="600" fill="#FFB74D">🇰🇷 한국 수출자</text>
+<text x="180" y="150" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="11" fill="#A8AEB6">(POSCO · 현대제철 · 노벨리스 등)</text>
+
+<!-- 생산 박스 -->
+<rect x="60" y="170" width="240" height="80" rx="6" fill="#161c26" stroke="#FFB74D" stroke-width="1"/>
+<text x="180" y="195" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="13" font-weight="500" fill="#F0F2F5">① 생산</text>
+<text x="180" y="215" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="11" fill="#D4D8DD">철강 · 시멘트 · 알루미늄 ·</text>
+<text x="180" y="231" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="11" fill="#D4D8DD">비료 · 수소 · 전력</text>
+
+<!-- SEE 측정 박스 -->
+<rect x="60" y="270" width="240" height="80" rx="6" fill="#161c26" stroke="#FFB74D" stroke-width="1"/>
+<text x="180" y="295" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="13" font-weight="500" fill="#F0F2F5">② SEE 측정 + 검증</text>
+<text x="180" y="315" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="11" fill="#D4D8DD">Scope 1 (직접 배출)</text>
+<text x="180" y="331" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="11" fill="#D4D8DD">+ Scope 2 (간접, 일부 sector)</text>
+
+<!-- K-ETS -->
+<rect x="60" y="430" width="240" height="100" rx="6" fill="#1a2832" stroke="#81C784" stroke-width="1.5"/>
+<text x="180" y="455" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="13" font-weight="500" fill="#A5D6A7">⑦ K-ETS 지불</text>
+<text x="180" y="475" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="11" fill="#D4D8DD">한국 배출권 거래제</text>
+<text x="180" y="491" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="11" fill="#D4D8DD">~₩8,000/tCO₂ (€5~7)</text>
+<text x="180" y="513" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="10" fill="#81C784">Reg 2023/956 Art.9 → 차감 가능</text>
+
+<!-- ─────────── 중앙: EU 영역 ─────────── -->
+<rect x="380" y="100" width="340" height="540" rx="10" fill="#11161e" stroke="#4FC3F7" stroke-width="1.5"/>
+<text x="550" y="130" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="15" font-weight="600" fill="#4FC3F7">🇪🇺 EU 시장 + CBAM Registry</text>
+<text x="550" y="150" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="11" fill="#A8AEB6">Importer (Authorized Declarant)</text>
+
+<!-- 수입 -->
+<rect x="400" y="170" width="300" height="70" rx="6" fill="#161c26" stroke="#4FC3F7" stroke-width="1"/>
+<text x="550" y="195" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="13" font-weight="500" fill="#F0F2F5">③ 수입</text>
+<text x="550" y="215" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="11" fill="#D4D8DD">EU importer (대기업·trader)</text>
+<text x="550" y="230" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="11" fill="#D4D8DD">→ Authorized Declarant 등록</text>
+
+<!-- 보고 -->
+<rect x="400" y="260" width="300" height="80" rx="6" fill="#161c26" stroke="#4FC3F7" stroke-width="1"/>
+<text x="550" y="285" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="13" font-weight="500" fill="#F0F2F5">④ Embedded emissions 보고</text>
+<text x="550" y="304" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="11" fill="#D4D8DD">분기 보고 (전이기간)</text>
+<text x="550" y="320" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="11" fill="#D4D8DD">+ 연간 declaration (9-30 마감)</text>
+
+<!-- CBAM 인증서 구매 -->
+<rect x="400" y="360" width="300" height="80" rx="6" fill="#1a2028" stroke="#E57373" stroke-width="1"/>
+<text x="550" y="385" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="13" font-weight="500" fill="#EF9A9A">⑤ CBAM 인증서 구매·제출</text>
+<text x="550" y="404" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="11" fill="#D4D8DD">2027.2.1 판매 개시 (Omnibus 연기)</text>
+<text x="550" y="420" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="11" fill="#D4D8DD">가격 = EUA 분기/주간 평균</text>
+
+<!-- 핵심 수식 박스 -->
+<rect x="400" y="465" width="300" height="155" rx="6" fill="#1a2028" stroke="#9b8de8" stroke-width="1.5"/>
+<text x="550" y="490" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="13" font-weight="500" fill="#9b8de8">📐 CBAM cost 수식</text>
+
+<text x="420" y="515" font-family="ui-monospace, monospace" font-size="11" fill="#D4D8DD">Gross = (SEE − Free benchmark)</text>
+<text x="450" y="530" font-family="ui-monospace, monospace" font-size="11" fill="#D4D8DD">× Phase-in × EUA</text>
+<text x="450" y="545" font-family="ui-monospace, monospace" font-size="11" fill="#D4D8DD">× (1 + mark-up)</text>
+
+<line x1="420" y1="556" x2="680" y2="556" stroke="#252b36" stroke-width="0.5"/>
+
+<text x="420" y="575" font-family="ui-monospace, monospace" font-size="11" fill="#A5D6A7">Net   = Gross − K-ETS credit</text>
+<text x="420" y="592" font-family="ui-monospace, monospace" font-size="11" fill="#A5D6A7">      ↑                ↑</text>
+<text x="420" y="608" font-family="ui-monospace, monospace" font-size="10" fill="#A8AEB6">      EU 부담     수출국 차감</text>
+
+<!-- ─────────── 우측: 결과 영역 ─────────── -->
+<rect x="780" y="100" width="280" height="540" rx="10" fill="#11161e" stroke="#9b8de8" stroke-width="1.5"/>
+<text x="920" y="130" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="15" font-weight="600" fill="#9b8de8">📊 본 도구의 분석</text>
+<text x="920" y="150" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="11" fill="#A8AEB6">9 sector × 9 한국 기업</text>
+
+<!-- KPI 1 -->
+<rect x="800" y="170" width="240" height="68" rx="6" fill="#161c26" stroke="#4FC3F7" stroke-width="0.5"/>
+<rect x="800" y="170" width="3" height="68" fill="#4FC3F7"/>
+<text x="815" y="190" font-family="-apple-system, sans-serif" font-size="10" fill="#6b7689" font-weight="500">연간 CBAM 부담</text>
+<text x="815" y="215" font-family="-apple-system, sans-serif" font-size="14" fill="#F0F2F5" font-weight="600">€X.XM / yr</text>
+<text x="815" y="230" font-family="-apple-system, sans-serif" font-size="10" fill="#A8AEB6">2026 → 2034 trajectory</text>
+
+<!-- KPI 2 -->
+<rect x="800" y="248" width="240" height="68" rx="6" fill="#161c26" stroke="#9575CD" stroke-width="0.5"/>
+<rect x="800" y="248" width="3" height="68" fill="#9575CD"/>
+<text x="815" y="268" font-family="-apple-system, sans-serif" font-size="10" fill="#6b7689" font-weight="500">단위 제품당 CBAM</text>
+<text x="815" y="293" font-family="-apple-system, sans-serif" font-size="14" fill="#F0F2F5" font-weight="600">€X.XX / t</text>
+<text x="815" y="308" font-family="-apple-system, sans-serif" font-size="10" fill="#A8AEB6">EU 수출가의 X% 추가</text>
+
+<!-- KPI 3 -->
+<rect x="800" y="326" width="240" height="68" rx="6" fill="#161c26" stroke="#FFB74D" stroke-width="0.5"/>
+<rect x="800" y="326" width="3" height="68" fill="#FFB74D"/>
+<text x="815" y="346" font-family="-apple-system, sans-serif" font-size="10" fill="#6b7689" font-weight="500">EU 수출가 인상률</text>
+<text x="815" y="371" font-family="-apple-system, sans-serif" font-size="14" fill="#F0F2F5" font-weight="600">+X.XX %</text>
+<text x="815" y="386" font-family="-apple-system, sans-serif" font-size="10" fill="#A8AEB6">5%↑ → 가격경쟁력 위협</text>
+
+<!-- KPI 4 -->
+<rect x="800" y="404" width="240" height="68" rx="6" fill="#1a2832" stroke="#81C784" stroke-width="0.5"/>
+<rect x="800" y="404" width="3" height="68" fill="#81C784"/>
+<text x="815" y="424" font-family="-apple-system, sans-serif" font-size="10" fill="#6b7689" font-weight="500">CCS 90% 회피 가능액</text>
+<text x="815" y="449" font-family="-apple-system, sans-serif" font-size="14" fill="#A5D6A7" font-weight="600">€X.XM / yr</text>
+<text x="815" y="464" font-family="-apple-system, sans-serif" font-size="10" fill="#A8AEB6">자매 CCUS 도구로 deep-dive</text>
+
+<!-- 의사결정 박스 -->
+<rect x="800" y="490" width="240" height="130" rx="6" fill="#1a2028" stroke="#9b8de8" stroke-width="1.5"/>
+<text x="920" y="515" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="12" font-weight="500" fill="#9b8de8">🎯 의사결정 워크플로우</text>
+<text x="815" y="540" font-family="-apple-system, sans-serif" font-size="10.5" fill="#D4D8DD">1. 부담 trajectory 파악</text>
+<text x="815" y="557" font-family="-apple-system, sans-serif" font-size="10.5" fill="#D4D8DD">2. CBAM=0 필요 감축율 계산</text>
+<text x="815" y="574" font-family="-apple-system, sans-serif" font-size="10.5" fill="#D4D8DD">3. 9개 CCUS 기술 NPV 비교</text>
+<text x="815" y="591" font-family="-apple-system, sans-serif" font-size="10.5" fill="#D4D8DD">4. CCS 가동개시·BEP 결정</text>
+<text x="815" y="608" font-family="-apple-system, sans-serif" font-size="10.5" fill="#D4D8DD">5. EU 정책 변동 모니터링</text>
+
+<!-- ─────────── 화살표들 ─────────── -->
+<!-- 한국 → EU (제품 수출) -->
+<line x1="305" y1="210" x2="395" y2="210" stroke="#FFB74D" stroke-width="1.5" marker-end="url(#arr)"/>
+<text x="350" y="200" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="10" fill="#FFB74D">제품 수출</text>
+
+<!-- 한국 → EU (verified data) -->
+<line x1="305" y1="305" x2="395" y2="305" stroke="#9aa5b8" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arr)"/>
+<text x="350" y="295" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="10" fill="#A8AEB6">verified data</text>
+
+<!-- 생산 ↓ SEE 측정 -->
+<line x1="180" y1="252" x2="180" y2="268" stroke="#9aa5b8" stroke-width="1" marker-end="url(#arr)"/>
+
+<!-- SEE → K-ETS -->
+<line x1="180" y1="352" x2="180" y2="428" stroke="#9aa5b8" stroke-width="1" marker-end="url(#arr)"/>
+
+<!-- K-ETS → 수식 (차감) -->
+<line x1="305" y1="475" x2="395" y2="555" stroke="#81C784" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arrG)"/>
+<text x="335" y="500" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="10" fill="#81C784">Art.9 차감</text>
+
+<!-- EU 수입 → 보고 -->
+<line x1="550" y1="242" x2="550" y2="258" stroke="#9aa5b8" stroke-width="1" marker-end="url(#arr)"/>
+
+<!-- 보고 → 인증서 -->
+<line x1="550" y1="342" x2="550" y2="358" stroke="#9aa5b8" stroke-width="1" marker-end="url(#arr)"/>
+
+<!-- 인증서 → 수식 -->
+<line x1="550" y1="442" x2="550" y2="463" stroke="#9aa5b8" stroke-width="1" marker-end="url(#arr)"/>
+
+<!-- EU 영역 → 우측 분석 (결과) -->
+<line x1="725" y1="540" x2="795" y2="300" stroke="#9b8de8" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arr)"/>
+<text x="755" y="425" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="10" fill="#9b8de8" transform="rotate(-72, 755, 425)">본 도구로</text>
+<text x="755" y="439" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="10" fill="#9b8de8" transform="rotate(-72, 755, 439)">시뮬레이션</text>
+
+<!-- 하단 캡션 -->
+<text x="550" y="700" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="11" fill="#7A8089">출처: EU Reg 2023/956 · IR 2025/2621 · Omnibus 2025-10-17 · ICAP CBAM Tracker</text>
+
+</svg>
