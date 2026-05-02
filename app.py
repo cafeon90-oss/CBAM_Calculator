@@ -136,12 +136,20 @@ st.markdown(
     div[data-baseweb="tab-list"] button {
         flex-shrink: 0 !important;
         white-space: nowrap;
-        font-size: 0.86rem !important;
+        font-size: 0.84rem !important;
         font-weight: 500 !important;
         color: #A8AEB6 !important;
-        padding: 10px 14px !important;
+        padding: 9px 11px !important;     /* 14px → 11px (10개 탭 가로 압축) */
         border-bottom: 2px solid transparent !important;
         transition: color 0.15s ease;
+        min-width: auto !important;
+    }
+    /* 모바일에서는 더 압축 */
+    @media (max-width: 768px) {
+        div[data-baseweb="tab-list"] button {
+            font-size: 0.78rem !important;
+            padding: 8px 9px !important;
+        }
     }
     div[data-baseweb="tab-list"] button[aria-selected="true"] {
         color: #4FC3F7 !important;
@@ -740,60 +748,73 @@ NEWS_IMPORTANCE_BADGE = {
 }
 
 
+def _hex_to_rgba(hex_color: str, alpha: float) -> str:
+    """#RRGGBB → rgba(r,g,b,a). Streamlit HTML sanitizer가 #RRGGBBAA 표기를
+    잘못 파싱하는 문제 회피."""
+    h = hex_color.lstrip("#")
+    if len(h) != 6:
+        return f"rgba(79,195,247,{alpha})"
+    r, g, b = int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
+    return f"rgba({r},{g},{b},{alpha})"
+
+
 def render_news_card(item: dict, compact: bool = False) -> str:
-    """뉴스 카드 HTML 렌더링. compact=True면 헤더 expander용 미니 버전.
-    Streamlit markdown 호환을 위해 HTML을 한 줄로 압축 (줄바꿈이 <br>로 변환되는 문제 방지)."""
+    """뉴스 카드 HTML 렌더링. Streamlit st.markdown 호환을 위해 단일 라인 HTML."""
     cat = item.get("category", "other")
     cat_meta = NEWS_CATEGORY_META.get(cat, NEWS_CATEGORY_META["other"])
     importance = item.get("importance", "medium")
     imp_meta = NEWS_IMPORTANCE_BADGE.get(importance, NEWS_IMPORTANCE_BADGE["medium"])
+    color = cat_meta["color"]
+    color_bg = _hex_to_rgba(color, 0.13)
     title = item.get("title_ko") or item.get("title_en", "(제목 없음)")
     summary = item.get("summary_ko") or item.get("title_en", "")
     date = item.get("date", "")
     url = item.get("url", "#")
     src = item.get("source", "")
+    cat_label = cat_meta["label"]
+    cat_emoji = cat_meta["emoji"]
 
-    # 한 줄로 압축한 HTML — Streamlit이 줄바꿈을 <br>로 변환하는 것 차단
     if compact:
-        html = (
-            f'<div style="border-left:2px solid {cat_meta["color"]};padding:10px 14px;'
-            f'margin:6px 0;background:#11161e;border-radius:0 6px 6px 0;">'
-            f'<div style="font-size:0.72rem;color:#A8AEB6;margin-bottom:4px;">'
-            f'{cat_meta["emoji"]} {date} · {cat_meta["label"]}</div>'
-            f'<div style="font-size:0.88rem;color:#F0F2F5;font-weight:500;margin-bottom:4px;line-height:1.4;">'
-            f'{title}</div>'
-            f'<a href="{url}" target="_blank" style="color:{cat_meta["color"]};'
-            f'text-decoration:none;font-size:0.76rem;">원문 보기 ↗</a>'
-            f'</div>'
+        return (
+            '<div style="border-left:2px solid ' + color + ';padding:10px 14px;'
+            'margin:6px 0;background:#11161e;border-radius:0 6px 6px 0;">'
+            '<div style="font-size:0.72rem;color:#A8AEB6;margin-bottom:4px;">'
+            + cat_emoji + ' ' + date + ' · ' + cat_label + '</div>'
+            '<div style="font-size:0.88rem;color:#F0F2F5;font-weight:500;'
+            'margin-bottom:6px;line-height:1.4;">' + title + '</div>'
+            '<a href="' + url + '" target="_blank" style="color:' + color + ';'
+            'text-decoration:none;font-size:0.76rem;">원문 보기 ↗</a>'
+            '</div>'
         )
-        return html
 
-    html = (
-        f'<div style="border-left:3px solid {cat_meta["color"]};padding:14px 18px;'
-        f'margin:10px 0;background:#11161e;border:1px solid #1f2733;border-left-width:3px;'
-        f'border-radius:0 8px 8px 0;">'
-        # 메타 행: 카테고리 배지 + 날짜 + 출처 + 중요도
-        f'<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap;">'
-        f'<span style="background:{cat_meta["color"]}22;color:{cat_meta["color"]};'
-        f'font-size:0.72rem;padding:2px 8px;border-radius:4px;font-weight:500;">'
-        f'{cat_meta["emoji"]} {cat_meta["label"]}</span>'
-        f'<span style="color:#A8AEB6;font-size:0.78rem;">{date}</span>'
-        f'<span style="color:#7A8089;font-size:0.74rem;">· {src}</span>'
-        f'<span style="margin-left:auto;background:{imp_meta["bg"]};color:{imp_meta["fg"]};'
-        f'font-size:0.7rem;padding:2px 8px;border-radius:4px;">{imp_meta["label"]}</span>'
-        f'</div>'
-        # 제목 (필수 표시)
-        f'<div style="font-size:0.96rem;color:#F0F2F5;font-weight:500;'
-        f'margin-bottom:8px;line-height:1.4;">{title}</div>'
+    return (
+        '<div style="border-left:3px solid ' + color + ';padding:14px 18px;'
+        'margin:10px 0;background:#11161e;border:1px solid #1f2733;'
+        'border-left-width:3px;border-radius:0 8px 8px 0;">'
+        # 메타 행
+        '<div style="display:flex;align-items:center;gap:10px;'
+        'margin-bottom:8px;flex-wrap:wrap;">'
+        '<span style="background:' + color_bg + ';color:' + color + ';'
+        'font-size:0.72rem;padding:2px 8px;border-radius:4px;font-weight:500;">'
+        + cat_emoji + ' ' + cat_label + '</span>'
+        '<span style="color:#A8AEB6;font-size:0.78rem;">' + date + '</span>'
+        '<span style="color:#7A8089;font-size:0.74rem;">· ' + src + '</span>'
+        '<span style="margin-left:auto;background:' + imp_meta['bg'] + ';'
+        'color:' + imp_meta['fg'] + ';font-size:0.7rem;padding:2px 8px;'
+        'border-radius:4px;">' + imp_meta['label'] + '</span>'
+        '</div>'
+        # 제목
+        '<div style="font-size:0.96rem;color:#F0F2F5;font-weight:500;'
+        'margin-bottom:8px;line-height:1.4;">' + title + '</div>'
         # 요약
-        f'<div style="color:#D4D8DD;font-size:0.86rem;line-height:1.65;margin-bottom:10px;">'
-        f'{summary}</div>'
+        '<div style="color:#D4D8DD;font-size:0.86rem;line-height:1.65;'
+        'margin-bottom:10px;">' + summary + '</div>'
         # 원문 링크
-        f'<a href="{url}" target="_blank" style="color:{cat_meta["color"]};'
-        f'text-decoration:none;font-size:0.82rem;font-weight:500;">원문 보기 ↗</a>'
-        f'</div>'
+        '<a href="' + url + '" target="_blank" style="color:' + color + ';'
+        'text-decoration:none;font-size:0.82rem;font-weight:500;">'
+        '원문 보기 ↗</a>'
+        '</div>'
     )
-    return html
 
 
 # ======================================================================
@@ -1966,36 +1987,6 @@ if _news_items:
             unsafe_allow_html=True,
         )
 
-# ─── 최신 EU CBAM 뉴스 미리보기 (헤더 expander) ───
-_news_items, _news_last_updated, _news_mode = load_cbam_news()
-if _news_items:
-    _high_items = [i for i in _news_items if i.get("importance") == "high"][:2]
-    _preview = _high_items if _high_items else _news_items[:2]
-    if _preview:
-        with st.expander(
-            f"📰 최신 EU CBAM 공지 ({len(_news_items)}건 · 마지막 갱신 {_news_last_updated}) — 클릭",
-            expanded=False,
-        ):
-            for item in _preview:
-                imp = item.get("importance", "medium")
-                badge_color = {"high": "#E57373", "medium": "#FFB74D", "low": "#A8AEB6"}.get(imp, "#A8AEB6")
-                badge_text = {"high": "⚠ HIGH", "medium": "● MED", "low": "○ LOW"}.get(imp, "● MED")
-                st.markdown(
-                    f"<div style='padding:8px 0; border-bottom:1px solid #1f2733;'>"
-                    f"<span style='color:{badge_color}; font-size:0.7rem; font-weight:500; "
-                    f"margin-right:8px;'>{badge_text}</span>"
-                    f"<span style='color:#A8AEB6; font-size:0.78rem;'>{item.get('date','')}"
-                    f" · {item.get('source','')}</span><br>"
-                    f"<span style='color:#F0F2F5; font-size:0.92rem; font-weight:500;'>"
-                    f"{item.get('title','')}</span><br>"
-                    f"<span style='color:#D4D8DD; font-size:0.84rem;'>{item.get('summary','')}</span><br>"
-                    f"<a href='{item.get('url','#')}' style='color:#4FC3F7; font-size:0.78rem;'>"
-                    f"원문 ↗</a>"
-                    f"</div>",
-                    unsafe_allow_html=True,
-                )
-            st.caption(f"전체 {len(_news_items)}건 보기 → 탭 ⑩ CBAM 뉴스")
-
 # ======================================================================
 # 메인 계산 (사이드바 입력 기반)
 # ======================================================================
@@ -2155,16 +2146,16 @@ with st.expander("📖 KPI 정의 보기 (클릭)", expanded=False):
 # ======================================================================
 tabs = st.tabs(
     [
-        "① 종합 영향",
-        "② Sector별 분석",
-        "③ 한국 기업 영향",
-        "④ 감축 시뮬레이터",
-        "⑤ CCUS 연계",
-        "⑥ 시간 흐름",
-        "⑦ Custom 입력",
+        "① 종합",
+        "② Sector",
+        "③ 기업",
+        "④ 감축",
+        "⑤ CCUS",
+        "⑥ 시간",
+        "⑦ Custom",
         "⑧ 방법론",
-        "⑨ 참고문헌",
-        "⑩ 📰 CBAM 뉴스",
+        "⑨ 출처",
+        "⑩ 뉴스",
     ]
 )
 
