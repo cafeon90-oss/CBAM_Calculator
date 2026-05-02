@@ -41,6 +41,8 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
+import streamlit.components.v1 as components
+import base64
 
 # ======================================================================
 # 페이지 설정 + 다크모드 CSS
@@ -3287,6 +3289,17 @@ with tabs[10]:
     usage_md, usage_mode = load_usage_md()
     usage_svg, svg_mode = load_usage_svg()
 
+    # 디버그: 파일 로딩 상태 명시
+    with st.expander("🔧 파일 로딩 상태 (디버그)", expanded=False):
+        st.write(f"**USAGE.md path**: `{USAGE_MD_LOCAL}`")
+        st.write(f"**USAGE.md exists**: {USAGE_MD_LOCAL.exists()}")
+        st.write(f"**USAGE.md mode**: `{usage_mode}`")
+        st.write(f"**SVG path**: `{USAGE_SVG_LOCAL}`")
+        st.write(f"**SVG exists**: {USAGE_SVG_LOCAL.exists()}")
+        st.write(f"**SVG mode**: `{svg_mode}`")
+        st.write(f"**SVG length**: {len(usage_svg) if usage_svg else 'None'} chars")
+        st.write(f"**Working dir**: `{Path(__file__).parent}`")
+
     if usage_mode == "fallback":
         st.warning(
             "⚠️ `USAGE.md` 파일을 찾을 수 없습니다. "
@@ -3302,18 +3315,41 @@ with tabs[10]:
             "<!-- SVG는 별도 렌더링 -->",
         )
 
-        # 다이어그램 표시 (SVG 직접 렌더)
+        # 다이어그램 표시 — st.markdown은 SVG sanitize 차단함
+        # 해결: components.html로 iframe 안에 SVG 임베드 (sanitizer 우회)
         if svg_mode == "auto" and usage_svg:
-            # SVG embed (Streamlit 컨테이너 폭 맞춤)
-            st.markdown(
-                "##### 📊 작동 메커니즘 다이어그램",
-            )
-            st.markdown(
-                f'<div style="background:#0a0d14; border:1px solid #1f2733; '
-                f'border-radius:8px; padding:8px; margin: 8px 0 18px 0; '
-                f'overflow-x:auto;">{usage_svg}</div>',
-                unsafe_allow_html=True,
-            )
+            st.markdown("##### 📊 작동 메커니즘 다이어그램")
+            # SVG 비율 유지 + 다크 배경 + 반응형
+            svg_html = f"""
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+  body {{ margin: 0; padding: 8px; background: #0a0d14; }}
+  .svg-wrapper {{
+    width: 100%;
+    background: #0a0d14;
+    border: 1px solid #1f2733;
+    border-radius: 8px;
+    padding: 8px;
+    overflow: auto;
+  }}
+  .svg-wrapper svg {{
+    width: 100%;
+    height: auto;
+    display: block;
+  }}
+</style>
+</head>
+<body>
+<div class="svg-wrapper">
+{usage_svg}
+</div>
+</body>
+</html>
+"""
+            # height는 SVG의 viewBox 기준 + padding (1100x720 비율 → 너비 100%일 때 ~520)
+            components.html(svg_html, height=540, scrolling=False)
 
         # 본문 매뉴얼
         st.markdown(usage_md_for_streamlit)
