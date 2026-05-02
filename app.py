@@ -741,50 +741,59 @@ NEWS_IMPORTANCE_BADGE = {
 
 
 def render_news_card(item: dict, compact: bool = False) -> str:
-    """뉴스 카드 HTML 렌더링. compact=True면 헤더 expander용 미니 버전."""
+    """뉴스 카드 HTML 렌더링. compact=True면 헤더 expander용 미니 버전.
+    Streamlit markdown 호환을 위해 HTML을 한 줄로 압축 (줄바꿈이 <br>로 변환되는 문제 방지)."""
     cat = item.get("category", "other")
     cat_meta = NEWS_CATEGORY_META.get(cat, NEWS_CATEGORY_META["other"])
     importance = item.get("importance", "medium")
     imp_meta = NEWS_IMPORTANCE_BADGE.get(importance, NEWS_IMPORTANCE_BADGE["medium"])
-    title = item.get("title_ko") or item.get("title_en", "")
-    summary = item.get("summary_ko", "")
+    title = item.get("title_ko") or item.get("title_en", "(제목 없음)")
+    summary = item.get("summary_ko") or item.get("title_en", "")
     date = item.get("date", "")
     url = item.get("url", "#")
     src = item.get("source", "")
 
+    # 한 줄로 압축한 HTML — Streamlit이 줄바꿈을 <br>로 변환하는 것 차단
     if compact:
-        return (
-            f"<div style='border-left: 2px solid {cat_meta['color']}; padding: 8px 12px; "
-            f"margin: 6px 0; background: #11161e; border-radius: 0 6px 6px 0;'>"
-            f"<div style='font-size: 0.72rem; color: #A8AEB6; margin-bottom: 2px;'>"
-            f"{cat_meta['emoji']} {date} · {cat_meta['label']}</div>"
-            f"<a href='{url}' target='_blank' style='color: #F0F2F5; text-decoration: none; "
-            f"font-size: 0.88rem; font-weight: 500;'>{title} ↗</a>"
-            f"</div>"
+        html = (
+            f'<div style="border-left:2px solid {cat_meta["color"]};padding:10px 14px;'
+            f'margin:6px 0;background:#11161e;border-radius:0 6px 6px 0;">'
+            f'<div style="font-size:0.72rem;color:#A8AEB6;margin-bottom:4px;">'
+            f'{cat_meta["emoji"]} {date} · {cat_meta["label"]}</div>'
+            f'<div style="font-size:0.88rem;color:#F0F2F5;font-weight:500;margin-bottom:4px;line-height:1.4;">'
+            f'{title}</div>'
+            f'<a href="{url}" target="_blank" style="color:{cat_meta["color"]};'
+            f'text-decoration:none;font-size:0.76rem;">원문 보기 ↗</a>'
+            f'</div>'
         )
+        return html
 
-    return (
-        f"<div style='border-left: 3px solid {cat_meta['color']}; padding: 14px 18px; "
-        f"margin: 10px 0; background: #11161e; border: 1px solid #1f2733; "
-        f"border-left-width: 3px; border-radius: 0 8px 8px 0;'>"
-        f"<div style='display: flex; align-items: center; gap: 10px; margin-bottom: 8px; flex-wrap: wrap;'>"
-        f"<span style='background: {cat_meta['color']}22; color: {cat_meta['color']}; "
-        f"font-size: 0.72rem; padding: 2px 8px; border-radius: 4px; font-weight: 500;'>"
-        f"{cat_meta['emoji']} {cat_meta['label']}</span>"
-        f"<span style='color: #A8AEB6; font-size: 0.78rem;'>{date}</span>"
-        f"<span style='color: #7A8089; font-size: 0.74rem;'>· {src}</span>"
-        f"<span style='margin-left: auto; background: {imp_meta['bg']}; color: {imp_meta['fg']}; "
-        f"font-size: 0.7rem; padding: 2px 8px; border-radius: 4px;'>{imp_meta['label']}</span>"
-        f"</div>"
-        f"<div style='font-size: 0.96rem; color: #F0F2F5; font-weight: 500; "
-        f"margin-bottom: 6px; line-height: 1.4;'>{title}</div>"
-        f"<div style='color: #D4D8DD; font-size: 0.86rem; line-height: 1.65; margin-bottom: 8px;'>"
-        f"{summary}</div>"
-        f"<a href='{url}' target='_blank' style='color: {cat_meta['color']}; "
-        f"text-decoration: none; font-size: 0.82rem; font-weight: 500;'>"
-        f"원문 보기 ↗</a>"
-        f"</div>"
+    html = (
+        f'<div style="border-left:3px solid {cat_meta["color"]};padding:14px 18px;'
+        f'margin:10px 0;background:#11161e;border:1px solid #1f2733;border-left-width:3px;'
+        f'border-radius:0 8px 8px 0;">'
+        # 메타 행: 카테고리 배지 + 날짜 + 출처 + 중요도
+        f'<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap;">'
+        f'<span style="background:{cat_meta["color"]}22;color:{cat_meta["color"]};'
+        f'font-size:0.72rem;padding:2px 8px;border-radius:4px;font-weight:500;">'
+        f'{cat_meta["emoji"]} {cat_meta["label"]}</span>'
+        f'<span style="color:#A8AEB6;font-size:0.78rem;">{date}</span>'
+        f'<span style="color:#7A8089;font-size:0.74rem;">· {src}</span>'
+        f'<span style="margin-left:auto;background:{imp_meta["bg"]};color:{imp_meta["fg"]};'
+        f'font-size:0.7rem;padding:2px 8px;border-radius:4px;">{imp_meta["label"]}</span>'
+        f'</div>'
+        # 제목 (필수 표시)
+        f'<div style="font-size:0.96rem;color:#F0F2F5;font-weight:500;'
+        f'margin-bottom:8px;line-height:1.4;">{title}</div>'
+        # 요약
+        f'<div style="color:#D4D8DD;font-size:0.86rem;line-height:1.65;margin-bottom:10px;">'
+        f'{summary}</div>'
+        # 원문 링크
+        f'<a href="{url}" target="_blank" style="color:{cat_meta["color"]};'
+        f'text-decoration:none;font-size:0.82rem;font-weight:500;">원문 보기 ↗</a>'
+        f'</div>'
     )
+    return html
 
 
 # ======================================================================
