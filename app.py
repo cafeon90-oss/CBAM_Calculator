@@ -136,19 +136,23 @@ st.markdown(
     div[data-baseweb="tab-list"] button {
         flex-shrink: 0 !important;
         white-space: nowrap;
-        font-size: 0.84rem !important;
+        font-size: 0.82rem !important;
         font-weight: 500 !important;
         color: #A8AEB6 !important;
-        padding: 9px 11px !important;     /* 14px → 11px (10개 탭 가로 압축) */
+        padding: 9px 8px !important;       /* 좌우 패딩 압축으로 10개 다 보이게 */
         border-bottom: 2px solid transparent !important;
         transition: color 0.15s ease;
         min-width: auto !important;
     }
-    /* 모바일에서는 더 압축 */
+    /* 데스크톱에서 탭 사이 간격 미세조정 */
+    div[data-baseweb="tab-list"] button + button {
+        margin-left: 4px !important;
+    }
+    /* 모바일에서는 더 압축 + 가로 스크롤 허용 */
     @media (max-width: 768px) {
         div[data-baseweb="tab-list"] button {
-            font-size: 0.78rem !important;
-            padding: 8px 9px !important;
+            font-size: 0.76rem !important;
+            padding: 8px 7px !important;
         }
     }
     div[data-baseweb="tab-list"] button[aria-selected="true"] {
@@ -2147,15 +2151,15 @@ with st.expander("📖 KPI 정의 보기 (클릭)", expanded=False):
 tabs = st.tabs(
     [
         "① 종합",
-        "② Sector",
-        "③ 기업",
-        "④ 감축",
+        "② Sector별 분석",
+        "③ 기업영향",
+        "④ 감축 시뮬레이션",
         "⑤ CCUS",
-        "⑥ 시간",
-        "⑦ Custom",
+        "⑥ 연도별 변화",
+        "⑦ Custom 입력",
         "⑧ 방법론",
         "⑨ 출처",
-        "⑩ 뉴스",
+        "⑩ CBAM 뉴스",
     ]
 )
 
