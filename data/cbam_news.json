@@ -1,0 +1,121 @@
+{
+  "schema_version": "1.0",
+  "last_updated": "2026-05-01",
+  "last_fetched": "2026-05-01T00:00:00Z",
+  "source": "manual_curation_seed",
+  "automation": "full",
+  "retention_months": 12,
+  "note": "EU CBAM 공식 위원회 + Eur-Lex의 주요 공지. 매월 1일 09:00 KST에 GitHub Actions가 자동 fetch (카테고리 자동 분류 + 한글 제목 자동 생성). 모든 항목 즉시 표시 (important=true).",
+  "sources": [
+    {
+      "name": "EU Taxation & Customs CBAM",
+      "url": "https://taxation-customs.ec.europa.eu/carbon-border-adjustment-mechanism_en"
+    },
+    {
+      "name": "EU Eur-Lex Official Journal",
+      "url": "https://eur-lex.europa.eu/"
+    },
+    {
+      "name": "ICAP CBAM Tracker",
+      "url": "https://icapcarbonaction.com/en/news"
+    }
+  ],
+  "items": [
+    {
+      "id": "2026-01-14-cbam-in-force",
+      "date": "2026-01-14",
+      "category": "milestone",
+      "importance": "high",
+      "important": true,
+      "title_ko": "CBAM 본격 시행 (2026.1.1)",
+      "title_en": "CBAM successfully entered into force on 1 January 2026",
+      "summary_ko": "EU CBAM이 definitive phase 진입. 6개 sector 수입자에 대한 인증서 의무 시작. 첫 정산은 2027년 9월 30일.",
+      "url": "https://taxation-customs.ec.europa.eu/news/cbam-successfully-entered-force-1-january-2026-2026-01-14_en",
+      "source": "EU Taxation & Customs"
+    },
+    {
+      "id": "2025-12-23-reminder-january",
+      "date": "2025-12-23",
+      "category": "notice",
+      "importance": "high",
+      "important": true,
+      "title_ko": "리마인더: 2026.1.1부터 CBAM 본격 시행",
+      "title_en": "Reminder: CBAM goes live on 1 January 2026",
+      "summary_ko": "EU 위원회 공식 사전 안내. authorized declarant 등록·default value 사용 조건·verifier 인증 절차 등 사전 점검 사항 정리.",
+      "url": "https://taxation-customs.ec.europa.eu/news/reminder-cbam-goes-live-1-january-2026-2025-12-23_en",
+      "source": "EU Taxation & Customs"
+    },
+    {
+      "id": "2025-12-17-implementing-acts-package",
+      "date": "2025-12-17",
+      "category": "regulation",
+      "importance": "high",
+      "important": true,
+      "title_ko": "EU Commission, CBAM 운영 패키지 채택 — 8개 시행령 + 1개 위임령",
+      "title_en": "Commission adopts CBAM operational package: 8 implementing acts + 1 delegated act",
+      "summary_ko": "Definitive phase 운영을 위한 종합 패키지. 인증서 가격(2026 분기평균 EUA, 2027+ 주간평균), verifier 인증, registry 운영 규정 포함. + downstream 철강·알루미늄 제품 확장 제안 (2028 목표).",
+      "url": "https://taxation-customs.ec.europa.eu/carbon-border-adjustment-mechanism/cbam-legislation-and-guidance_en",
+      "source": "EU Commission"
+    },
+    {
+      "id": "2025-11-default-values",
+      "date": "2025-11-15",
+      "category": "guidance",
+      "importance": "medium",
+      "important": true,
+      "title_ko": "CBAM 최종 benchmark·default value 확정 (IR 2025/2621)",
+      "title_en": "Final CBAM benchmarks and default values published (IR 2025/2621)",
+      "summary_ko": "철강 HRC: BF/BOF 1.370, DRI/EAF 0.481, scrap-EAF 0.072 tCO₂/t. 시멘트·알루미늄·비료·수소·전력 모두 확정. Mark-up: 2026-2027 10%, 2028+ 30% (철강·시멘트·알루미늄), 비료 1%.",
+      "url": "https://eurometal.net/eu-commission-finalizes-cbam-benchmarks-default-values-ahead-of-january-2026-launch/",
+      "source": "EUROMETAL"
+    },
+    {
+      "id": "2025-10-17-omnibus-oj",
+      "date": "2025-10-17",
+      "category": "regulation",
+      "importance": "high",
+      "important": true,
+      "title_ko": "CBAM Omnibus 단순화 규정 OJ 발행 — 시행 2025.10.20",
+      "title_en": "CBAM Omnibus Simplification Regulation published in Official Journal",
+      "summary_ko": "주요 변경: (1) 50톤 de minimis 면제 (H₂·전력 제외), (2) 인증서 판매 2027.2.1로 연기, (3) 연간 declaration 마감 5-31 → 9-30, (4) 분기 holding 80% → 50%, (5) authorized declarant grace period 2026.3.31까지.",
+      "url": "https://eur-lex.europa.eu/",
+      "source": "Eur-Lex / Official Journal"
+    },
+    {
+      "id": "2025-09-29-omnibus-adoption",
+      "date": "2025-09-29",
+      "category": "regulation",
+      "importance": "medium",
+      "important": true,
+      "title_ko": "이사회·의회 CBAM Omnibus 최종 채택",
+      "title_en": "Council and Parliament finally adopt CBAM Omnibus Regulation",
+      "summary_ko": "2025-02-26 제안 → 2025-06-18 정치적 합의 → 2025-09-29 최종 채택. 단순화 패키지 입법 절차 마무리.",
+      "url": "https://icapcarbonaction.com/en/news/eu-adopts-simplifications-cbam-rules-ahead-compliance-phase-starting-2026",
+      "source": "ICAP"
+    },
+    {
+      "id": "2025-06-18-political-agreement",
+      "date": "2025-06-18",
+      "category": "negotiation",
+      "importance": "medium",
+      "important": false,
+      "title_ko": "EU 의회·이사회, CBAM 단순화 정치적 합의 도달",
+      "title_en": "Political agreement reached on CBAM simplification",
+      "summary_ko": "2월 제안된 Omnibus 패키지에 대한 양 기관의 정치적 합의. 50t threshold·declaration 일정 등 핵심 조항 확정.",
+      "url": "https://taxation-customs.ec.europa.eu/carbon-border-adjustment-mechanism_en",
+      "source": "EU Council"
+    },
+    {
+      "id": "2025-02-26-omnibus-proposal",
+      "date": "2025-02-26",
+      "category": "proposal",
+      "importance": "medium",
+      "important": true,
+      "title_ko": "EU Commission, Omnibus 단순화 패키지 제안 — CBAM·CSRD·CSDDD·Taxonomy",
+      "title_en": "Commission presents Omnibus Simplification Package",
+      "summary_ko": "행정 부담 감축을 위한 4개 sustainability 규정 동시 단순화 제안. CBAM은 50t threshold·인증서 일정 변경 포함.",
+      "url": "https://www.mayerbrown.com/en/insights/publications/2025/02/european-commission-presents-omnibus-simplification-package-with-amendments-to-csrd-csddd-cbam-and-taxonomy",
+      "source": "Mayer Brown analysis"
+    }
+  ]
+}
