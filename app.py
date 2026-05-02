@@ -530,18 +530,25 @@ PLOTLY_CONFIG = {
 def lock_static(fig):
     """차트 정적 잠금 + 톤다운된 흰색 텍스트 강제 (다크모드 가독성).
     모든 fig 직전에 호출."""
+    # 기본 layout 갱신 — title은 강제로 건드리지 않음
+    # (title.text가 None인 fig에 title.font를 강제하면 빈 객체로 그려져 'undefined' 노출)
     fig.update_layout(
         dragmode=False,
         hovermode=False,
         clickmode="none",
-        # 텍스트 색상 — 톤다운된 흰색 통일
         font=dict(color=C_TEXT2, family="-apple-system, sans-serif", size=12),
-        title=dict(font=dict(color=C_TEXT, size=14)),
         legend=dict(font=dict(color=C_TEXT2, size=11)),
-        # 배경 — 카드와 자연스럽게 녹게
         paper_bgcolor=C_BG,
         plot_bgcolor=C_BG,
     )
+    # title은 이미 텍스트가 있는 경우만 폰트 색상 적용
+    existing_title = fig.layout.title
+    if existing_title is not None and existing_title.text:
+        fig.update_layout(title=dict(text=existing_title.text,
+                                     font=dict(color=C_TEXT, size=14)))
+    else:
+        # 명시적으로 title 비활성화 (Plotly 일부 버전에서 빈 title이 'undefined'로 렌더되는 케이스 차단)
+        fig.update_layout(title=dict(text=""))
     # 축 라벨/눈금/그리드
     axis_style = dict(
         color=C_TEXT2,
@@ -578,7 +585,7 @@ CCUS_JSON_URL = "https://raw.githubusercontent.com/cafeon90-oss/CCUS_benchmark/m
 
 # Phase 2에서 위 URL로 fetch — 현재는 placeholder mirror
 DEFAULT_CCUS_METRICS = {
-    "schema_version": "1.0-stub",
+    "schema_version": "1.1-stub-9tech",
     "last_updated": "2026-05-01",
     "currency": "USD",
     "year_basis": 2025,
@@ -668,10 +675,10 @@ DEFAULT_CCUS_METRICS = {
 }
 
 
-@st.cache_data(ttl=86400)
 def load_ccus_metrics():
-    """CCUS 도구 metrics fetch. Phase 2에서 활성화. 현재는 stub."""
-    # Phase 2:
+    """CCUS 도구 metrics fetch. Phase 2에서 live fetch 활성화.
+    현재는 stub mode이므로 캐싱 없이 매번 최신 dict 반환 (개발 중 갱신 즉시 반영)."""
+    # Phase 2 — 활성화 시 @st.cache_data(ttl=86400) 데코레이터 추가:
     # try:
     #     r = requests.get(CCUS_JSON_URL, timeout=5); r.raise_for_status()
     #     return r.json(), "live"
@@ -684,6 +691,7 @@ def load_ccus_metrics():
 # EUA 가격 자동 fetch (GitHub Actions로 주 1회 갱신되는 JSON 사용)
 # ======================================================================
 EUA_JSON_LOCAL = Path(__file__).parent / "data" / "eua_price.json"
+CBAM_NEWS_LOCAL = Path(__file__).parent / "data" / "cbam_news.json"
 
 @st.cache_data(ttl=86400)
 def load_eua_price():
@@ -695,6 +703,88 @@ def load_eua_price():
     except Exception:
         pass
     return 80.0, "fallback", "fallback"
+
+
+@st.cache_data(ttl=3600)   # 1시간 캐시 (월 1회 갱신이지만 새로고침 시 빠르게 보이게)
+def load_cbam_news():
+    """data/cbam_news.json에서 최신 EU CBAM 뉴스 로드. GitHub Actions 월 1회 갱신."""
+    try:
+        if CBAM_NEWS_LOCAL.exists():
+            data = json.loads(CBAM_NEWS_LOCAL.read_text(encoding="utf-8"))
+            items = sorted(
+                data.get("items", []),
+                key=lambda x: x.get("date", ""),
+                reverse=True,
+            )
+            return items, data.get("last_updated", "n/a"), "auto"
+    except Exception:
+        pass
+    return [], "fallback", "fallback"
+
+
+# 카테고리별 표시 색상 + 이모지
+NEWS_CATEGORY_META = {
+    "milestone":   {"emoji": "🚀", "label": "이정표",  "color": "#4FC3F7"},
+    "regulation":  {"emoji": "⚖️", "label": "규제",   "color": "#FFB74D"},
+    "guidance":    {"emoji": "📘", "label": "가이드", "color": "#9575CD"},
+    "notice":      {"emoji": "📢", "label": "공지",   "color": "#81C784"},
+    "proposal":    {"emoji": "💡", "label": "제안",   "color": "#80DEEA"},
+    "negotiation": {"emoji": "🗳️", "label": "협상",   "color": "#B0BEC5"},
+    "other":       {"emoji": "📰", "label": "기타",   "color": "#A8AEB6"},
+}
+
+NEWS_IMPORTANCE_BADGE = {
+    "high":   {"label": "⚠️ 중요",  "bg": "#3a1f1f", "fg": "#EF9A9A"},
+    "medium": {"label": "○ 보통",  "bg": "#1f2733", "fg": "#A8AEB6"},
+    "low":    {"label": "·",       "bg": "#1f2733", "fg": "#7A8089"},
+}
+
+
+def render_news_card(item: dict, compact: bool = False) -> str:
+    """뉴스 카드 HTML 렌더링. compact=True면 헤더 expander용 미니 버전."""
+    cat = item.get("category", "other")
+    cat_meta = NEWS_CATEGORY_META.get(cat, NEWS_CATEGORY_META["other"])
+    importance = item.get("importance", "medium")
+    imp_meta = NEWS_IMPORTANCE_BADGE.get(importance, NEWS_IMPORTANCE_BADGE["medium"])
+    title = item.get("title_ko") or item.get("title_en", "")
+    summary = item.get("summary_ko", "")
+    date = item.get("date", "")
+    url = item.get("url", "#")
+    src = item.get("source", "")
+
+    if compact:
+        return (
+            f"<div style='border-left: 2px solid {cat_meta['color']}; padding: 8px 12px; "
+            f"margin: 6px 0; background: #11161e; border-radius: 0 6px 6px 0;'>"
+            f"<div style='font-size: 0.72rem; color: #A8AEB6; margin-bottom: 2px;'>"
+            f"{cat_meta['emoji']} {date} · {cat_meta['label']}</div>"
+            f"<a href='{url}' target='_blank' style='color: #F0F2F5; text-decoration: none; "
+            f"font-size: 0.88rem; font-weight: 500;'>{title} ↗</a>"
+            f"</div>"
+        )
+
+    return (
+        f"<div style='border-left: 3px solid {cat_meta['color']}; padding: 14px 18px; "
+        f"margin: 10px 0; background: #11161e; border: 1px solid #1f2733; "
+        f"border-left-width: 3px; border-radius: 0 8px 8px 0;'>"
+        f"<div style='display: flex; align-items: center; gap: 10px; margin-bottom: 8px; flex-wrap: wrap;'>"
+        f"<span style='background: {cat_meta['color']}22; color: {cat_meta['color']}; "
+        f"font-size: 0.72rem; padding: 2px 8px; border-radius: 4px; font-weight: 500;'>"
+        f"{cat_meta['emoji']} {cat_meta['label']}</span>"
+        f"<span style='color: #A8AEB6; font-size: 0.78rem;'>{date}</span>"
+        f"<span style='color: #7A8089; font-size: 0.74rem;'>· {src}</span>"
+        f"<span style='margin-left: auto; background: {imp_meta['bg']}; color: {imp_meta['fg']}; "
+        f"font-size: 0.7rem; padding: 2px 8px; border-radius: 4px;'>{imp_meta['label']}</span>"
+        f"</div>"
+        f"<div style='font-size: 0.96rem; color: #F0F2F5; font-weight: 500; "
+        f"margin-bottom: 6px; line-height: 1.4;'>{title}</div>"
+        f"<div style='color: #D4D8DD; font-size: 0.86rem; line-height: 1.65; margin-bottom: 8px;'>"
+        f"{summary}</div>"
+        f"<a href='{url}' target='_blank' style='color: {cat_meta['color']}; "
+        f"text-decoration: none; font-size: 0.82rem; font-weight: 500;'>"
+        f"원문 보기 ↗</a>"
+        f"</div>"
+    )
 
 
 # ======================================================================
@@ -1848,6 +1938,55 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+# ────────────── 최신 CBAM 공지 미리보기 (헤더 expander) ──────────────
+_news_items, _news_updated, _news_mode = load_cbam_news()
+if _news_items:
+    _latest_3 = _news_items[:3]
+    _latest_label = (
+        f"📰 EU CBAM 최신 공지 — 전체 {len(_news_items)}건 · "
+        f"마지막 갱신 {_news_updated}"
+    )
+    with st.expander(_latest_label, expanded=False):
+        for it in _latest_3:
+            st.markdown(render_news_card(it, compact=True), unsafe_allow_html=True)
+        st.markdown(
+            "<div style='text-align: right; font-size: 0.78rem; "
+            "color: #A8AEB6; margin-top: 8px;'>"
+            "탭 <strong>⑩ 📰 CBAM 뉴스</strong>에서 전체 보기 →"
+            "</div>",
+            unsafe_allow_html=True,
+        )
+
+# ─── 최신 EU CBAM 뉴스 미리보기 (헤더 expander) ───
+_news_items, _news_last_updated, _news_mode = load_cbam_news()
+if _news_items:
+    _high_items = [i for i in _news_items if i.get("importance") == "high"][:2]
+    _preview = _high_items if _high_items else _news_items[:2]
+    if _preview:
+        with st.expander(
+            f"📰 최신 EU CBAM 공지 ({len(_news_items)}건 · 마지막 갱신 {_news_last_updated}) — 클릭",
+            expanded=False,
+        ):
+            for item in _preview:
+                imp = item.get("importance", "medium")
+                badge_color = {"high": "#E57373", "medium": "#FFB74D", "low": "#A8AEB6"}.get(imp, "#A8AEB6")
+                badge_text = {"high": "⚠ HIGH", "medium": "● MED", "low": "○ LOW"}.get(imp, "● MED")
+                st.markdown(
+                    f"<div style='padding:8px 0; border-bottom:1px solid #1f2733;'>"
+                    f"<span style='color:{badge_color}; font-size:0.7rem; font-weight:500; "
+                    f"margin-right:8px;'>{badge_text}</span>"
+                    f"<span style='color:#A8AEB6; font-size:0.78rem;'>{item.get('date','')}"
+                    f" · {item.get('source','')}</span><br>"
+                    f"<span style='color:#F0F2F5; font-size:0.92rem; font-weight:500;'>"
+                    f"{item.get('title','')}</span><br>"
+                    f"<span style='color:#D4D8DD; font-size:0.84rem;'>{item.get('summary','')}</span><br>"
+                    f"<a href='{item.get('url','#')}' style='color:#4FC3F7; font-size:0.78rem;'>"
+                    f"원문 ↗</a>"
+                    f"</div>",
+                    unsafe_allow_html=True,
+                )
+            st.caption(f"전체 {len(_news_items)}건 보기 → 탭 ⑩ CBAM 뉴스")
+
 # ======================================================================
 # 메인 계산 (사이드바 입력 기반)
 # ======================================================================
@@ -2016,6 +2155,7 @@ tabs = st.tabs(
         "⑦ Custom 입력",
         "⑧ 방법론",
         "⑨ 참고문헌",
+        "⑩ 📰 CBAM 뉴스",
     ]
 )
 
@@ -2074,9 +2214,14 @@ with tabs[0]:
     lock_static(fig1)
     st.plotly_chart(fig1, use_container_width=True, config=PLOTLY_CONFIG)
 
-    # ────────────── 표: 9개 sector 단위 CBAM cost (스크롤하지 않아도 보이게) ──────────────
-    st.markdown("---")
-    st.markdown(f"##### 💰 {analysis_year}년 단위 CBAM cost — 9개 sector 비교")
+    # ────────────── 표: 9개 sector 단위 CBAM cost ──────────────
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown(
+        f"<h5 style='color:#F0F2F5; margin: 12px 0 8px 0;'>"
+        f"📋 {analysis_year}년 단위 CBAM cost — 9개 sector 상세 비교"
+        f"</h5>",
+        unsafe_allow_html=True,
+    )
     df_show = df_overview[[
         "Sector", "SEE (kr)", "Benchmark", "Gap",
         "Unit cost (€/t)", "Unit cost (USD/t)"
@@ -2273,8 +2418,10 @@ with tabs[3]:
     df_abate = pd.DataFrame(rows)
     st.dataframe(df_abate, hide_index=True, use_container_width=True)
 
-    # 4-C: CCS BEP — 자매 CCUS 도구 6개 기술 모두 평가
-    st.markdown("##### 💰 4-C. CCS 도입 시 BEP 분석 — 전체 6개 기술 비교")
+    # 4-C: CCS BEP — 자매 CCUS 도구의 모든 기술 평가
+    ccus_data_check, _ = load_ccus_metrics()
+    n_total_techs = len(ccus_data_check.get("technologies", {}))
+    st.markdown(f"##### 💰 4-C. CCS 도입 시 BEP 분석 — 전체 {n_total_techs}개 기술 비교")
 
     ccus_data, ccus_mode = load_ccus_metrics()
     fit_techs = set(ccus_data["sector_fit"].get(sector["ccus_sector"], []))
@@ -2344,7 +2491,8 @@ Phase 2 예정: <code>data/ccus_metrics.json</code> live fetch</small>
         unsafe_allow_html=True,
     )
 
-    st.markdown(f"##### 🔌 자매 CCUS 도구의 6개 기술 — 전체 비교 (현재 sector: {sector['name']})")
+    n_total_techs_5 = len(ccus_data.get("technologies", {}))
+    st.markdown(f"##### 🔌 자매 CCUS 도구의 {n_total_techs_5}개 기술 — 전체 비교 (현재 sector: {sector['name']})")
 
     fit_techs = set(ccus_data["sector_fit"].get(sector["ccus_sector"], []))
     all_techs = list(ccus_data["technologies"].keys())
@@ -2637,6 +2785,94 @@ with tabs[8]:
             unsafe_allow_html=True,
         )
         st.markdown("---")
+
+
+# ────────────── 탭 ⑩ EU CBAM 뉴스 ──────────────
+with tabs[9]:
+    st.subheader("⑩ 📰 EU CBAM 최신 공지")
+
+    news_items, news_updated, news_mode = load_cbam_news()
+
+    if not news_items:
+        st.info("⚠️ 뉴스 데이터를 불러올 수 없습니다 (`data/cbam_news.json` 미존재). "
+                "GitHub Actions의 `cbam_news_fetch.yml` workflow가 매월 1일 자동 fetch합니다.")
+    else:
+        # 상태 안내 — 완전 자동화 모드 강조
+        n_total = len(news_items)
+        n_high = len([n for n in news_items if n.get("importance") == "high"])
+        st.markdown(
+            f"""
+<div style='display: flex; gap: 14px; align-items: center; margin-bottom: 14px;
+            padding: 10px 14px; background: #11161e; border: 1px solid #1f2733;
+            border-radius: 8px; font-size: 0.84rem; color: #D4D8DD; flex-wrap: wrap;'>
+    <span>📅 마지막 갱신: <strong style='color:#F0F2F5;'>{news_updated}</strong></span>
+    <span style='color: #7A8089;'>·</span>
+    <span>전체 <strong style='color:#F0F2F5;'>{n_total}</strong>건</span>
+    <span style='color: #7A8089;'>·</span>
+    <span>⚠️ 중요도 high <strong style='color:#EF9A9A;'>{n_high}</strong>건</span>
+    <span style='margin-left: auto; background: #1d2b22; color: #81C784;
+                  font-size: 0.7rem; padding: 2px 8px; border-radius: 4px; font-weight: 500;'>
+        🤖 완전 자동화
+    </span>
+</div>
+""",
+            unsafe_allow_html=True,
+        )
+
+        # 카테고리 필터만 (중요/전체 필터는 모두 important이므로 제거)
+        cats_in_data = sorted({n.get("category", "other") for n in news_items})
+        cat_options = [
+            f"{NEWS_CATEGORY_META.get(c, NEWS_CATEGORY_META['other'])['emoji']} "
+            f"{NEWS_CATEGORY_META.get(c, NEWS_CATEGORY_META['other'])['label']}"
+            for c in cats_in_data
+        ]
+        selected_cat_labels = st.multiselect(
+            "카테고리 필터 (전체 표시 중)",
+            options=cat_options,
+            default=cat_options,
+            key="news_cat_multi",
+        )
+        selected_cats = [
+            cats_in_data[i]
+            for i, lbl in enumerate(cat_options)
+            if lbl in selected_cat_labels
+        ]
+
+        filtered = [n for n in news_items if n.get("category", "other") in selected_cats]
+
+        if not filtered:
+            st.info("선택한 카테고리에 해당하는 공지가 없습니다.")
+        else:
+            st.markdown(f"#### 📋 {len(filtered)}건")
+            for it in filtered:
+                st.markdown(render_news_card(it, compact=False), unsafe_allow_html=True)
+
+        # 자동화 안내
+        st.markdown("---")
+        st.markdown(
+            """
+##### 🤖 완전 자동화 시스템
+
+이 탭은 **사용자 개입 없이 매월 자동 갱신**됩니다:
+
+| 단계 | 동작 |
+|---|---|
+| 1 | 매월 1일 09:00 KST, GitHub Actions cron 자동 실행 |
+| 2 | EU Taxation & Customs CBAM 페이지 스크래핑 |
+| 3 | 카테고리 자동 분류 (제목 키워드 휴리스틱) |
+| 4 | 한글 제목 자동 생성 (단어 치환 — 약 50개 매핑) |
+| 5 | 모든 항목 `important: True`로 추가 (필터링 없이 즉시 표시) |
+| 6 | 12개월 초과 항목 자동 제거 |
+| 7 | repo에 commit + push → Streamlit Cloud 자동 재배포 |
+
+**소스**: [EU Taxation & Customs CBAM](https://taxation-customs.ec.europa.eu/news_en?f%5B0%5D=topic%3A39)
+**한글 번역**: 영문 단어를 매핑된 한글로 부분 치환 (100% 자연스럽지 않을 수 있음).
+정확한 의미는 원문 링크 클릭하여 확인.
+
+📝 큐레이션 제안: [GitHub issue](https://github.com/cafeon90-oss/CBAM_calculator/issues)
+또는 [email](mailto:cafeon90@gmail.com).
+"""
+        )
 
 
 # ======================================================================

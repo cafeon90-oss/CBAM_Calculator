@@ -27,19 +27,20 @@ CBAM cost = (SEE − Free EU benchmark) × Phase-in factor × EUA × import volu
 - **EUA**: EU ETS 탄소배출권 가격 (€/tCO₂)
 - **Free benchmark**: EU 무상할당 벤치마크 (sector·공정별)
 
-### 9개 탭 구성
+### 10개 탭 구성
 
 | # | 탭 | 내용 |
 |---|---|---|
-| ① | 종합 영향 | 6개 sector × 한국 평균 SEE × EU benchmark 비교 |
+| ① | 종합 영향 | 9개 sector × 한국 평균 SEE × EU benchmark 비교 |
 | ② | Sector별 분석 | 선택 sector deep-dive (default vs 한국 vs benchmark) |
 | ③ | 한국 기업 영향 | 9개 프리셋 기업 비교 (POSCO, 현대제철 BF/EAF, 시멘트 등) |
-| ④ | 감축 시뮬레이터 | "CBAM=0 만들려면 얼마 감축?" 역산 + BEP 분석 |
-| ⑤ | CCUS 연계 | 자매 도구(CCUS Benchmark) 연결 — Phase 2 |
+| ④ | 감축 시뮬레이터 | "CBAM=0 만들려면 얼마 감축?" 역산 + 9개 CCUS BEP 분석 |
+| ⑤ | CCUS 연계 | 자매 도구(CCUS Benchmark) 9개 기술 비교 — Phase 2에서 live fetch |
 | ⑥ | 시간 흐름 | 2023~2034 phase-in 시각화 + 회사별 trajectory |
 | ⑦ | Custom 입력 | Multi-year 비교 + EUA 가격 민감도 |
 | ⑧ | 방법론 | 계산식, 가정, 한계 |
 | ⑨ | 참고문헌 | 30+ 출처 카탈로그 (regulation, report, paper, market) |
+| ⑩ | 📰 EU CBAM 뉴스 | EU 위원회 + Eur-Lex의 주요 공지 — **GitHub Actions가 매월 1일 자동 갱신** |
 
 ### 시나리오 프리셋 (9개 + Custom)
 
@@ -56,9 +57,10 @@ CBAM cost = (SEE − Free EU benchmark) × Phase-in factor × EUA × import volu
 
 ### 자동 데이터 갱신
 
-- **EUA 가격**: GitHub Actions가 매주 월요일 09:00 KST에 Sandbag/TradingEconomics에서 fetch → `data/eua_price.json` commit. Streamlit `@st.cache_data(ttl=86400)`.
+- **EUA 가격** *(주 1회)*: GitHub Actions가 매주 월요일 09:00 KST에 Sandbag/TradingEconomics에서 fetch → `data/eua_price.json` commit. Streamlit `@st.cache_data(ttl=86400)`.
+- **EU CBAM 뉴스** *(월 1회 · 완전 자동화)*: GitHub Actions가 매월 1일 09:00 KST에 EU Taxation & Customs CBAM 페이지 스크래핑 → 카테고리 자동 분류 + 한글 제목 자동 생성 → `data/cbam_news.json` commit. **사용자 개입 0**. 12개월 누적 자동 보존.
 - **POSCO SEE**: 정적값 + 출처 link + 사용자 슬라이더 override (POSCO ESG 보고서는 연 1회 갱신).
-- **CCUS COCA**: Phase 2에서 자매 도구 `data/ccus_metrics.json` 연결 예정 (현재는 stub mirror).
+- **CCUS COCA**: Phase 2에서 자매 도구 `data/ccus_metrics.json` 연결 예정 (현재는 9개 기술 stub mirror).
 
 ### 설치 및 실행
 
@@ -90,10 +92,12 @@ CBAM_calculator/
 ├── .streamlit/
 │   └── config.toml                 # 다크모드 + 서버 설정
 ├── data/
-│   └── eua_price.json              # EUA 가격 (GitHub Actions 자동 갱신)
+│   ├── eua_price.json              # EUA 가격 (주 1회 자동 갱신)
+│   └── cbam_news.json              # EU CBAM 주요 공지 (월 1회 자동 갱신)
 └── .github/
     └── workflows/
-        └── eua_fetch.yml           # 주 1회 EUA 가격 fetch cron
+        ├── eua_fetch.yml           # 주 1회 EUA 가격 fetch cron
+        └── cbam_news_fetch.yml     # 월 1회 EU CBAM 뉴스 fetch cron
 ```
 
 ### 자매 도구
