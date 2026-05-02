@@ -1,0 +1,276 @@
+name: Fetch CBAM News (Monthly)
+
+# 매월 1일 09:00 KST (= 매월 1일 00:00 UTC)에 실행 — 완전 자동화 (큐레이션 불필요)
+on:
+  schedule:
+    - cron: '0 0 1 * *'
+  workflow_dispatch:    # 수동 트리거 가능
+
+jobs:
+  fetch-cbam-news:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write    # repo에 commit 권한 필요
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Fetch CBAM news (full automation)
+        run: |
+          python <<'EOF'
+          """
+          EU Taxation & Customs CBAM 공식 뉴스 페이지를 스크래핑하여
+          data/cbam_news.json의 items 배열에 신규 항목 자동 추가.
+
+          완전 자동화:
+            - 자동 fetch 항목은 important=True (월말 검토 불필요)
+            - 카테고리 키워드 휴리스틱으로 자동 분류
+            - 한글 제목 자동 생성 (간단한 키워드 치환 — 보완 가능)
+            - 12개월 보존
+            - id 중복 시 skip (수동 큐레이션된 항목 보존)
+          """
+          import json, os, re, datetime, urllib.request
+          from html.parser import HTMLParser
+
+          BASE_URL = "https://taxation-customs.ec.europa.eu"
+          NEWS_URL = f"{BASE_URL}/news_en?f%5B0%5D=topic%3A39"
+          UA = "Mozilla/5.0 CBAM-Calculator-Bot (https://github.com/cafeon90-oss/CBAM_calculator)"
+          JSON_PATH = "data/cbam_news.json"
+
+          today = datetime.date.today()
+          retention_cutoff = today - datetime.timedelta(days=365)
+
+          # ─────────────────────────────────────────────
+          # 카테고리 자동 추론 (제목 키워드 기반)
+          # ─────────────────────────────────────────────
+          def classify_category(title_en: str) -> str:
+              t = title_en.lower()
+              # 우선순위 순
+              if any(k in t for k in ["entered into force", "goes live", "in force",
+                                        "first compliance", "milestone"]):
+                  return "milestone"
+              if any(k in t for k in ["regulation", "implementing act", "delegated act",
+                                        "official journal", "adopted", "published"]):
+                  return "regulation"
+              if any(k in t for k in ["proposal", "proposes", "draft"]):
+                  return "proposal"
+              if any(k in t for k in ["agreement", "negotiation", "trilogue", "council"]):
+                  return "negotiation"
+              if any(k in t for k in ["guidance", "default value", "benchmark", "faq",
+                                        "guideline", "manual"]):
+                  return "guidance"
+              if any(k in t for k in ["reminder", "notice", "alert", "deadline"]):
+                  return "notice"
+              return "other"
+
+          # ─────────────────────────────────────────────
+          # 한글 제목 자동 생성 (키워드 치환)
+          # 완벽하지 않아도 사용자가 가독성 ↑로 즉시 인지 가능
+          # ─────────────────────────────────────────────
+          KO_TRANSLATIONS = [
+              ("CBAM", "CBAM"),
+              ("Carbon Border Adjustment Mechanism", "탄소국경조정제도(CBAM)"),
+              ("Commission", "EU Commission"),
+              ("Council", "EU 이사회"),
+              ("Parliament", "EU 의회"),
+              ("Regulation", "규정"),
+              ("Implementing Regulation", "시행령"),
+              ("Delegated Act", "위임령"),
+              ("Implementing Act", "시행법"),
+              ("Official Journal", "관보(OJ)"),
+              ("entered into force", "시행 발효"),
+              ("enters into force", "시행 발효"),
+              ("goes live", "본격 시행"),
+              ("publishes", "발행"),
+              ("published", "발행"),
+              ("adopts", "채택"),
+              ("adopted", "채택"),
+              ("proposes", "제안"),
+              ("proposal", "제안"),
+              ("simplification", "단순화"),
+              ("amendment", "개정"),
+              ("guidance", "가이드"),
+              ("default values", "기본값"),
+              ("benchmark", "벤치마크"),
+              ("transitional period", "전이기간"),
+              ("definitive phase", "본격 시행 단계"),
+              ("compliance", "준수"),
+              ("registry", "등록부"),
+              ("certificate", "인증서"),
+              ("verifier", "검증인"),
+              ("downstream", "후행 제품"),
+              ("steel", "철강"),
+              ("aluminium", "알루미늄"),
+              ("aluminum", "알루미늄"),
+              ("cement", "시멘트"),
+              ("hydrogen", "수소"),
+              ("electricity", "전력"),
+              ("fertiliser", "비료"),
+              ("fertilizer", "비료"),
+              ("Reminder", "리마인더"),
+              ("Update", "업데이트"),
+              ("Notice", "공지"),
+          ]
+
+          def generate_ko_title(title_en: str) -> str:
+              """영문 제목을 한글로 부분 치환. 100% 자연스럽지는 않으나 가독성 보강."""
+              ko = title_en
+              for en, kr in KO_TRANSLATIONS:
+                  # 단어 경계 매칭 (대소문자 무시)
+                  ko = re.sub(r"\b" + re.escape(en) + r"\b", kr, ko, flags=re.IGNORECASE)
+              return ko
+
+          # ─────────────────────────────────────────────
+          # 기존 JSON 로드
+          # ─────────────────────────────────────────────
+          try:
+              with open(JSON_PATH, "r", encoding="utf-8") as f:
+                  data = json.load(f)
+          except Exception:
+              data = {
+                  "schema_version": "1.0",
+                  "items": [],
+                  "sources": [],
+                  "retention_months": 12,
+              }
+
+          existing_ids = {it.get("id") for it in data.get("items", [])}
+          new_items = []
+          fetch_log = []
+
+          # ─────────────────────────────────────────────
+          # 스크래핑
+          # ─────────────────────────────────────────────
+          class NewsParser(HTMLParser):
+              def __init__(self):
+                  super().__init__()
+                  self.items = []
+                  self.in_link = False
+                  self.current = {}
+                  self.text_buf = []
+
+              def handle_starttag(self, tag, attrs):
+                  if tag == "a":
+                      href = dict(attrs).get("href", "")
+                      if "/news/" in href and "cbam" in href.lower():
+                          self.in_link = True
+                          self.current = {"url": href if href.startswith("http") else BASE_URL + href}
+                          self.text_buf = []
+
+              def handle_endtag(self, tag):
+                  if tag == "a" and self.in_link:
+                      title = " ".join("".join(self.text_buf).split())
+                      if title and len(title) > 10:
+                          self.current["title_en"] = title
+                          m = re.search(r"(\d{4}-\d{2}-\d{2})", self.current["url"])
+                          if m:
+                              self.current["date"] = m.group(1)
+                              self.current["id"] = (
+                                  self.current["url"].rstrip("/").split("/")[-1].replace("_en", "")
+                              )
+                              self.items.append(self.current)
+                      self.in_link = False
+                      self.current = {}
+                      self.text_buf = []
+
+              def handle_data(self, d):
+                  if self.in_link:
+                      self.text_buf.append(d)
+
+          try:
+              req = urllib.request.Request(NEWS_URL, headers={"User-Agent": UA})
+              html = urllib.request.urlopen(req, timeout=15).read().decode("utf-8", errors="ignore")
+              parser = NewsParser()
+              parser.feed(html)
+              fetched = parser.items
+              fetch_log.append(("eu_taxation_customs", len(fetched)))
+
+              for item in fetched:
+                  iid = item.get("id")
+                  if not iid or iid in existing_ids:
+                      continue
+                  try:
+                      d = datetime.date.fromisoformat(item.get("date", ""))
+                      if d < retention_cutoff:
+                          continue
+                  except Exception:
+                      continue
+
+                  title_en = item["title_en"]
+                  category = classify_category(title_en)
+                  title_ko = generate_ko_title(title_en)
+                  # 카테고리에 따른 중요도 자동 산정
+                  if category in ("milestone", "regulation"):
+                      importance = "high"
+                  elif category in ("guidance", "proposal"):
+                      importance = "medium"
+                  else:
+                      importance = "medium"
+
+                  new_items.append({
+                      "id": iid,
+                      "date": item["date"],
+                      "category": category,
+                      "importance": importance,
+                      "important": True,    # 완전 자동화 — 모두 표시
+                      "title_ko": title_ko,
+                      "title_en": title_en,
+                      "summary_ko": f"({title_en[:80]}{'...' if len(title_en) > 80 else ''}) — EU 공식 발표. 원문 클릭하여 상세 확인.",
+                      "url": item["url"],
+                      "source": "EU Taxation & Customs",
+                      "auto_fetched": True,    # 자동 수집 표식
+                  })
+                  existing_ids.add(iid)
+          except Exception as e:
+              fetch_log.append(("eu_taxation_customs", f"err:{e}"))
+
+          # ─────────────────────────────────────────────
+          # 머지 + 보존 + 정렬
+          # ─────────────────────────────────────────────
+          all_items = data.get("items", []) + new_items
+
+          def in_retention(it):
+              try:
+                  d = datetime.date.fromisoformat(it.get("date", ""))
+                  return d >= retention_cutoff
+              except Exception:
+                  return False
+
+          all_items = [it for it in all_items if in_retention(it)]
+          all_items.sort(key=lambda x: x.get("date", ""), reverse=True)
+
+          data["items"] = all_items
+          data["last_fetched"] = datetime.datetime.utcnow().isoformat() + "Z"
+          data["last_updated"] = today.isoformat()
+          data["fetch_log"] = fetch_log
+          data["automation"] = "full"   # 완전 자동화 표시
+
+          os.makedirs("data", exist_ok=True)
+          with open(JSON_PATH, "w", encoding="utf-8") as f:
+              json.dump(data, f, ensure_ascii=False, indent=2)
+
+          print(f"✅ CBAM news: {len(all_items)} items total, {len(new_items)} new")
+          print(f"   Categories: " + str({
+              c: sum(1 for it in all_items if it.get('category') == c)
+              for c in set(it.get('category', 'other') for it in all_items)
+          }))
+          print(f"   Fetch log: {fetch_log}")
+          EOF
+
+      - name: Commit & Push
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/cbam_news.json
+          if git diff --staged --quiet; then
+            echo "No changes — skipping commit."
+          else
+            git commit -m "chore(news): monthly CBAM news auto-update [skip ci]"
+            git push
+          fi
