@@ -3319,25 +3319,30 @@ with tabs[10]:
         # 해결: components.html로 iframe 안에 SVG 임베드 (sanitizer 우회)
         if svg_mode == "auto" and usage_svg:
             st.markdown("##### 📊 작동 메커니즘 다이어그램")
-            # SVG 비율 유지 + 다크 배경 + 반응형
+            # SVG viewBox: 1100x720 (비율 1.528:1). 컨테이너 폭 ~700~900px일 때
+            # 자동 리사이즈하여 비율 유지. iframe height는 안전하게 800px + 스크롤.
             svg_html = f"""
 <!DOCTYPE html>
 <html>
 <head>
 <style>
-  body {{ margin: 0; padding: 8px; background: #0a0d14; }}
+  html, body {{
+    margin: 0; padding: 0; background: #0a0d14;
+    width: 100%; overflow: hidden;
+  }}
   .svg-wrapper {{
     width: 100%;
     background: #0a0d14;
     border: 1px solid #1f2733;
     border-radius: 8px;
-    padding: 8px;
-    overflow: auto;
+    padding: 4px;
+    box-sizing: border-box;
   }}
   .svg-wrapper svg {{
     width: 100%;
     height: auto;
     display: block;
+    max-height: none;
   }}
 </style>
 </head>
@@ -3348,8 +3353,8 @@ with tabs[10]:
 </body>
 </html>
 """
-            # height는 SVG의 viewBox 기준 + padding (1100x720 비율 → 너비 100%일 때 ~520)
-            components.html(svg_html, height=540, scrolling=False)
+            # SVG 비율(1.528) × Streamlit 컨텐츠 폭 → 충분한 height + 스크롤 X
+            components.html(svg_html, height=750, scrolling=False)
 
         # 본문 매뉴얼
         st.markdown(usage_md_for_streamlit)
