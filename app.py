@@ -44,6 +44,19 @@ import streamlit as st
 import streamlit.components.v1 as components
 import base64
 
+# ───────────────────────────────────────────────────────────────────────
+# 자매 도구 (CCUS Benchmark)와의 데이터 연계 — Single Source of Truth
+# 자매 repo의 ccus_metrics.json fetch + helper 함수 모두 이 모듈에서 제공
+# 두 도구가 같은 loader.py 사용 → 자매 도구 갱신 시 한 곳만 수정
+# ───────────────────────────────────────────────────────────────────────
+from ccus_metrics_loader import (
+    load_ccus_metrics as _load_ccus_metrics_raw,
+    get_tech_data,
+    get_tech_coca,
+    list_techs_by_trl,
+    techs_for_capacity,
+)
+
 # ======================================================================
 # 페이지 설정 + 다크모드 CSS
 # ======================================================================
@@ -596,15 +609,13 @@ def region_icon(key: str) -> str:
 # ======================================================================
 CCUS_APP_URL = "https://ccusamineanalysis-9z3cxdmxmd3muuepqlhaqb.streamlit.app/"   # 사용자 노출용 (라이브 앱)
 CCUS_REPO_URL = "https://github.com/cafeon90-oss/CCUS_benchmark"                       # GitHub repo
-CCUS_JSON_URL = ("https://raw.githubusercontent.com/cafeon90-oss/CCUS_benchmark/"
-                  "main/data/ccus_metrics.json")                                         # Phase 2 live fetch URL
-CCUS_JSON_URL = "https://raw.githubusercontent.com/cafeon90-oss/CCUS_benchmark/main/data/ccus_metrics.json"
+CCUS_JSON_URL = ("https://raw.githubusercontent.com/cafeon90-oss/ccus_benchmark/"
+                  "main/data/ccus_metrics.json")                                         # loader 내부 사용 (참조용)
 
-# Phase 2에서 위 URL로 fetch — 현재는 placeholder mirror
 # ─────────────────────────────────────────────
 # CBAM-specific sector → CCUS 기술 적합도 매핑
 # (자매 도구 schema 1.0의 키 기준: MEA_baseline, MHI_KS21, ...)
-# 본 도구에서만 유지 (CBAM-specific 정보)
+# 본 도구에서만 유지 (CBAM-specific 정보 — loader.py에 없음)
 # ─────────────────────────────────────────────
 CCUS_SECTOR_FIT = {
     # 철강 BF-BOF (CO₂ 25~30%, retrofit 어려움)
@@ -629,180 +640,53 @@ CCUS_SECTOR_FIT = {
 
 
 # ─────────────────────────────────────────────
-# Phase 2 fallback (네트워크 실패 시 — 자매 도구 schema 1.0 호환)
-# 9개 기술의 핵심 값만 보존. live fetch 우선.
-# ─────────────────────────────────────────────
-DEFAULT_CCUS_METRICS = {
-    "schema_version": "1.0-fallback",
-    "last_updated": "2026-04-30",
-    "source_tool": CCUS_REPO_URL,
-    "fallback_note": ("Network 실패 시 fallback — 자매 도구 schema 1.0의 핵심 값만 보존. "
-                      "live fetch가 정상이면 사용 안 됨."),
-    "metadata": {
-        "reference_capture_mt_yr": 3.7,
-        "currency": "USD",
-    },
-    "technologies": {
-        "MEA_baseline": {
-            "name": "MEA 30 wt% (참고)", "short_name": "MEA",
-            "category": "Amine (ref)", "TRL": 9, "is_pilot": False,
-            "performance": {"SRD_GJ_per_tCO2": 3.6, "capture_rate_default": 0.90},
-            "economics": {"CAPEX_USD_per_tCO2_yr": 950,
-                          "OPEX_solvent_USD_per_tCO2": 1.5,
-                          "OPEX_other_USD_per_tCO2": 12.0},
-            "operations": {"capacity_range_mt_yr": [0.1, 10.0]},
-            "notes": "fallback",
-        },
-        "MHI_KS21": {
-            "name": "MHI KS-21™", "short_name": "KS-21",
-            "category": "Advanced Amine", "TRL": 9, "is_pilot": False,
-            "performance": {"SRD_GJ_per_tCO2": 2.8, "capture_rate_default": 0.90},
-            "economics": {"CAPEX_USD_per_tCO2_yr": 920,
-                          "OPEX_solvent_USD_per_tCO2": 1.8,
-                          "OPEX_other_USD_per_tCO2": 12.0},
-            "operations": {"capacity_range_mt_yr": [0.5, 10.0]},
-            "notes": "fallback",
-        },
-        "Cansolv_DC103": {
-            "name": "Cansolv DC-103", "short_name": "DC-103",
-            "category": "Advanced Amine", "TRL": 9, "is_pilot": False,
-            "performance": {"SRD_GJ_per_tCO2": 2.5, "capture_rate_default": 0.90},
-            "economics": {"CAPEX_USD_per_tCO2_yr": 880,
-                          "OPEX_solvent_USD_per_tCO2": 1.6,
-                          "OPEX_other_USD_per_tCO2": 11.5},
-            "operations": {"capacity_range_mt_yr": [0.5, 10.0]},
-            "notes": "fallback",
-        },
-        "Aker_S26": {
-            "name": "Aker S26", "short_name": "Aker S26",
-            "category": "Advanced Amine", "TRL": 9, "is_pilot": False,
-            "performance": {"SRD_GJ_per_tCO2": 2.8, "capture_rate_default": 0.90},
-            "economics": {"CAPEX_USD_per_tCO2_yr": 1000,
-                          "OPEX_solvent_USD_per_tCO2": 1.7,
-                          "OPEX_other_USD_per_tCO2": 12.5},
-            "operations": {"capacity_range_mt_yr": [0.1, 5.0]},
-            "notes": "fallback",
-        },
-        "K2CO3_KIERSOL": {
-            "name": "KIERSOL (KIER 한국) †", "short_name": "KIERSOL†",
-            "category": "Hot Carbonate", "TRL": 6, "is_pilot": True,
-            "performance": {"SRD_GJ_per_tCO2": 2.95, "capture_rate_default": 0.90},
-            "economics": {"CAPEX_USD_per_tCO2_yr": 1050,
-                          "OPEX_solvent_USD_per_tCO2": 0.8,
-                          "OPEX_other_USD_per_tCO2": 11.0},
-            "operations": {"capacity_range_mt_yr": [0.05, 1.0]},
-            "notes": "fallback",
-        },
-        "CAP_B12C": {
-            "name": "Chilled Ammonia (CAP)", "short_name": "CAP",
-            "category": "Chilled NH₃", "TRL": 7, "is_pilot": False,
-            "performance": {"SRD_GJ_per_tCO2": 2.4, "capture_rate_default": 0.90},
-            "economics": {"CAPEX_USD_per_tCO2_yr": 1200,
-                          "OPEX_solvent_USD_per_tCO2": 0.6,
-                          "OPEX_other_USD_per_tCO2": 13.0},
-            "operations": {"capacity_range_mt_yr": [1.0, 5.0]},
-            "notes": "fallback",
-        },
-        "Biphasic_DMX": {
-            "name": "Biphasic DMX™ †", "short_name": "DMX†",
-            "category": "Biphasic", "TRL": 6, "is_pilot": True,
-            "performance": {"SRD_GJ_per_tCO2": 2.3, "capture_rate_default": 0.90},
-            "economics": {"CAPEX_USD_per_tCO2_yr": 1100,
-                          "OPEX_solvent_USD_per_tCO2": 1.8,
-                          "OPEX_other_USD_per_tCO2": 12.0},
-            "operations": {"capacity_range_mt_yr": [0.05, 2.0]},
-            "notes": "fallback",
-        },
-        "TSA_Solid": {
-            "name": "Solid Sorbent TSA", "short_name": "TSA",
-            "category": "Solid Sorbent", "TRL": 7, "is_pilot": False,
-            "performance": {"SRD_GJ_per_tCO2": 2.2, "capture_rate_default": 0.90},
-            "economics": {"CAPEX_USD_per_tCO2_yr": 1300,
-                          "OPEX_solvent_USD_per_tCO2": 2.5,
-                          "OPEX_other_USD_per_tCO2": 10.0},
-            "operations": {"capacity_range_mt_yr": [0.01, 1.0]},
-            "notes": "fallback",
-        },
-        "CaL": {
-            "name": "Calcium Looping (CaL)", "short_name": "CaL",
-            "category": "CaO/CaCO₃", "TRL": 7, "is_pilot": False,
-            "performance": {"SRD_GJ_per_tCO2": 3.2, "capture_rate_default": 0.90},
-            "economics": {"CAPEX_USD_per_tCO2_yr": 850,
-                          "OPEX_solvent_USD_per_tCO2": 1.5,
-                          "OPEX_other_USD_per_tCO2": 14.0},
-            "operations": {"capacity_range_mt_yr": [0.5, 5.0]},
-            "notes": "fallback",
-        },
-    },
-}
-
-
-# ─────────────────────────────────────────────
-# CCUS Helper 함수 (자매 도구 schema 1.0 기준)
+# CCUS Metrics — 자매 도구 ccus_metrics_loader 사용 (Phase 2)
+# loader는 자매 도구가 master, 본 도구도 같은 파일 mirror
+# 자매 도구 갱신 시 양쪽 push 필요 (Single Source of Truth 원칙)
 # ─────────────────────────────────────────────
 
-def get_tech_data(metrics: dict, tech_key: str) -> dict:
-    """기술 키로 nested dict 반환. 없으면 빈 dict."""
-    return metrics.get("technologies", {}).get(tech_key, {})
+# 본 도구의 wrapper — load_ccus_metrics는 loader가 정의 (24h 캐시 포함)
+# 본 도구는 (data, mode) tuple 형식을 기대하지만, loader는 dict만 반환
+# → wrapper로 mode 정보(live/fallback) 추가
+def load_ccus_metrics():
+    """자매 도구 loader.py의 fetch 함수 wrapper.
+    loader.py가 (a) GitHub raw fetch, (b) 24h 캐시, (c) fallback 모두 처리.
+    본 도구는 mode flag만 추가로 반환.
 
-
-def get_tech_coca(metrics: dict, tech_key: str,
-                  capex_amort_factor: float = 0.10) -> float:
-    """COCA(Cost Of Carbon Avoided, USD/tCO₂) 계산.
-    schema 1.0에는 COCA가 직접 저장되지 않고 CAPEX/OPEX로부터 산출.
-
-    COCA = CAPEX × annual amortization factor + OPEX_solvent + OPEX_other
-    capex_amort_factor: CRF (Capital Recovery Factor) 근사. 0.10 = 25년 8% 할인 ≈ 0.094
+    Returns: (metrics_dict, mode_str)
+    mode: 'live' (정상 fetch) / 'fallback' (네트워크 실패 시 stub)
     """
-    tdata = get_tech_data(metrics, tech_key)
-    if not tdata:
-        return 0.0
-    eco = tdata.get("economics", {})
-    capex = eco.get("CAPEX_USD_per_tCO2_yr", 0.0)
-    opex_solv = eco.get("OPEX_solvent_USD_per_tCO2", 0.0)
-    opex_other = eco.get("OPEX_other_USD_per_tCO2", 0.0)
-    return capex * capex_amort_factor + opex_solv + opex_other
+    data = _load_ccus_metrics_raw()
+    is_fallback = (
+        "fallback" in str(data.get("schema_version", "")).lower()
+        or "_fallback_warning" in data
+    )
+    mode = "fallback" if is_fallback else "live"
+    return data, mode
 
+
+# ─────────────────────────────────────────────
+# loader.py에 없는 본 도구 전용 thin wrapper
+# (NPV 분석에 raw CAPEX·OPEX 직접 필요)
+# ─────────────────────────────────────────────
 
 def get_tech_capture_rate(metrics: dict, tech_key: str) -> float:
     """기본 capture_rate 반환 (default 0.90)."""
-    tdata = get_tech_data(metrics, tech_key)
-    return tdata.get("performance", {}).get("capture_rate_default", 0.90)
+    return get_tech_data(metrics, tech_key).get(
+        "performance", {}).get("capture_rate_default", 0.90)
 
 
 def get_tech_capex(metrics: dict, tech_key: str) -> float:
-    """CAPEX (USD per tCO₂/yr capacity)."""
-    return get_tech_data(metrics, tech_key).get("economics", {}).get(
-        "CAPEX_USD_per_tCO2_yr", 0.0
-    )
+    """CAPEX (USD per tCO₂/yr capacity) — NPV 분석에 분리 필요."""
+    return get_tech_data(metrics, tech_key).get(
+        "economics", {}).get("CAPEX_USD_per_tCO2_yr", 0.0)
 
 
 def get_tech_opex(metrics: dict, tech_key: str) -> float:
-    """OPEX (solvent + other, USD/tCO₂)."""
+    """OPEX (solvent + other, USD/tCO₂) — NPV 분석에 분리 필요."""
     eco = get_tech_data(metrics, tech_key).get("economics", {})
     return (eco.get("OPEX_solvent_USD_per_tCO2", 0.0)
             + eco.get("OPEX_other_USD_per_tCO2", 0.0))
-
-
-@st.cache_data(ttl=86400)   # 24h 캐시 (자매 도구 갱신 후 24h 내 자동 반영)
-def load_ccus_metrics():
-    """Phase 2 — 자매 도구 GitHub raw URL에서 ccus_metrics.json fetch.
-    네트워크 실패 시 DEFAULT_CCUS_METRICS fallback.
-
-    Returns: (metrics_dict, mode_str)
-    mode: 'live' / 'fallback'
-    """
-    try:
-        import urllib.request
-        req = urllib.request.Request(
-            CCUS_JSON_URL,
-            headers={"User-Agent": "Mozilla/5.0 CBAM-Calculator-Bot"},
-        )
-        with urllib.request.urlopen(req, timeout=5) as r:
-            data = json.loads(r.read().decode("utf-8"))
-        return data, "live"
-    except Exception:
-        return DEFAULT_CCUS_METRICS, "fallback"
 
 
 # ======================================================================
