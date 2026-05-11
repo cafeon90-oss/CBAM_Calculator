@@ -1,6 +1,6 @@
 {
   "price_eur_per_tco2": 80.0,
-  "date": "2026-05-04",
+  "date": "2026-05-11",
   "source": "fallback_existing",
   "sources_tried": [
     [
@@ -36,6 +36,11 @@
     },
     {
       "date": "2026-05-04",
+      "price": 80.0,
+      "source": "fallback_existing"
+    },
+    {
+      "date": "2026-05-11",
       "price": 80.0,
       "source": "fallback_existing"
     }
