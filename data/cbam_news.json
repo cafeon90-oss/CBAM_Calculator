@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0",
-  "last_updated": "2026-05-01",
-  "last_fetched": "2026-05-01T00:00:00Z",
+  "last_updated": "2026-05-18",
+  "last_fetched": "2026-05-18T07:48:15.398780Z",
   "source": "manual_curation_seed",
   "automation": "full",
   "retention_months": 12,
@@ -104,18 +104,12 @@
       "summary_ko": "2월 제안된 Omnibus 패키지에 대한 양 기관의 정치적 합의. 50t threshold·declaration 일정 등 핵심 조항 확정.",
       "url": "https://taxation-customs.ec.europa.eu/carbon-border-adjustment-mechanism_en",
       "source": "EU Council"
-    },
-    {
-      "id": "2025-02-26-omnibus-proposal",
-      "date": "2025-02-26",
-      "category": "proposal",
-      "importance": "medium",
-      "important": true,
-      "title_ko": "EU Commission, Omnibus 단순화 패키지 제안 — CBAM·CSRD·CSDDD·Taxonomy",
-      "title_en": "Commission presents Omnibus Simplification Package",
-      "summary_ko": "행정 부담 감축을 위한 4개 sustainability 규정 동시 단순화 제안. CBAM은 50t threshold·인증서 일정 변경 포함.",
-      "url": "https://www.mayerbrown.com/en/insights/publications/2025/02/european-commission-presents-omnibus-simplification-package-with-amendments-to-csrd-csddd-cbam-and-taxonomy",
-      "source": "Mayer Brown analysis"
     }
+  ],
+  "fetch_log": [
+    [
+      "eu_taxation_customs",
+      "err:HTTP Error 403: Forbidden"
+    ]
   ]
 }
