@@ -1,7 +1,7 @@
 {
-  "price_eur_per_tco2": 80.0,
+  "price_eur_per_tco2": 75.51,
   "date": "2026-05-18",
-  "source": "fallback_existing",
+  "source": "tradingeconomics.com",
   "sources_tried": [
     [
       "sandbag",
@@ -9,10 +9,10 @@
     ],
     [
       "tradingeconomics",
-      "no_match"
+      "ok"
     ]
   ],
-  "note": "Auto-fetched by GitHub Actions weekly.",
+  "note": "Auto-fetched by GitHub Actions weekly. Multi-source robust (4 sources tried).",
   "history": [
     {
       "date": "2025-12-15",
@@ -46,8 +46,8 @@
     },
     {
       "date": "2026-05-18",
-      "price": 80.0,
-      "source": "fallback_existing"
+      "price": 75.51,
+      "source": "tradingeconomics.com"
     }
   ]
 }
