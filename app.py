@@ -1979,9 +1979,20 @@ with st.sidebar:
         step=0.1, format="%.3f",
         key="annual_production_mt",
         help=("단위: 백만 톤(Mt). 전력 sector의 경우 GWh로 입력 "
-              "(내부적으로 1 GWh = 1,000 MWh로 환산)."),
+              "(내부적으로 1 GWh = 1,000 MWh = 0.001 Mt-equivalent로 환산)."),
     )
-    st.caption(f"≈ {annual_production_mt * 1e6:,.0f} {prod_unit_caption}")
+    # 🔧 Bug fix #1 (2026-05): electricity sector는 GWh → Mt-MWh 동등치(/1000)로 환산.
+    # calc_total_cbam이 *1e6을 곱하므로 GWh/1000 * 1e6 = MWh가 되어 일관성 유지.
+    # session_state는 raw 입력값 유지, local 변수만 환산.
+    if sector_lit == "electricity":
+        st.caption(
+            f"≈ {annual_production_mt * 1000:,.0f} {prod_unit_caption} "
+            f"(내부 환산: {annual_production_mt:.3f} GWh → "
+            f"{annual_production_mt / 1000.0:.6f} Mt-MWh 등가)"
+        )
+        annual_production_mt = annual_production_mt / 1000.0   # GWh → Mt-MWh
+    else:
+        st.caption(f"≈ {annual_production_mt * 1e6:,.0f} {prod_unit_caption}")
 
     # EU 수출 비중
     eu_export_share_pct = st.number_input(
@@ -2575,15 +2586,27 @@ with tabs[2]:
         s = LIT[slit]
         settings = pdata["settings"]
         prod_mt = settings.get("annual_production_mt", 1.0)
+        # 🔧 Bug fix #1: electricity sector는 GWh → Mt-MWh 등가로 환산
+        if slit == "electricity":
+            prod_mt = prod_mt / 1000.0
         share = settings.get("eu_export_share_pct", 5.0)
         see_use = settings.get("user_SEE", s["kr_avg_SEE"])
         cname = settings.get("company_name", pdata["label"])
+
+        # 🔧 Bug fix #2A: 회사별 SEE 기반 K-ETS 차감 동적 계산 + sector별 mark-up 자동 적용
+        company_kets = (
+            calc_kets_credit(see_use, kets_price_krw, fx_eur_krw, kets_credit_share)
+            if use_kets else 0.0
+        )
+        company_markup = get_markup(s["sector_key"], analysis_year)
 
         r = calc_total_cbam(
             annual_production_mt=prod_mt,
             eu_export_share_pct=share,
             SEE=see_use, benchmark=s["eu_benchmark"],
-            eua_price_eur=eua_price, year=analysis_year, mark_up_pct=0,
+            eua_price_eur=eua_price, year=analysis_year,
+            mark_up_pct=company_markup,
+            k_ets_credit_eur=company_kets,
         )
         company_rows.append({
             "Company": cname,
@@ -3002,11 +3025,17 @@ with tabs[5]:
     yrs = list(range(2026, 2035))
     annual_costs_eur = []
     for y in yrs:
+        # 🔧 Bug fix #2B: K-ETS 차감 적용 + 연도별 mark-up 동적 적용 (2028+ 30%)
+        y_markup = (
+            get_markup(sector["sector_key"], y)
+            if see_mode == "EU Default 사용 (mark-up 적용)" else mark_up_pct
+        )
         r = calc_total_cbam(
             annual_production_mt=annual_production_mt,
             eu_export_share_pct=eu_export_share_pct,
             SEE=user_SEE, benchmark=sector["eu_benchmark"],
-            eua_price_eur=eua_price, year=y, mark_up_pct=mark_up_pct,
+            eua_price_eur=eua_price, year=y, mark_up_pct=y_markup,
+            k_ets_credit_eur=k_ets_credit_eur,
         )
         annual_costs_eur.append(r["annual_cost_eur"] / 1e6)
     fig_traj.add_trace(go.Bar(
@@ -3045,11 +3074,17 @@ with tabs[6]:
     if custom_years:
         cust_rows = []
         for y in custom_years:
+            # 🔧 Bug fix #2C: K-ETS 차감 + 연도별 mark-up 동적
+            y_markup = (
+                get_markup(sector["sector_key"], y)
+                if see_mode == "EU Default 사용 (mark-up 적용)" else mark_up_pct
+            )
             r = calc_total_cbam(
                 annual_production_mt=annual_production_mt,
                 eu_export_share_pct=eu_export_share_pct,
                 SEE=user_SEE, benchmark=sector["eu_benchmark"],
-                eua_price_eur=eua_price, year=y, mark_up_pct=mark_up_pct,
+                eua_price_eur=eua_price, year=y, mark_up_pct=y_markup,
+                k_ets_credit_eur=k_ets_credit_eur,
             )
             cust_rows.append({
                 "Year": y,
@@ -3081,11 +3116,14 @@ with tabs[6]:
     eua_grid = list(range(int(eua_min), int(eua_max) + 1, 10))
     sens_rows = []
     for ep in eua_grid:
+        # 🔧 Bug fix #2D: K-ETS 차감 적용. EUA 변동 시에도 K-ETS는 SEE×K-ETS 가격으로 고정.
+        # (K-ETS 차감은 EUA와 무관하게 한국에서 이미 지불한 금액 기준)
         r = calc_total_cbam(
             annual_production_mt=annual_production_mt,
             eu_export_share_pct=eu_export_share_pct,
             SEE=user_SEE, benchmark=sector["eu_benchmark"],
             eua_price_eur=ep, year=analysis_year, mark_up_pct=mark_up_pct,
+            k_ets_credit_eur=k_ets_credit_eur,
         )
         sens_rows.append({"EUA (€/t)": ep, "Annual (€M)": r["annual_cost_eur"] / 1e6})
     df_sens = pd.DataFrame(sens_rows)

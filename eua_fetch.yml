@@ -1,0 +1,204 @@
+name: Fetch EUA Price (Weekly)
+
+# 매주 월요일 09:00 KST (= 00:00 UTC)에 실행
+# 🔧 2026-05-18 갱신: regex 패턴 강화 + carboncredits.com 3순위 소스 추가
+on:
+  schedule:
+    - cron: '0 0 * * 1'
+  workflow_dispatch:    # 수동 트리거 가능
+
+jobs:
+  fetch-eua:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write    # repo에 commit 권한 필요
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests beautifulsoup4
+
+      - name: Fetch EUA price
+        id: fetch
+        run: |
+          python <<'EOF'
+          import json, os, datetime, urllib.request, re
+
+          # ─────────────────────────────────────────────
+          # 다중 소스 시도 (실패 시 fallback)
+          # 🔧 2026-05-18: 사이트 HTML 구조 변경 대응 — multi-pattern regex
+          # ─────────────────────────────────────────────
+          sources_tried = []
+          price = None
+          source = None
+          UA = "Mozilla/5.0 CBAM-Calculator-Bot (https://github.com/cafeon90-oss/CBAM_Calculator)"
+
+          def try_patterns(html: str, patterns: list) -> float:
+              """여러 regex 패턴을 순차 시도, 첫 매치 반환."""
+              for pat in patterns:
+                  m = re.search(pat, html, flags=re.IGNORECASE)
+                  if m:
+                      try:
+                          val = float(m.group(1))
+                          if 40 <= val <= 200:
+                              return val
+                      except (ValueError, IndexError):
+                          continue
+              return None
+
+          # 1순위: Sandbag
+          try:
+              req = urllib.request.Request(
+                  "https://sandbag.be/carbon-price-viewer/",
+                  headers={"User-Agent": UA},
+              )
+              html = urllib.request.urlopen(req, timeout=15).read().decode("utf-8", errors="ignore")
+              patterns_sandbag = [
+                  r'€\s*(\d{2,3}[.,]\d{1,2})',
+                  r'EUR\s*(\d{2,3}[.,]\d{1,2})',
+                  r'"price"\s*:\s*"?(\d{2,3}[.,]\d{1,2})',
+                  r'data-price[^>]*=["\'](\d{2,3}[.,]\d{1,2})',
+                  r'class="[^"]*price[^"]*"[^>]*>[€\s]*(\d{2,3}[.,]\d{1,2})',
+                  r'(\d{2,3}[.,]\d{1,2})\s*€/t',
+                  r'(\d{2,3}[.,]\d{1,2})\s*EUR/t',
+              ]
+              v = try_patterns(html.replace(',', '.'), patterns_sandbag)
+              if v:
+                  price = v
+                  source = "sandbag.be"
+              sources_tried.append(("sandbag", "ok" if v else "no_match"))
+          except Exception as e:
+              sources_tried.append(("sandbag", f"err:{str(e)[:60]}"))
+
+          # 2순위: TradingEconomics
+          if price is None:
+              try:
+                  req = urllib.request.Request(
+                      "https://tradingeconomics.com/commodity/carbon",
+                      headers={"User-Agent": UA},
+                  )
+                  html = urllib.request.urlopen(req, timeout=15).read().decode("utf-8", errors="ignore")
+                  patterns_te = [
+                      r'data-symbol="CO2"[^>]*>(\d{2,3}[.,]?\d{0,2})',
+                      r'id="p"[^>]*>(\d{2,3}[.,]\d{1,2})',
+                      r'"last":\s*"?(\d{2,3}[.,]\d{1,2})',
+                      r'(\d{2,3}[.,]\d{2})\s*EUR/Tonne',
+                      r'class="[^"]*last[^"]*"[^>]*>(\d{2,3}[.,]\d{1,2})',
+                      r'>EUA[^<]*<[^>]*>(\d{2,3}[.,]\d{1,2})',
+                  ]
+                  v = try_patterns(html.replace(',', '.'), patterns_te)
+                  if v:
+                      price = v
+                      source = "tradingeconomics.com"
+                  sources_tried.append(("tradingeconomics", "ok" if v else "no_match"))
+              except Exception as e:
+                  sources_tried.append(("tradingeconomics", f"err:{str(e)[:60]}"))
+
+          # 3순위: carboncredits.com (🔧 2026-05-18 추가)
+          if price is None:
+              try:
+                  req = urllib.request.Request(
+                      "https://carboncredits.com/carbon-prices-today/",
+                      headers={"User-Agent": UA},
+                  )
+                  html = urllib.request.urlopen(req, timeout=15).read().decode("utf-8", errors="ignore")
+                  patterns_cc = [
+                      r'EUA[^<]{0,200}€\s*(\d{2,3}[.,]\d{1,2})',
+                      r'EU\s*ETS[^<]{0,200}€?\s*(\d{2,3}[.,]\d{1,2})',
+                      r'"euAllowance"[^}]*"price":\s*"?(\d{2,3}[.,]\d{1,2})',
+                      r'European[^<]{0,200}(\d{2,3}[.,]\d{1,2})\s*EUR',
+                  ]
+                  v = try_patterns(html.replace(',', '.'), patterns_cc)
+                  if v:
+                      price = v
+                      source = "carboncredits.com"
+                  sources_tried.append(("carboncredits", "ok" if v else "no_match"))
+              except Exception as e:
+                  sources_tried.append(("carboncredits", f"err:{str(e)[:60]}"))
+
+          # 4순위: investing.com
+          if price is None:
+              try:
+                  req = urllib.request.Request(
+                      "https://www.investing.com/commodities/carbon-emissions-historical-data",
+                      headers={"User-Agent": UA},
+                  )
+                  html = urllib.request.urlopen(req, timeout=15).read().decode("utf-8", errors="ignore")
+                  patterns_inv = [
+                      r'data-test="instrument-price-last"[^>]*>(\d{2,3}[.,]\d{1,2})',
+                      r'"last_close":\s*"?(\d{2,3}[.,]\d{1,2})',
+                  ]
+                  v = try_patterns(html.replace(',', '.'), patterns_inv)
+                  if v:
+                      price = v
+                      source = "investing.com"
+                  sources_tried.append(("investing", "ok" if v else "no_match"))
+              except Exception as e:
+                  sources_tried.append(("investing", f"err:{str(e)[:60]}"))
+
+          # Fallback
+          if price is None:
+              try:
+                  with open("data/eua_price.json", "r", encoding="utf-8") as f:
+                      old = json.load(f)
+                      price = old.get("price_eur_per_tco2", 80.0)
+                      source = "fallback_existing"
+              except Exception:
+                  price = 80.0
+                  source = "fallback_default"
+
+          if not (40 <= price <= 200):
+              price = 80.0
+              source = "fallback_out_of_range"
+
+          today = datetime.date.today().isoformat()
+
+          history = []
+          try:
+              with open("data/eua_price.json", "r", encoding="utf-8") as f:
+                  old = json.load(f)
+                  history = old.get("history", [])
+          except Exception:
+              pass
+
+          history = [h for h in history if h.get("date") != today]
+          history.append({"date": today, "price": price, "source": source})
+          history = history[-52:]
+
+          out = {
+              "price_eur_per_tco2": price,
+              "date": today,
+              "source": source,
+              "sources_tried": sources_tried,
+              "note": "Auto-fetched by GitHub Actions weekly. Multi-source robust (4 sources tried).",
+              "history": history,
+          }
+
+          os.makedirs("data", exist_ok=True)
+          with open("data/eua_price.json", "w", encoding="utf-8") as f:
+              json.dump(out, f, ensure_ascii=False, indent=2)
+
+          print(f"✅ EUA price: €{price}/tCO₂ from {source} ({today})")
+          print(f"   Sources tried: {sources_tried}")
+          EOF
+
+      - name: Commit & Push
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/eua_price.json
+          if git diff --staged --quiet; then
+            echo "No changes — skipping commit."
+          else
+            git commit -m "chore(eua): weekly EUA price update [skip ci]"
+            git push
+          fi
