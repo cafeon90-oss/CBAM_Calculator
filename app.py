@@ -2593,12 +2593,17 @@ with tabs[2]:
         see_use = settings.get("user_SEE", s["kr_avg_SEE"])
         cname = settings.get("company_name", pdata["label"])
 
-        # 🔧 Bug fix #2A: 회사별 SEE 기반 K-ETS 차감 동적 계산 + sector별 mark-up 자동 적용
+        # 🔧 Bug fix #2A v2 (2026-05-18): see_mode 조건 추가 — Verified 모드면 mark-up 0%
+        # (탭 ⑥/⑦와 동일 로직. 각 preset의 user_SEE는 verified 공시값이므로 mark-up은 사용자가
+        # "EU Default 사용"으로 선택했을 때만 sector × year 기준으로 자동 적용)
         company_kets = (
             calc_kets_credit(see_use, kets_price_krw, fx_eur_krw, kets_credit_share)
             if use_kets else 0.0
         )
-        company_markup = get_markup(s["sector_key"], analysis_year)
+        company_markup = (
+            get_markup(s["sector_key"], analysis_year)
+            if see_mode == "EU Default 사용 (mark-up 적용)" else 0.0
+        )
 
         r = calc_total_cbam(
             annual_production_mt=prod_mt,
