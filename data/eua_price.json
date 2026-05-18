@@ -1,5 +1,5 @@
 {
-  "price_eur_per_tco2": 75.51,
+  "price_eur_per_tco2": 76.02,
   "date": "2026-05-18",
   "source": "tradingeconomics.com",
   "sources_tried": [
@@ -46,7 +46,7 @@
     },
     {
       "date": "2026-05-18",
-      "price": 75.51,
+      "price": 76.02,
       "source": "tradingeconomics.com"
     }
   ]
