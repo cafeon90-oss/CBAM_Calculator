@@ -609,7 +609,7 @@ def region_icon(key: str) -> str:
 # ======================================================================
 CCUS_APP_URL = "https://ccusbenchmark-rcuf9appppppppykmyeca8nwgk.streamlit.app/"   # 사용자 노출용 (라이브 앱)
 CCUS_REPO_URL = "https://github.com/cafeon90-oss/CCUS_benchmark"                       # GitHub repo
-CCUS_JSON_URL = ("https://raw.githubusercontent.com/cafeon90-oss/ccus_benchmark/"
+CCUS_JSON_URL = ("https://raw.githubusercontent.com/cafeon90-oss/CCUS_benchmark/"
                   "main/data/ccus_metrics.json")                                         # loader 내부 사용 (참조용)
 
 # ─────────────────────────────────────────────
