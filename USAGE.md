@@ -203,7 +203,7 @@ BEP year              ← 누적 회피액이 누적 비용 초과하는 연도
 
 ### 5.1 자매 도구
 
-🌫️ **[CCUS 기술 벤치마크 라이브 앱 ↗](https://ccusamineanalysis-9z3cxdmxmd3muuepqlhaqb.streamlit.app/)**
+🌫️ **[CCUS 기술 벤치마크 라이브 앱 ↗](https://ccusbenchmark-rcuf9appppppppykmyeca8nwgk.streamlit.app/)**
 
 한국·미국·EU의 9개 CCUS 흡수제·공정 기술의 COCA·SPECCA·CAPEX 비교:
 1. MEA 30wt% (1세대 baseline)
@@ -337,7 +337,7 @@ CCS 프로젝트의 **2030 가동 목표**가 합리적인 이유 — 그래야 
 ## 📚 더 알아보기
 
 - 본 도구 GitHub: <https://github.com/cafeon90-oss/CBAM_calculator>
-- 자매 CCUS 도구: <https://ccusamineanalysis-9z3cxdmxmd3muuepqlhaqb.streamlit.app/>
+- 자매 CCUS 도구: <https://ccusbenchmark-rcuf9appppppppykmyeca8nwgk.streamlit.app/>
 - EU CBAM 공식: <https://taxation-customs.ec.europa.eu/carbon-border-adjustment-mechanism_en>
 - 작성자 블로그: <https://cdrmaster.tistory.com/>
 

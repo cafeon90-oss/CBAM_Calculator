@@ -607,7 +607,7 @@ def region_icon(key: str) -> str:
 # ======================================================================
 # 자매 CCUS 도구 연계 (Phase 2 — 현재는 stub + placeholder)
 # ======================================================================
-CCUS_APP_URL = "https://ccusamineanalysis-9z3cxdmxmd3muuepqlhaqb.streamlit.app/"   # 사용자 노출용 (라이브 앱)
+CCUS_APP_URL = "https://ccusbenchmark-rcuf9appppppppykmyeca8nwgk.streamlit.app/"   # 사용자 노출용 (라이브 앱)
 CCUS_REPO_URL = "https://github.com/cafeon90-oss/CCUS_benchmark"                       # GitHub repo
 CCUS_JSON_URL = ("https://raw.githubusercontent.com/cafeon90-oss/ccus_benchmark/"
                   "main/data/ccus_metrics.json")                                         # loader 내부 사용 (참조용)
@@ -3427,7 +3427,7 @@ with tabs[10]:
 
 - 📄 [USAGE.md GitHub에서 보기](https://github.com/cafeon90-oss/CBAM_calculator/blob/main/USAGE.md)
 - 📊 [작동 메커니즘 SVG](https://github.com/cafeon90-oss/CBAM_calculator/blob/main/cbam_mechanism.svg)
-- 🌫️ [자매 CCUS 도구 라이브 앱](https://ccusamineanalysis-9z3cxdmxmd3muuepqlhaqb.streamlit.app/)
+- 🌫️ [자매 CCUS 도구 라이브 앱](https://ccusbenchmark-rcuf9appppppppykmyeca8nwgk.streamlit.app/)
 - 📖 [EU CBAM 공식](https://taxation-customs.ec.europa.eu/carbon-border-adjustment-mechanism_en)
 - 📝 [작성자 블로그](https://cdrmaster.tistory.com/)
 
