@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0",
-  "last_updated": "2026-06-01",
-  "last_fetched": "2026-06-01T19:28:36.590915Z",
+  "last_updated": "2026-07-01",
+  "last_fetched": "2026-07-01T02:34:27.334833Z",
   "source": "manual_curation_seed",
   "automation": "full",
   "retention_months": 12,
@@ -92,18 +92,6 @@
       "summary_ko": "2025-02-26 제안 → 2025-06-18 정치적 합의 → 2025-09-29 최종 채택. 단순화 패키지 입법 절차 마무리.",
       "url": "https://icapcarbonaction.com/en/news/eu-adopts-simplifications-cbam-rules-ahead-compliance-phase-starting-2026",
       "source": "ICAP"
-    },
-    {
-      "id": "2025-06-18-political-agreement",
-      "date": "2025-06-18",
-      "category": "negotiation",
-      "importance": "medium",
-      "important": false,
-      "title_ko": "EU 의회·이사회, CBAM 단순화 정치적 합의 도달",
-      "title_en": "Political agreement reached on CBAM simplification",
-      "summary_ko": "2월 제안된 Omnibus 패키지에 대한 양 기관의 정치적 합의. 50t threshold·declaration 일정 등 핵심 조항 확정.",
-      "url": "https://taxation-customs.ec.europa.eu/carbon-border-adjustment-mechanism_en",
-      "source": "EU Council"
     }
   ],
   "fetch_log": [
