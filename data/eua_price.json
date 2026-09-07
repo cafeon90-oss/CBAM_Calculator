@@ -1,6 +1,6 @@
 {
-  "price_eur_per_tco2": 82.73,
-  "date": "2026-08-31",
+  "price_eur_per_tco2": 84.18,
+  "date": "2026-09-07",
   "source": "tradingeconomics.com",
   "sources_tried": [
     [
@@ -122,6 +122,11 @@
     {
       "date": "2026-08-31",
       "price": 82.73,
+      "source": "tradingeconomics.com"
+    },
+    {
+      "date": "2026-09-07",
+      "price": 84.18,
       "source": "tradingeconomics.com"
     }
   ]
