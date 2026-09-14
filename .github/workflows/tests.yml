@@ -1,0 +1,28 @@
+name: Tests
+
+# 사람이 push/PR할 때 실행. 봇의 데이터 갱신 커밋은 [skip ci]라 돌지 않는다.
+# Python 3.11 — Streamlit Cloud·기존 워크플로와 동일 버전 (로컬 3.14에선 못 잡는 문법 호환성 확인)
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: Install
+        run: pip install -r requirements.txt pytest
+
+      - name: Run tests
+        run: pytest -q
