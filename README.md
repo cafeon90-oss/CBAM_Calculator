@@ -40,7 +40,7 @@ CBAM cost = (SEE − Free EU benchmark) × Phase-in factor × EUA × import volu
 | ⑦ | Custom 입력 | Multi-year 비교 + EUA 가격 민감도 |
 | ⑧ | 방법론 | 계산식, 가정, 한계 |
 | ⑨ | 참고문헌 | 30+ 출처 카탈로그 (regulation, report, paper, market) |
-| ⑩ | 📰 EU CBAM 뉴스 | EU 위원회 + Eur-Lex의 주요 공지 — **GitHub Actions가 매월 1일 자동 갱신** |
+| ⑩ | 📰 EU CBAM 뉴스 | EU 위원회 + Eur-Lex의 주요 공지 — 수동 큐레이션 + GitHub Actions 월 1회 자동 수집 |
 
 ### 시나리오 프리셋 (9개 + Custom)
 
@@ -58,7 +58,7 @@ CBAM cost = (SEE − Free EU benchmark) × Phase-in factor × EUA × import volu
 ### 자동 데이터 갱신
 
 - **EUA 가격** *(주 1회)*: GitHub Actions가 매주 월요일 09:00 KST에 Sandbag/TradingEconomics에서 fetch → `data/eua_price.json` commit. Streamlit `@st.cache_data(ttl=86400)`.
-- **EU CBAM 뉴스** *(월 1회 · 완전 자동화)*: GitHub Actions가 매월 1일 09:00 KST에 EU Taxation & Customs CBAM 페이지 스크래핑 → 카테고리 자동 분류 + 한글 제목 자동 생성 → `data/cbam_news.json` commit. **사용자 개입 0**. 12개월 누적 자동 보존.
+- **EU CBAM 뉴스** *(수동 큐레이션 + 월 1회 자동 수집)*: 주요 공지는 직접 선별해 등록하고, GitHub Actions가 매월 1일 09:00 KST에 새 공지 수집을 시도(`scripts/fetch_cbam_news.py`) → 카테고리 자동 분류 + 한글 제목 자동 생성 → `data/cbam_news.json` commit. 수동 항목은 삭제하지 않고 자동 수집 항목만 12개월 보존. 수집이 전부 실패하면 Actions 실행이 실패로 표시됨.
 - **POSCO SEE**: 정적값 + 출처 link + 사용자 슬라이더 override (POSCO ESG 보고서는 연 1회 갱신).
 - **CCUS COCA**: Phase 2에서 자매 도구 `data/ccus_metrics.json` 연결 예정 (현재는 9개 기술 stub mirror).
 
@@ -79,6 +79,10 @@ pip install -r requirements.txt
 
 # 4. 실행
 streamlit run app.py
+
+# 5. 테스트 (선택)
+pip install pytest
+pytest -q
 ```
 
 ### 디렉토리 구조
@@ -93,11 +97,15 @@ CBAM_calculator/
 │   └── config.toml                 # 다크모드 + 서버 설정
 ├── data/
 │   ├── eua_price.json              # EUA 가격 (주 1회 자동 갱신)
-│   └── cbam_news.json              # EU CBAM 주요 공지 (월 1회 자동 갱신)
+│   └── cbam_news.json              # EU CBAM 주요 공지 (수동 큐레이션 + 월 1회 자동 수집)
+├── scripts/
+│   └── fetch_cbam_news.py          # 뉴스 수집 (EU 공식 RSS → cbam_news.json)
+├── tests/                          # pytest — 계산 함수·호출부·데이터·앱 스모크·뉴스 수집
 └── .github/
     └── workflows/
         ├── eua_fetch.yml           # 주 1회 EUA 가격 fetch cron
-        └── cbam_news_fetch.yml     # 월 1회 EU CBAM 뉴스 fetch cron
+        ├── cbam_news_fetch.yml     # 월 1회 EU CBAM 뉴스 수집 cron
+        └── tests.yml               # push 시 pytest (Python 3.11)
 ```
 
 ### 자매 도구

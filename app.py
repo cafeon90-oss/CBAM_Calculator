@@ -41,8 +41,8 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
-import streamlit.components.v1 as components
 import base64
+from html import escape as html_escape
 
 # ───────────────────────────────────────────────────────────────────────
 # 자매 도구 (CCUS Benchmark)와의 데이터 연계 — Single Source of Truth
@@ -784,11 +784,12 @@ def render_news_card(item: dict, compact: bool = False) -> str:
     imp_meta = NEWS_IMPORTANCE_BADGE.get(importance, NEWS_IMPORTANCE_BADGE["medium"])
     color = cat_meta["color"]
     color_bg = _hex_to_rgba(color, 0.13)
-    title = item.get("title_ko") or item.get("title_en", "(제목 없음)")
-    summary = item.get("summary_ko") or item.get("title_en", "")
-    date = item.get("date", "")
-    url = item.get("url", "#")
-    src = item.get("source", "")
+    # 자동 수집 항목(외부 RSS)도 들어오므로 HTML에 넣기 전에 escape
+    title = html_escape(item.get("title_ko") or item.get("title_en", "(제목 없음)"))
+    summary = html_escape(item.get("summary_ko") or item.get("title_en", ""))
+    date = html_escape(item.get("date", ""))
+    url = html_escape(item.get("url", "#"))
+    src = html_escape(item.get("source", ""))
     cat_label = cat_meta["label"]
     cat_emoji = cat_meta["emoji"]
 
@@ -2153,9 +2154,11 @@ with st.sidebar:
         )
         kets_credit_share = st.slider(
             "Verified 차감 비율 (%)",
-            min_value=0, max_value=100, value=50, step=5,
-            help=("실제 차감 가능 비율. EU 협상·MRV 호환·검증 절차에 따라 변동. "
-                  "보수적: 50%, 낙관적: 80~100%, 비관적: 0~30%."),
+            min_value=0, max_value=100, value=30, step=5,
+            help=("K-ETS 가격 중 차감이 인정되는 비율. Art.9는 '실제 지불한' 탄소가격만 "
+                  "차감하므로 무상할당분은 빠진다. 기본 30% ≈ 철강 무상할당(~69%)을 뺀 몫 "
+                  "(TTI Korea 2026 추정: 차감액 €2.92/tCO₂, EU 가격의 3.4%). "
+                  "낙관적: 50~100%, 비관적: 0%."),
         )
         k_ets_credit_eur = calc_kets_credit(
             user_SEE, kets_price_krw,
@@ -2420,7 +2423,7 @@ with st.expander("📖 KPI 정의 보기 (클릭)", expanded=False):
     )
 
 # ======================================================================
-# 탭 9개 구성
+# 탭 11개 구성
 # ======================================================================
 tabs = st.tabs(
     [
@@ -2491,7 +2494,7 @@ with tabs[0]:
         ),
     )
     lock_static(fig1)
-    st.plotly_chart(fig1, use_container_width=True, config=PLOTLY_CONFIG)
+    st.plotly_chart(fig1, width="stretch", config=PLOTLY_CONFIG)
 
     # ────────────── 표: 9개 sector 단위 CBAM cost ──────────────
     st.markdown("<br>", unsafe_allow_html=True)
@@ -2512,7 +2515,7 @@ with tabs[0]:
     df_show["Unit cost (USD/t)"] = df_show["Unit cost (USD/t)"].map(lambda x: f"${x:.2f}")
     df_show.columns = ["Sector", "한국 SEE", "EU benchmark", "Gap",
                         f"단가 €/t ({analysis_year})", f"단가 $/t ({analysis_year})"]
-    st.dataframe(df_show, hide_index=True, use_container_width=True)
+    st.dataframe(df_show, hide_index=True, width="stretch")
     st.caption(
         f"↑ {analysis_year}년 phase-in {phase_in(analysis_year)*100:.1f}% × EUA €{eua_price:.0f}/tCO₂ 적용. "
         f"Unit cost 내림차순 정렬 — 부담 큰 sector가 위."
@@ -2563,7 +2566,7 @@ with tabs[1]:
         margin=dict(l=10, r=10, t=50, b=30),
     )
     lock_static(fig_gap)
-    st.plotly_chart(fig_gap, use_container_width=True, config=PLOTLY_CONFIG)
+    st.plotly_chart(fig_gap, width="stretch", config=PLOTLY_CONFIG)
 
     # 출처 link
     st.markdown("📚 **이 sector 출처:**")
@@ -2642,7 +2645,7 @@ with tabs[2]:
     )
     fig_co.update_traces(textposition="outside")
     lock_static(fig_co)
-    st.plotly_chart(fig_co, use_container_width=True, config=PLOTLY_CONFIG)
+    st.plotly_chart(fig_co, width="stretch", config=PLOTLY_CONFIG)
 
     # 테이블
     df_co_show = df_co.copy()
@@ -2653,7 +2656,7 @@ with tabs[2]:
     df_co_show["Annual CBAM (€M)"] = df_co_show["Annual CBAM (€M)"].map(lambda x: f"€{x:.2f}M")
     df_co_show["Annual CBAM (USD M)"] = df_co_show["Annual CBAM (USD M)"].map(lambda x: f"${x:.2f}M")
     df_co_show["Annual CBAM (억원)"] = df_co_show["Annual CBAM (억원)"].map(lambda x: f"{x:,.1f}억원")
-    st.dataframe(df_co_show, hide_index=True, use_container_width=True)
+    st.dataframe(df_co_show, hide_index=True, width="stretch")
 
     # 2034 완전시행 대비 증가배수 안내 (현재 연도가 이미 2034면 메시지 숨김)
     pi_now = phase_in(analysis_year)
@@ -2712,7 +2715,7 @@ with tabs[3]:
             "비고": opt["note"],
         })
     df_abate = pd.DataFrame(rows)
-    st.dataframe(df_abate, hide_index=True, use_container_width=True)
+    st.dataframe(df_abate, hide_index=True, width="stretch")
 
     # 4-C: CCS BEP — 자매 CCUS 도구의 모든 기술 평가 (Phase 2 live fetch)
     ccus_data, ccus_mode = load_ccus_metrics()
@@ -2765,7 +2768,7 @@ with tabs[3]:
         })
     df_bep = pd.DataFrame(bep_rows)
     df_bep = df_bep.sort_values("_net", ascending=False).drop(columns=["_net"])
-    st.dataframe(df_bep, hide_index=True, use_container_width=True)
+    st.dataframe(df_bep, hide_index=True, width="stretch")
 
     n_recommended = len(fit_techs)
     last_updated = ccus_data.get("last_updated", "n/a")
@@ -2878,7 +2881,7 @@ with tabs[3]:
         legend=dict(orientation="h", yanchor="bottom", y=-0.25, xanchor="center", x=0.5),
     )
     lock_static(fig_npv)
-    st.plotly_chart(fig_npv, use_container_width=True, config=PLOTLY_CONFIG)
+    st.plotly_chart(fig_npv, width="stretch", config=PLOTLY_CONFIG)
 
     if npv_result["npv_net_eur"] > 0:
         st.success(
@@ -2956,7 +2959,7 @@ with tabs[4]:
             "_coca": coca,
         })
     df_rec = pd.DataFrame(rec_rows).sort_values("_coca", ascending=True).drop(columns=["_coca"])
-    st.dataframe(df_rec, hide_index=True, use_container_width=True)
+    st.dataframe(df_rec, hide_index=True, width="stretch")
     n_recommended = len(fit_techs)
     st.caption(
         f"⭐ 표시: 현재 sector({sector['name']})에 적합한 기술 {n_recommended}개. "
@@ -3022,7 +3025,7 @@ with tabs[5]:
     fig_time.add_vline(x=2026, line_dash="dash", line_color=C_HIGH,
                       annotation_text="본격 시행 시작")
     lock_static(fig_time)
-    st.plotly_chart(fig_time, use_container_width=True, config=PLOTLY_CONFIG)
+    st.plotly_chart(fig_time, width="stretch", config=PLOTLY_CONFIG)
 
     # 회사별 연도별 부담 trajectory
     st.markdown(f"##### 📈 {company_name} — 연도별 CBAM 부담 추이")
@@ -3056,7 +3059,7 @@ with tabs[5]:
         margin=dict(l=10, r=10, t=50, b=30), showlegend=False,
     )
     lock_static(fig_traj)
-    st.plotly_chart(fig_traj, use_container_width=True, config=PLOTLY_CONFIG)
+    st.plotly_chart(fig_traj, width="stretch", config=PLOTLY_CONFIG)
 
     st.markdown(
         f"""
@@ -3099,7 +3102,7 @@ with tabs[6]:
                 "Annual (USD M)": f"${r['annual_cost_eur']/fx_eur_usd/1e6:.2f}M",
                 "Annual (억원)": f"{r['annual_cost_eur']*fx_eur_krw/1e8:.1f}억원",
             })
-        st.dataframe(pd.DataFrame(cust_rows), hide_index=True, use_container_width=True)
+        st.dataframe(pd.DataFrame(cust_rows), hide_index=True, width="stretch")
 
     st.markdown("---")
     st.markdown("##### ⚡ EUA 가격 민감도")
@@ -3143,7 +3146,7 @@ with tabs[6]:
         margin=dict(l=10, r=10, t=50, b=30),
     )
     lock_static(fig_sens)
-    st.plotly_chart(fig_sens, use_container_width=True, config=PLOTLY_CONFIG)
+    st.plotly_chart(fig_sens, width="stretch", config=PLOTLY_CONFIG)
 
 
 # ────────────── 탭 ⑧ 방법론 ──────────────
@@ -3191,8 +3194,8 @@ with tabs[7]:
 2. **Indirect emissions**: 시멘트·비료만 indirect 포함 (CBAM 규정). 본 도구는 단순화하여 sector별 평균 적용.
 3. **EUA 가격 변동성**: 매주 평균 변동. 본 도구는 사용자 슬라이더 + 자동 fetch 옵션 제공.
 4. **Free benchmark 갱신**: 2025년 IR 2025/2621 기준. 향후 EU 갱신 시 LIT 업데이트 필요.
-5. **Mark-up 진화**: 철강·시멘트·알루미늄 2026 10% → 2028 30%. 본 도구는 현재 10% 고정 (선택형으로 향후 확장).
-6. **K-ETS 차감**: 한국 K-ETS 보고배출량 차감 가능성은 본 도구에서 미반영. {ref_link("ME_K_ETS")} 참조.
+5. **Mark-up 진화**: 철강·시멘트·알루미늄 2026 10% → 2028 30%. 본 도구는 'EU Default 사용' 선택 시 분석 연도에 맞춰 자동 적용.
+6. **K-ETS 차감**: 사이드바에서 선택 적용 (Art.9). 차감액 = SEE × K-ETS 가격 × 차감 비율(기본 30%, 무상할당분 제외 가정)로 단순화 — 실제 인정액은 EU 이행규정·검증 결과에 따름. {ref_link("ME_K_ETS")} 참조.
 
 ##### 🔄 자동 데이터 갱신
 
@@ -3264,9 +3267,12 @@ with tabs[9]:
         st.info("⚠️ 뉴스 데이터를 불러올 수 없습니다 (`data/cbam_news.json` 미존재). "
                 "GitHub Actions의 `cbam_news_fetch.yml` workflow가 매월 1일 자동 fetch합니다.")
     else:
-        # 상태 안내 — 완전 자동화 모드 강조
+        # 상태 안내 — 수동 큐레이션 / 자동 수집 건수 구분
         n_total = len(news_items)
         n_high = len([n for n in news_items if n.get("importance") == "high"])
+        n_auto = len([n for n in news_items if n.get("auto_fetched")])
+        news_badge = (f"✍️ 수동 {n_total - n_auto} · 🤖 자동 {n_auto}" if n_auto
+                      else "✍️ 수동 큐레이션")
         st.markdown(
             f"""
 <div style='display: flex; gap: 14px; align-items: center; margin-bottom: 14px;
@@ -3279,7 +3285,7 @@ with tabs[9]:
     <span>⚠️ 중요도 high <strong style='color:#EF9A9A;'>{n_high}</strong>건</span>
     <span style='margin-left: auto; background: #1d2b22; color: #81C784;
                   font-size: 0.7rem; padding: 2px 8px; border-radius: 4px; font-weight: 500;'>
-        🤖 완전 자동화
+        {news_badge}
     </span>
 </div>
 """,
@@ -3314,26 +3320,24 @@ with tabs[9]:
             for it in filtered:
                 st.markdown(render_news_card(it, compact=False), unsafe_allow_html=True)
 
-        # 자동화 안내
+        # 수집 방식 안내
         st.markdown("---")
         st.markdown(
             """
-##### 🤖 완전 자동화 시스템
+##### 📰 수집 방식
 
-이 탭은 **사용자 개입 없이 매월 자동 갱신**됩니다:
+**수동 큐레이션 + 매월 자동 수집**으로 운영합니다:
 
 | 단계 | 동작 |
 |---|---|
-| 1 | 매월 1일 09:00 KST, GitHub Actions cron 자동 실행 |
-| 2 | EU Taxation & Customs CBAM 페이지 스크래핑 |
-| 3 | 카테고리 자동 분류 (제목 키워드 휴리스틱) |
-| 4 | 한글 제목 자동 생성 (단어 치환 — 약 50개 매핑) |
-| 5 | 모든 항목 `important: True`로 추가 (필터링 없이 즉시 표시) |
-| 6 | 12개월 초과 항목 자동 제거 |
-| 7 | repo에 commit + push → Streamlit Cloud 자동 재배포 |
+| 1 | 주요 공지는 직접 선별해 등록 (✍️ 수동 — 기간이 지나도 삭제하지 않음) |
+| 2 | 매월 1일 09:00 KST, GitHub Actions가 공식 소스에서 새 공지 수집 시도 |
+| 3 | 카테고리 자동 분류 (제목 키워드) + 한글 제목 자동 생성 (단어 치환) |
+| 4 | 자동 수집 항목(🤖)은 12개월 보존 후 정리 |
+| 5 | 새 항목이 들어온 경우에만 '마지막 갱신' 날짜가 바뀜 |
 
-**소스**: [EU Taxation & Customs CBAM](https://taxation-customs.ec.europa.eu/news_en?f%5B0%5D=topic%3A39)
-**한글 번역**: 영문 단어를 매핑된 한글로 부분 치환 (100% 자연스럽지 않을 수 있음).
+**자동 수집 소스**: [EU Taxation & Customs 뉴스 RSS](https://taxation-customs.ec.europa.eu/node/2/rss_en) · [EU Commission Press Corner](https://ec.europa.eu/commission/presscorner/) (CC BY 4.0)
+**한글 번역**: 자동 수집 항목은 영문 단어를 한글로 부분 치환 (100% 자연스럽지 않을 수 있음).
 정확한 의미는 원문 링크 클릭하여 확인.
 
 📝 큐레이션 제안: [GitHub issue](https://github.com/cafeon90-oss/CBAM_calculator/issues)
@@ -3376,11 +3380,11 @@ with tabs[10]:
         )
 
         # 다이어그램 표시 — st.markdown은 SVG sanitize 차단함
-        # 해결: components.html로 iframe 안에 SVG 임베드 (sanitizer 우회)
+        # 해결: st.iframe으로 iframe 안에 SVG 임베드 (sanitizer 우회)
         if svg_mode == "auto" and usage_svg:
             st.markdown("##### 📊 작동 메커니즘 다이어그램")
-            # SVG viewBox: 1100x720 (비율 1.528:1). 컨테이너 폭 ~700~900px일 때
-            # 자동 리사이즈하여 비율 유지. iframe height는 안전하게 800px + 스크롤.
+            # SVG viewBox: 1100x720 (비율 1.528:1). 컨테이너 폭에 맞춰
+            # 자동 리사이즈하여 비율 유지.
             svg_html = f"""
 <!DOCTYPE html>
 <html>
@@ -3413,8 +3417,8 @@ with tabs[10]:
 </body>
 </html>
 """
-            # SVG 비율(1.528) × Streamlit 컨텐츠 폭 → 충분한 height + 스크롤 X
-            components.html(svg_html, height=750, scrolling=False)
+            # 높이는 iframe 내용(폭에 맞춰 줄어든 SVG)에 맞춰 자동 조정
+            st.iframe(svg_html, height="content")
 
         # 본문 매뉴얼
         st.markdown(usage_md_for_streamlit)

@@ -1,11 +1,11 @@
 {
   "schema_version": "1.0",
-  "last_updated": "2026-09-01",
-  "last_fetched": "2026-09-01T02:37:22.110052Z",
-  "source": "manual_curation_seed",
-  "automation": "full",
+  "last_updated": "2026-09-14",
+  "last_fetched": "2026-09-14T17:48:26Z",
+  "source": "manual_curation",
+  "automation": "partial",
   "retention_months": 12,
-  "note": "EU CBAM 공식 위원회 + Eur-Lex의 주요 공지. 매월 1일 09:00 KST에 GitHub Actions가 자동 fetch (카테고리 자동 분류 + 한글 제목 자동 생성). 모든 항목 즉시 표시 (important=true).",
+  "note": "EU CBAM 공식 위원회 + Eur-Lex의 주요 공지. 수동 큐레이션 항목은 삭제하지 않음. 매월 1일 09:00 KST에 GitHub Actions가 새 공지 자동 수집을 시도하며(scripts/fetch_cbam_news.py), 자동 수집 항목(auto_fetched=true)만 12개월 보존. last_updated는 항목이 실제로 바뀐 날짜.",
   "sources": [
     {
       "name": "EU Taxation & Customs CBAM",
@@ -21,6 +21,110 @@
     }
   ],
   "items": [
+    {
+      "id": "european-commission-publishes-guidance-cbam-verifiers-and-accreditation-bodies-2026-08-24",
+      "date": "2026-08-24",
+      "category": "guidance",
+      "importance": "medium",
+      "important": true,
+      "title_ko": "EU 집행위, CBAM 검증기관·인정기구용 가이드 발행",
+      "title_en": "The European Commission publishes guidance for CBAM verifiers and accreditation bodies",
+      "summary_ko": "(The European Commission publishes guidance for CBAM verifiers and accreditation ...) — EU Taxation & Customs. 원문 클릭하여 상세 확인.",
+      "url": "https://taxation-customs.ec.europa.eu/news/european-commission-publishes-guidance-cbam-verifiers-and-accreditation-bodies-2026-08-24_en",
+      "source": "EU Taxation & Customs",
+      "auto_fetched": true
+    },
+    {
+      "id": "european-commission-publishes-series-guidance-documents-support-cbam-implementation-definitive-2026-08-14",
+      "date": "2026-08-14",
+      "category": "guidance",
+      "importance": "medium",
+      "important": true,
+      "title_ko": "EU 집행위, CBAM 본격 시행기 이행 지원 가이드 문서 시리즈 발행",
+      "title_en": "The European Commission publishes a series of guidance documents to support CBAM implementation in the definitive period",
+      "summary_ko": "(The European Commission publishes a series of guidance documents to support CBAM...) — EU Taxation & Customs. 원문 클릭하여 상세 확인.",
+      "url": "https://taxation-customs.ec.europa.eu/news/european-commission-publishes-series-guidance-documents-support-cbam-implementation-definitive-2026-08-14_en",
+      "source": "EU Taxation & Customs",
+      "auto_fetched": true
+    },
+    {
+      "id": "cbam-webinar-follow-become-cbam-verifier-all-about-accreditation-and-verification-2026-07-31",
+      "date": "2026-07-31",
+      "category": "other",
+      "importance": "medium",
+      "important": true,
+      "title_ko": "CBAM 웨비나 후속 자료 — ‘CBAM 검증기관 되기: 인정·검증 절차 총정리’",
+      "title_en": "CBAM webinar follow up: “Become a CBAM verifier: all about accreditation and verification”",
+      "summary_ko": "(CBAM webinar follow up: “Become a CBAM verifier: all about accreditation and ver...) — EU Taxation & Customs. 원문 클릭하여 상세 확인.",
+      "url": "https://taxation-customs.ec.europa.eu/news/cbam-webinar-follow-become-cbam-verifier-all-about-accreditation-and-verification-2026-07-31_en",
+      "source": "EU Taxation & Customs",
+      "auto_fetched": true
+    },
+    {
+      "id": "commission-welcomes-council-agreement-strengthening-cbam-2026-06-12",
+      "date": "2026-06-12",
+      "category": "negotiation",
+      "importance": "high",
+      "important": true,
+      "title_ko": "EU 집행위, CBAM 강화안에 대한 이사회 합의 환영",
+      "title_en": "Commission welcomes Council agreement on strengthening CBAM",
+      "summary_ko": "(Commission welcomes Council agreement on strengthening CBAM) — EU Taxation & Customs. 원문 클릭하여 상세 확인.",
+      "url": "https://taxation-customs.ec.europa.eu/news/commission-welcomes-council-agreement-strengthening-cbam-2026-06-12_en",
+      "source": "EU Taxation & Customs",
+      "auto_fetched": true
+    },
+    {
+      "id": "cbam-webinar-follow-how-make-your-decarbonisation-efforts-pay-2026-06-11",
+      "date": "2026-06-11",
+      "category": "other",
+      "importance": "medium",
+      "important": true,
+      "title_ko": "CBAM 웨비나 후속 자료 — ‘탈탄소 노력을 CBAM 부담 절감으로 연결하는 법’",
+      "title_en": "CBAM webinar follow up: “How to make your decarbonisation efforts pay off”",
+      "summary_ko": "(CBAM webinar follow up: “How to make your decarbonisation efforts pay off”) — EU Taxation & Customs. 원문 클릭하여 상세 확인.",
+      "url": "https://taxation-customs.ec.europa.eu/news/cbam-webinar-follow-how-make-your-decarbonisation-efforts-pay-2026-06-11_en",
+      "source": "EU Taxation & Customs",
+      "auto_fetched": true
+    },
+    {
+      "id": "technical-study-indirect-emissions-cbam-2026-06-08",
+      "date": "2026-06-08",
+      "category": "other",
+      "importance": "medium",
+      "important": true,
+      "title_ko": "CBAM 간접배출에 관한 기술 연구",
+      "title_en": "Technical Study on Indirect Emissions in the CBAM",
+      "summary_ko": "(Technical Study on Indirect Emissions in the CBAM) — EU Taxation & Customs. 원문 클릭하여 상세 확인.",
+      "url": "https://taxation-customs.ec.europa.eu/news/technical-study-indirect-emissions-cbam-2026-06-08_en",
+      "source": "EU Taxation & Customs",
+      "auto_fetched": true
+    },
+    {
+      "id": "carbon-price-paid-third-countries-2026-05-13",
+      "date": "2026-05-13",
+      "category": "proposal",
+      "importance": "high",
+      "important": true,
+      "title_ko": "제3국 지불 탄소가격의 CBAM 차감(Art.9) — 시행규정안 공개·의견수렴",
+      "title_en": "Carbon price paid in Third Countries",
+      "summary_ko": "(Carbon price paid in Third Countries) — EU Taxation & Customs. 원문 클릭하여 상세 확인.",
+      "url": "https://taxation-customs.ec.europa.eu/news/carbon-price-paid-third-countries-2026-05-13_en",
+      "source": "EU Taxation & Customs",
+      "auto_fetched": true
+    },
+    {
+      "id": "carbon-border-adjustment-mechanism-how-make-decarbonisation-efforts-pay-2026-05-07",
+      "date": "2026-05-07",
+      "category": "other",
+      "importance": "medium",
+      "important": true,
+      "title_ko": "CBAM: 탈탄소 노력을 부담 절감으로 연결하는 법",
+      "title_en": "CBAM: How to make decarbonisation efforts pay off",
+      "summary_ko": "(CBAM: How to make decarbonisation efforts pay off) — EU Taxation & Customs. 원문 클릭하여 상세 확인.",
+      "url": "https://taxation-customs.ec.europa.eu/carbon-border-adjustment-mechanism/carbon-border-adjustment-mechanism-how-make-decarbonisation-efforts-pay-2026-05-07_en",
+      "source": "EU Taxation & Customs",
+      "auto_fetched": true
+    },
     {
       "id": "2026-01-14-cbam-in-force",
       "date": "2026-01-14",
@@ -58,6 +162,45 @@
       "source": "EU Commission"
     },
     {
+      "id": "presscorner-speech_25_3107",
+      "date": "2025-12-17",
+      "category": "other",
+      "importance": "medium",
+      "important": true,
+      "title_ko": "청정산업딜 패키지(CBAM 포함) 기자회견 — 세주르네 수석부위원장·훅스트라 집행위원 발언",
+      "title_en": "Remarks by Executive Vice-President Séjourné and Commissioners Hoekstra at the press conference on the Clean Industrial Deal Package (including CBAM)",
+      "summary_ko": "(Remarks by Executive Vice-President Séjourné and Commissioners Hoekstra at the p...) — EU Commission Press Corner. 원문 클릭하여 상세 확인.",
+      "url": "https://ec.europa.eu/commission/presscorner/detail/en/speech_25_3107",
+      "source": "EU Commission Press Corner",
+      "auto_fetched": true
+    },
+    {
+      "id": "presscorner-ip_25_3088",
+      "date": "2025-12-16",
+      "category": "proposal",
+      "importance": "high",
+      "important": true,
+      "title_ko": "EU 집행위, CBAM 강화 방안 발표",
+      "title_en": "Commission strengthens the Carbon Border Adjustment Mechanism*",
+      "summary_ko": "(Commission strengthens the Carbon Border Adjustment Mechanism*) — EU Commission Press Corner. 원문 클릭하여 상세 확인.",
+      "url": "https://ec.europa.eu/commission/presscorner/detail/en/ip_25_3088",
+      "source": "EU Commission Press Corner",
+      "auto_fetched": true
+    },
+    {
+      "id": "presscorner-qanda_25_3089",
+      "date": "2025-12-16",
+      "category": "guidance",
+      "importance": "medium",
+      "important": true,
+      "title_ko": "CBAM 질의응답(Q&A) — EU 집행위",
+      "title_en": "Questions and answers on the Carbon Border Adjustment Mechanism (CBAM)",
+      "summary_ko": "(Questions and answers on the Carbon Border Adjustment Mechanism (CBAM)) — EU Commission Press Corner. 원문 클릭하여 상세 확인.",
+      "url": "https://ec.europa.eu/commission/presscorner/detail/en/qanda_25_3089",
+      "source": "EU Commission Press Corner",
+      "auto_fetched": true
+    },
+    {
       "id": "2025-11-default-values",
       "date": "2025-11-15",
       "category": "guidance",
@@ -92,12 +235,28 @@
       "summary_ko": "2025-02-26 제안 → 2025-06-18 정치적 합의 → 2025-09-29 최종 채택. 단순화 패키지 입법 절차 마무리.",
       "url": "https://icapcarbonaction.com/en/news/eu-adopts-simplifications-cbam-rules-ahead-compliance-phase-starting-2026",
       "source": "ICAP"
+    },
+    {
+      "id": "2025-06-18-political-agreement",
+      "date": "2025-06-18",
+      "category": "negotiation",
+      "importance": "medium",
+      "important": false,
+      "title_ko": "EU 의회·이사회, CBAM 단순화 정치적 합의 도달",
+      "title_en": "Political agreement reached on CBAM simplification",
+      "summary_ko": "2월 제안된 Omnibus 패키지에 대한 양 기관의 정치적 합의. 50t threshold·declaration 일정 등 핵심 조항 확정.",
+      "url": "https://taxation-customs.ec.europa.eu/carbon-border-adjustment-mechanism_en",
+      "source": "EU Council"
     }
   ],
   "fetch_log": [
     [
-      "eu_taxation_customs",
-      "err:HTTP Error 403: Forbidden"
+      "taxud_rss",
+      8
+    ],
+    [
+      "press_corner_rss",
+      5
     ]
   ]
 }
