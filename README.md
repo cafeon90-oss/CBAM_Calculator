@@ -24,6 +24,8 @@ CBAM cost = (SEE − Free EU benchmark × CBAM factor) × EUA × import volume  
 
 - **SEE** (Specific Embedded Emissions): 단위 제품당 내재 탄소배출량 [tCO₂/t]
 - **Phase-in factor**: 2026 2.5% → 2034 100% — benchmark분 무상할당 공제가 줄어드는 비율 (CBAM factor = 1 − phase-in, IR 2025/2620). benchmark 초과분은 2026년부터 전액 부과
+- **2026년 인증서 가격**: 분기별 EUA 경매 평균가(Q1 €75.36, Q2 €75.28) 반영, 2027년부터 EUA 주간 평균
+- **규제 시나리오**: 기본 현행법, 선택 시 2040 ETS 개편안(COM(2026) 616, 제안·미확정)과 비교
 - **EUA**: EU ETS 탄소배출권 가격 (€/tCO₂)
 - **Free benchmark**: EU 무상할당 벤치마크 (sector·공정별)
 

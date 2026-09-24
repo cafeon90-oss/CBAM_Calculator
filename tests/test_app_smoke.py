@@ -95,6 +95,28 @@ def test_eu_default_2034_with_kets_matches_calc(calc):
     assert _unit_kpi(at) == f"€{expected:.2f}/t"
 
 
+def test_reform_scenario_matches_calc(calc):
+    # 규제 시나리오 전환이 계산까지 전달되는지 (개편안 2034년 = 공제 15% 잔존)
+    at = _new_app()
+    at.radio(key="reg_scenario").set_value("reform_2040")
+    _by_label(at.sidebar.selectbox, "분석 연도").select(2034)
+    _run(at)
+    assert any("제안" in w.value for w in at.warning)
+    expected = calc.calc_unit_cbam(2.127, 1.370, _eua_price(), 2034,
+                                   scenario="reform_2040")["unit_cost_eur"]
+    assert _unit_kpi(at) == f"€{expected:.2f}/t"
+
+
+def test_switching_scenario_keeps_selected_year():
+    # 시나리오를 바꿔도 연도 선택이 2026으로 초기화되면 안 된다
+    at = _new_app()
+    _by_label(at.sidebar.selectbox, "분석 연도").select(2034)
+    _run(at)
+    at.radio(key="reg_scenario").set_value("reform_2040")
+    _run(at)
+    assert _by_label(at.sidebar.selectbox, "분석 연도").value == 2034
+
+
 @pytest.fixture(scope="module")
 def preset_app():
     return _new_app()

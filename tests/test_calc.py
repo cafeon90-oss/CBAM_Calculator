@@ -5,6 +5,7 @@
 
 CBAM 인증서 수 = SEE × (1 + mark-up) − benchmark × CBAM factor × CSCF  (음수면 0)
 CBAM factor = 1 − phase-in  (IR 2025/2620, 집행위 CBAM Q&A 3.7–3.8)
+인증서 가격 = 2026년분은 분기 평균(발표 Q1 €75.36·Q2 €75.28 + 미발표 분기는 EUA), 2027년~ EUA
 """
 import pytest
 
@@ -13,13 +14,14 @@ POSCO_SEE = 2.127
 BF_BOF_BENCHMARK = 1.370
 POSCO_EXPORT_T = 75.0 * 1e6 * 0.05   # 75 Mt × EU 수출 5% = 3.75 Mt
 EUA = 80.0
+PRICE_2026 = (75.36 + 75.28 + 2 * EUA) / 4   # €77.66 — 2026년분 인증서 가격
 
 FREE_2026 = BF_BOF_BENCHMARK * 0.975   # 1.33575 — 2026년 무상할당 공제
 FREE_2030 = BF_BOF_BENCHMARK * 0.515   # 0.70555
 
 
 # ── phase_in / cbam_factor: 현행법(Reg. 2023/956) 스케줄 고정 ─────────
-# 개편안 수치로 덮어쓰면 여기서 깨진다. 개편안은 별도 시나리오로 추가할 것.
+# 개편안 수치로 덮어쓰면 여기서 깨진다. 개편안은 scenario="reform_2040"으로만.
 CURRENT_LAW_SCHEDULE = {
     2026: 0.025, 2027: 0.05, 2028: 0.10, 2029: 0.225, 2030: 0.485,
     2031: 0.61, 2032: 0.735, 2033: 0.86, 2034: 1.00,
@@ -39,13 +41,53 @@ def test_phase_in_is_zero_before_2026_and_full_after_2034(calc):
     assert calc.cbam_factor(2050) == 0.0
 
 
-def test_phase_in_never_decreases(calc):
-    factors = [calc.phase_in(y) for y in range(2023, 2041)]
+@pytest.mark.parametrize("scenario", ["current", "reform_2040"])
+def test_phase_in_never_decreases(calc, scenario):
+    factors = [calc.phase_in(y, scenario) for y in range(2023, 2041)]
     assert factors == sorted(factors)
 
 
-def test_cscf_is_neutral_until_verified(calc):
+# ── 규제 시나리오: 2040 개편안 (COM(2026) 616, 제안) ─────────────────
+REFORM_SCHEDULE = {
+    2026: 0.025, 2027: 0.05, 2028: 0.085, 2029: 0.19, 2030: 0.41,
+    2031: 0.52, 2032: 0.625, 2033: 0.73, 2034: 0.85, 2037: 0.85, 2038: 1.0,
+}
+
+
+@pytest.mark.parametrize("year, factor", REFORM_SCHEDULE.items())
+def test_reform_scenario_schedule(calc, year, factor):
+    # CBAM factor 91.5%(2028) … 15%(2034~2037) → 0%(2038)
+    assert calc.phase_in(year, "reform_2040") == pytest.approx(factor)
+
+
+def test_current_law_is_the_default_scenario(calc):
+    assert calc.phase_in(2030) == calc.phase_in(2030, "current")
+    default = calc.calc_unit_cbam(POSCO_SEE, BF_BOF_BENCHMARK, EUA, 2030)
+    explicit = calc.calc_unit_cbam(POSCO_SEE, BF_BOF_BENCHMARK, EUA, 2030, scenario="current")
+    assert default == explicit
+
+
+def test_reform_leaves_15pct_allocation_in_2034(calc):
+    current = calc.calc_unit_cbam(POSCO_SEE, BF_BOF_BENCHMARK, EUA, 2034)
+    reform = calc.calc_unit_cbam(POSCO_SEE, BF_BOF_BENCHMARK, EUA, 2034, scenario="reform_2040")
+    assert current["unit_cost_eur"] == pytest.approx(170.16)
+    assert reform["free_allocation"] == pytest.approx(BF_BOF_BENCHMARK * 0.15)
+    assert reform["unit_cost_eur"] == pytest.approx((POSCO_SEE - BF_BOF_BENCHMARK * 0.15) * EUA)   # €153.72
+    target = calc.required_SEE_reduction(POSCO_SEE, BF_BOF_BENCHMARK, 2034, "reform_2040")["target"]
+    assert target == pytest.approx(0.2055)
+
+
+# ── CSCF · 인증서 가격 ───────────────────────────────────────────────
+def test_cscf_is_one_for_2026_2030(calc):
+    # 2026~2030은 교차부문 보정계수가 적용되지 않음 (COM(2026) 619)
     assert calc.CSCF == 1.0
+
+
+def test_certificate_price_2026_blends_published_quarters(calc):
+    assert calc.certificate_price(2026, EUA) == pytest.approx(PRICE_2026)   # €77.66
+    assert calc.certificate_price(2027, EUA) == EUA
+    r = calc.calc_unit_cbam(POSCO_SEE, BF_BOF_BENCHMARK, EUA, 2026)
+    assert r["cert_price"] == pytest.approx(PRICE_2026)
 
 
 # ── get_markup: IR 2025/2621 ─────────────────────────────────────────
@@ -61,12 +103,12 @@ def test_get_markup_schedule(calc, sector, year, expected):
 
 # ── calc_unit_cbam ───────────────────────────────────────────────────
 def test_posco_unit_cost_2026(calc):
-    # benchmark 초과분은 첫해부터 전액: (2.127 − 1.370 × 0.975) × 80
+    # benchmark 초과분은 첫해부터 전액: (2.127 − 1.370 × 0.975) × 2026년분 인증서 가격
     r = calc.calc_unit_cbam(POSCO_SEE, BF_BOF_BENCHMARK, EUA, 2026)
     assert r["phase_in"] == pytest.approx(0.025)
     assert r["free_allocation"] == pytest.approx(FREE_2026)
     assert r["obligation"] == pytest.approx(POSCO_SEE - FREE_2026)   # 0.79125 t/t
-    assert r["unit_cost_eur"] == pytest.approx(63.30)
+    assert r["unit_cost_eur"] == pytest.approx(0.79125 * PRICE_2026)   # ≈ €61.45
     assert r["gap"] == pytest.approx(0.757)
     assert r["below_benchmark"] is False
 
@@ -84,9 +126,9 @@ def test_full_phase_in_charges_all_embedded_emissions(calc):
 
 
 def test_matches_tti_korea_2026(calc):
-    # TTI Korea 2026: POSCO 2026년 gross €73.1/t (확정 전 benchmark 1.30, EUA €85)
+    # TTI Korea 2026: POSCO 2026년 gross €73.1/t (확정 전 benchmark 1.30, EUA €85 단일 가격)
     r = calc.calc_unit_cbam(POSCO_SEE, 1.30, 85.0, 2026)
-    assert r["gross_unit_cost_eur"] == pytest.approx(73.1, abs=0.05)
+    assert r["obligation"] * 85.0 == pytest.approx(73.1, abs=0.05)
 
 
 def test_markup_applies_to_embedded_emissions(calc):
@@ -95,7 +137,7 @@ def test_markup_applies_to_embedded_emissions(calc):
     assert r["effective_SEE"] == pytest.approx(POSCO_SEE * 1.3)
     assert r["unit_cost_eur"] == pytest.approx(POSCO_SEE * 1.3 * EUA)
     r = calc.calc_unit_cbam(POSCO_SEE, BF_BOF_BENCHMARK, EUA, 2026, mark_up_pct=10.0)
-    assert r["unit_cost_eur"] == pytest.approx((POSCO_SEE * 1.1 - FREE_2026) * EUA)
+    assert r["unit_cost_eur"] == pytest.approx((POSCO_SEE * 1.1 - FREE_2026) * PRICE_2026)
 
 
 @pytest.mark.parametrize("see", [0.5, 1.0, FREE_2026])
@@ -123,7 +165,7 @@ def test_kets_credit_is_subtracted_from_gross(calc):
 
 def test_kets_credit_never_makes_cost_negative(calc):
     r = calc.calc_unit_cbam(1.4, BF_BOF_BENCHMARK, EUA, 2026, k_ets_credit_eur=10.0)
-    assert r["gross_unit_cost_eur"] == pytest.approx((1.4 - FREE_2026) * EUA)   # €5.14
+    assert r["gross_unit_cost_eur"] == pytest.approx((1.4 - FREE_2026) * PRICE_2026)   # €4.99
     assert r["unit_cost_eur"] == 0.0
 
 
@@ -137,7 +179,7 @@ def test_kets_credit_amount(calc):
 def test_posco_annual_total_2026(calc):
     r = calc.calc_total_cbam(75.0, 5.0, POSCO_SEE, BF_BOF_BENCHMARK, EUA, 2026)
     assert r["eu_export_t"] == pytest.approx(POSCO_EXPORT_T)
-    assert r["annual_cost_eur"] == pytest.approx(63.30 * POSCO_EXPORT_T)   # ≈ €237M
+    assert r["annual_cost_eur"] == pytest.approx(0.79125 * PRICE_2026 * POSCO_EXPORT_T)   # ≈ €230M
 
 
 def test_annual_total_splits_gross_and_kets(calc):
@@ -170,7 +212,7 @@ def test_ccs_90_in_2026_removes_whole_cbam_for_posco(calc):
     # 2.127 × (1 − 0.9) = 0.213 < 공제 1.336 → CCS 후 CBAM 0
     r = calc.ccs_avoided_cbam(POSCO_SEE, BF_BOF_BENCHMARK, 0.90, EUA, 2026, POSCO_EXPORT_T)
     assert r["new_unit_cost"] == 0.0
-    assert r["avoided_unit"] == pytest.approx(63.30)
+    assert r["avoided_unit"] == pytest.approx(0.79125 * PRICE_2026)
     assert r["captured_co2_t"] == pytest.approx(POSCO_SEE * 0.90 * POSCO_EXPORT_T)
 
 
@@ -226,6 +268,13 @@ def test_bep_found_when_avoided_exceeds_cost(calc):
     # CAPEX $300/tpy(≈ €1,994M), OPEX $10/t → 누적 회피액이 2034년에 누적 비용을 넘는다
     r = _npv(calc, ccs_capex_usd_per_tpy=300.0, ccs_opex_usd_per_tco2=10.0)
     assert r["bep_year"] == 2034
+
+
+def test_reform_scenario_delays_npv_payback(calc):
+    # 개편안은 2034~2037년 공제가 남아 회피액이 줄어든다
+    current = _npv(calc)
+    reform = _npv(calc, scenario="reform_2040")
+    assert reform["npv_avoided_eur"] < current["npv_avoided_eur"]
 
 
 def test_bep_none_when_costs_never_recovered(calc):

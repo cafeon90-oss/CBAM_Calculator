@@ -8,12 +8,15 @@ import ast
 
 import pytest
 
-# calc_unit_cbam은 제외 — 탭 ① 개요는 sector별 한국 평균 비교라
+# calc_unit_cbam은 scenario만 필수 — 탭 ① 개요는 sector별 한국 평균 비교라
 # 기업별 K-ETS 차감을 의도적으로 넣지 않는다.
+# scenario(규제 시나리오)는 기본값이 현행법이라 빠뜨려도 에러가 안 나므로 반드시 여기서 잡는다.
 REQUIRED_ARGS = {
-    "calc_total_cbam": ("mark_up_pct", "k_ets_credit_eur"),
-    "ccs_avoided_cbam": ("mark_up_pct", "k_ets_credit_eur"),
-    "ccs_npv_analysis": ("mark_up_pct", "k_ets_credit_eur"),
+    "calc_total_cbam": ("mark_up_pct", "k_ets_credit_eur", "scenario"),
+    "ccs_avoided_cbam": ("mark_up_pct", "k_ets_credit_eur", "scenario"),
+    "ccs_npv_analysis": ("mark_up_pct", "k_ets_credit_eur", "scenario"),
+    "calc_unit_cbam": ("scenario",),
+    "required_SEE_reduction": ("scenario",),
 }
 
 
