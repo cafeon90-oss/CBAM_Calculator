@@ -16,6 +16,8 @@ APP_PATH = Path(__file__).resolve().parent.parent / "app.py"
 CALC_NAMES = (
     "PHASE_IN_FACTORS",
     "phase_in",
+    "cbam_factor",
+    "CSCF",
     "get_markup",
     "calc_unit_cbam",
     "calc_kets_credit",

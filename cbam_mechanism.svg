@@ -72,9 +72,9 @@
 <rect x="400" y="465" width="300" height="155" rx="6" fill="#1a2028" stroke="#9b8de8" stroke-width="1.5"/>
 <text x="550" y="490" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="13" font-weight="500" fill="#9b8de8">📐 CBAM cost 수식</text>
 
-<text x="420" y="515" font-family="ui-monospace, monospace" font-size="11" fill="#D4D8DD">Gross = (SEE − Free benchmark)</text>
-<text x="450" y="530" font-family="ui-monospace, monospace" font-size="11" fill="#D4D8DD">× Phase-in × EUA</text>
-<text x="450" y="545" font-family="ui-monospace, monospace" font-size="11" fill="#D4D8DD">× (1 + mark-up)</text>
+<text x="420" y="515" font-family="ui-monospace, monospace" font-size="11" fill="#D4D8DD">Gross = (SEE × (1 + mark-up)</text>
+<text x="450" y="530" font-family="ui-monospace, monospace" font-size="11" fill="#D4D8DD">− benchmark × CBAM factor)</text>
+<text x="450" y="545" font-family="ui-monospace, monospace" font-size="11" fill="#D4D8DD">× EUA   ※ factor = 1 − phase-in</text>
 
 <line x1="420" y1="556" x2="680" y2="556" stroke="#252b36" stroke-width="0.5"/>
 

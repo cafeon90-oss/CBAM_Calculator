@@ -6,12 +6,13 @@ EU CBAM (Carbon Border Adjustment Mechanism) 한국 기업 영향 계산기
   EU CBAM 본격 시행 (2026.1.1) 후 한국 주요 수출기업의 부담을 시뮬레이션하고,
   탄소감축 수단(CCS, DRI-H₂, EAF, RE100 등) 적용 시 회피 가능액을 계산.
 
-핵심 수식:
-  CBAM cost = (SEE − Free EU benchmark) × Phase-in factor × EUA × import volume
+핵심 수식 (IR 2025/2620):
+  CBAM cost = (SEE − Free EU benchmark × CBAM factor) × EUA × import volume
+  CBAM factor = 1 − Phase-in  (2026: 97.5% → 2034: 0%)
 
 지표 정의:
   SEE     [tCO₂/t]     Specific Embedded Emissions
-  Phase-in factor       2026: 2.5% → 2034: 100% (선형 ramp)
+  Phase-in factor       2026: 2.5% → 2034: 100% — benchmark분 무상할당 공제의 축소율
   Free benchmark         EU 무상할당 벤치마크 (sector·공정별 상이)
   EUA                    EU Emissions Allowance 가격 (€/tCO₂)
 
@@ -888,7 +889,7 @@ def tip(term: str, label: str = None) -> str:
 # ======================================================================
 # CBAM 핵심 상수 (EU Regulation 2023/956 + IR 2025/2621)
 # ======================================================================
-# Phase-in factor (CBAM이 부과하는 비율) — 2026~2034 ramp
+# Phase-in factor — benchmark분 무상할당 공제가 줄어드는 비율 (= 1 − CBAM factor), 2026~2034
 PHASE_IN_FACTORS = {
     2023: 0.0,    2024: 0.0,    2025: 0.0,
     2026: 0.025,  2027: 0.05,   2028: 0.10,
@@ -901,6 +902,17 @@ def phase_in(year: int) -> float:
     if year >= 2034:
         return 1.0
     return PHASE_IN_FACTORS.get(year, 0.0)
+
+
+def cbam_factor(year: int) -> float:
+    """CBAM factor (EU ETS Directive Art.10a) — EU 생산자에게 남는 무상할당 비율 = 1 − phase-in.
+    수입품은 benchmark × CBAM factor만큼 인증서를 공제받는다 (IR 2025/2620)."""
+    return 1.0 - phase_in(year)
+
+
+# 교차부문 보정계수 (Cross-Sectoral Correction Factor) — 무상할당 공제에 곱해진다.
+# 2026~2030 값을 아직 확인하지 못해 1.0으로 가정. 1보다 작으면 공제가 줄어 부담이 커진다.
+CSCF = 1.0
 
 
 # 한국 grid 배출계수 (간접 emissions 산정용, kgCO₂/kWh)
@@ -1170,7 +1182,7 @@ PRESETS = {
     },
     "kr_sk_h2_blue": {
         "label": "🇰🇷 SK E&S + CCS (Blue H₂, 100 kt/yr)",
-        "description": "SMR + CCS 90% — CBAM 부담 ~88% 회피",
+        "description": "SMR + CCS 90% — Gray H₂ 대비 CBAM 부담 대부분 회피",
         "sector_lit": "hydrogen_blue",
         "settings": {
             "annual_production_mt": 0.1,
@@ -1235,6 +1247,26 @@ REFS = {
                 "Applied: 1 Oct 2023 – 31 Dec 2025.",
         "url": "https://eur-lex.europa.eu/eli/reg_impl/2023/1773/oj",
         "used_for": "전이기간 (2023.10~2025.12) 분기별 보고",
+    },
+    "EU_IR_2025_2620": {
+        "cat": "regulation",
+        "date": "2025-12-16 (adopted) · applies from 2026-01-01",
+        "cite": "Commission Implementing Regulation (EU) 2025/2620 of 16 December 2025 — "
+                "calculation of the free allocation adjustment to the number of CBAM certificates "
+                "(Art. 31 of Reg. 2023/956): CBAM benchmark × CBAM factor × cross-sectoral "
+                "correction factor × quantity of goods.",
+        "url": "https://eur-lex.europa.eu/eli/reg_impl/2025/2620/oj",
+        "used_for": "무상할당 공제 = benchmark × CBAM factor — 핵심 계산식",
+    },
+    "EC_CBAM_QA": {
+        "cat": "regulation",
+        "date": "definitive period version (2026)",
+        "cite": "European Commission, Carbon Border Adjustment Mechanism (CBAM) Questions and Answers — "
+                "Q3.7 (certificates = embedded emissions − embedded free allocation − carbon price paid), "
+                "Q3.8 (free allocation adjustment), Q3.10 (carbon price paid in third countries), "
+                "Q4.32 (negative obligation set to zero).",
+        "url": "https://taxation-customs.ec.europa.eu/document/download/013fa763-5dce-4726-a204-69fec04d5ce2_en",
+        "used_for": "인증서 수 계산 순서·음수 0 처리·수출국 탄소가격 차감 원칙",
     },
     "EU_OMNIBUS_2025": {
         "cat": "regulation",
@@ -1548,15 +1580,15 @@ TOOLTIPS = {
         "■ 출처: ICE / EEX, Sandbag, GMK Center"
     ),
     "Phase-in": (
-        "CBAM Phase-in factor — 연도별 부과율\n"
+        "CBAM Phase-in — benchmark분 무상할당 공제가 줄어드는 비율\n"
         "■ 2026: 2.5%, 2027: 5%, 2028: 10%, 2029: 22.5%\n"
         "■ 2030: 48.5%, 2031: 61%, 2032: 73.5%, 2033: 86%, 2034: 100%\n"
-        "■ EU ETS Free Allowance phase-out과 mirror"
+        "■ 공제 = benchmark × (1 − phase-in). benchmark 초과분은 처음부터 전액 부과"
     ),
     "Free benchmark": (
         "EU Free Allocation Benchmark — EU 무상할당 기준값 [tCO₂/t]\n"
         "■ Sector·공정별 상위 10% 효율 평균 기반\n"
-        "■ 수입품 SEE가 이 값 초과시 그 차액에 CBAM 부과\n"
+        "■ 무상할당 공제 = benchmark × CBAM factor. SEE가 공제보다 크면 그 차이에 CBAM 부과\n"
         "■ 철강 BF-BOF: 1.370, DRI-EAF: 0.481, Scrap-EAF: 0.072 (HRC 기준)"
     ),
     "ETS": (
@@ -1566,9 +1598,9 @@ TOOLTIPS = {
         "■ CBAM은 EU ETS 가격을 기준값으로 사용"
     ),
     "Phase-in factor": (
-        "연도별 CBAM 적용 비율 (= 100% − Free allocation %)\n"
+        "연도별 phase-in (= 100% − CBAM factor)\n"
         "■ 2026 2.5%, 2030 48.5%, 2034 100%\n"
-        "■ Free benchmark 초과분에만 적용"
+        "■ benchmark분 무상할당 공제에만 적용 — benchmark 초과분은 전액 부과"
     ),
     "Embedded emissions": (
         "내재 배출량 — 제품 생산 과정에서 발생한 누적 CO₂\n"
@@ -1632,20 +1664,27 @@ def calc_unit_cbam(SEE: float, benchmark: float, eua_price_eur: float,
                    year: int, mark_up_pct: float = 0.0,
                    k_ets_credit_eur: float = 0.0) -> dict:
     """
-    단위 제품당 CBAM 부담.
+    단위 제품당 CBAM 부담 (IR 2025/2620, 집행위 CBAM Q&A 3.7–3.8).
+    인증서 수 = 내재배출 SEE×(1+mark-up) − 무상할당 공제 benchmark×CBAM factor×CSCF.
+    → benchmark 초과분은 2026년부터 전액 부과되고, phase-in으로 늘어나는 건
+      benchmark분 공제가 줄어드는 몫이다. 2034년부터는 내재배출 전량에 부과.
     k_ets_credit_eur: 한국 K-ETS 등 수출국 carbon price 차감액 (€/t product).
                      EU CBAM Reg 2023/956 Art.9에 따라 verified 지불액 차감 가능.
+    결과가 음수면 0 (제품별 — Q&A 4.32).
     """
     pi = phase_in(year)
-    gap = max(0.0, SEE - benchmark)
-    effective_SEE = gap * (1.0 + mark_up_pct / 100.0)
-    gross_unit_cost_eur = effective_SEE * pi * eua_price_eur
+    effective_SEE = SEE * (1.0 + mark_up_pct / 100.0)
+    free_allocation = benchmark * cbam_factor(year) * CSCF
+    obligation = max(0.0, effective_SEE - free_allocation)   # 인증서 수 [tCO₂/t product]
+    gross_unit_cost_eur = obligation * eua_price_eur
     # K-ETS 차감 (음수 방지)
     net_unit_cost_eur = max(0.0, gross_unit_cost_eur - k_ets_credit_eur)
     return {
-        "gap": gap,
+        "gap": max(0.0, SEE - benchmark),   # benchmark 초과분 (참고 지표)
         "phase_in": pi,
+        "free_allocation": free_allocation,
         "effective_SEE": effective_SEE,
+        "obligation": obligation,
         "gross_unit_cost_eur": gross_unit_cost_eur,
         "k_ets_credit_eur": k_ets_credit_eur,
         "unit_cost_eur": net_unit_cost_eur,    # K-ETS 차감 후
@@ -1682,11 +1721,14 @@ def calc_total_cbam(annual_production_mt: float, eu_export_share_pct: float,
     }
 
 
-def required_SEE_reduction(SEE: float, benchmark: float) -> dict:
-    if SEE <= benchmark:
-        return {"required": 0.0, "required_pct": 0.0, "already_zero": True}
-    gap = SEE - benchmark
+def required_SEE_reduction(SEE: float, benchmark: float, year: int) -> dict:
+    """해당 연도 CBAM을 0으로 만들려면 SEE를 무상할당 공제(benchmark × CBAM factor) 이하로."""
+    target = benchmark * cbam_factor(year) * CSCF
+    if SEE <= target:
+        return {"target": target, "required": 0.0, "required_pct": 0.0, "already_zero": True}
+    gap = SEE - target
     return {
+        "target": target,
         "required": gap,
         "required_pct": gap / SEE * 100.0,
         "already_zero": False,
@@ -2124,7 +2166,7 @@ with st.sidebar:
         options=list(range(2026, 2035)),
         index=0,
         format_func=lambda y: f"{y}년 (phase-in {phase_in(y)*100:.1f}%)",
-        help="CBAM phase-in factor 자동 적용. 2026: 2.5% → 2034: 100%",
+        help="phase-in만큼 benchmark분 무상할당 공제가 줄어듦. 2026: 2.5% → 2034: 100%(공제 0)",
     )
 
     # ─── Mark-up 자동 결정 (sector × year) ─────────────────────
@@ -2296,17 +2338,36 @@ unit_usd = result["unit_cost_eur"] / fx_eur_usd
 # 자동 인사이트 박스
 # ======================================================================
 gap_pct = (result["gap"] / max(user_SEE, 0.001)) * 100.0
-already_zero = result["below_benchmark"]
+already_zero = result["gross_unit_cost_eur"] == 0
 
 if already_zero:
+    # 무상할당 공제는 매년 줄어든다 — 부담이 처음 생기는 해를 함께 안내
+    first_cost_year = next(
+        (y for y in range(analysis_year + 1, 2035)
+         if result["effective_SEE"] > sector["eu_benchmark"] * cbam_factor(y) * CSCF),
+        None,
+    )
+    later_msg = (f" 다만 공제가 매년 줄어 <strong>{first_cost_year}년</strong>부터 부담이 생깁니다."
+                 if first_cost_year else "")
     insight_class = "good"
     insight_header = f"✓ {company_name} ({sector['name']})"
     insight_badge = f"<span class='good'>CBAM 0</span>"
     insight_msg = (
+        f"SEE <strong>{user_SEE:.3f}</strong> ≤ {analysis_year}년 무상할당 공제 "
+        f"<strong>{result['free_allocation']:.3f}</strong> {sector['unit']} "
+        f"(benchmark {sector['eu_benchmark']:.3f} × {cbam_factor(analysis_year)*100:.1f}%) — "
+        f"{analysis_year}년 CBAM 부담 없음.{later_msg}"
+    )
+elif result["gap"] == 0:
+    insight_class = "warn"
+    insight_header = f"⚠ {company_name}"
+    insight_badge = f"<span class='warn'>benchmark 이하</span>"
+    insight_msg = (
         f"SEE <strong>{user_SEE:.3f}</strong> ≤ benchmark "
-        f"<strong>{sector['eu_benchmark']:.3f}</strong> {sector['unit']} — "
-        f"{analysis_year}년 CBAM 부담 없음. 이 sector·공정은 한국 기업이 "
-        f"EU 시장에서 가질 수 있는 가장 강력한 경쟁우위입니다."
+        f"<strong>{sector['eu_benchmark']:.3f}</strong>이지만 {analysis_year}년 무상할당 공제가 "
+        f"{cbam_factor(analysis_year)*100:.1f}%로 줄어 연간 부담 "
+        f"<span class='warn'>{fmt_eur(result['annual_cost_eur'])}</span> "
+        f"(≈ {fmt_money(annual_usd, fx_usd_krw, currency_mode_key)}) 발생."
     )
 elif gap_pct < 20:
     insight_class = "warn"
@@ -2317,8 +2378,8 @@ elif gap_pct < 20:
         f"<strong>{sector['eu_benchmark']:.3f}</strong>. "
         f"{analysis_year}년 연간 부담 <span class='warn'>{fmt_eur(result['annual_cost_eur'])}</span> "
         f"(≈ {fmt_money(annual_usd, fx_usd_krw, currency_mode_key)}). "
-        f"<span class='warn'>에너지 효율 개선</span> · <span class='warn'>부분 CCS</span>로도 "
-        f"benchmark 이하 달성 가능."
+        f"benchmark 초과분은 전액 부과되므로 <span class='warn'>에너지 효율 개선</span> · "
+        f"<span class='warn'>부분 CCS</span>로 초과분부터 줄이는 게 효과적."
     )
 else:
     insight_class = "bad"
@@ -2403,20 +2464,21 @@ with col4:
 with st.expander("📖 KPI 정의 보기 (클릭)", expanded=False):
     st.markdown(
         f"""
-**연간 CBAM 부담** = (SEE − Free benchmark) × Phase-in × EUA × EU 수출량
+**연간 CBAM 부담** = (SEE × (1+mark-up) − benchmark × CBAM factor) × EUA × EU 수출량 − K-ETS 차감
 - 현재 SEE: **{user_SEE:.3f}** {sector['unit']}
-- EU benchmark: **{sector['eu_benchmark']:.3f}** {sector['unit']}
-- Gap: **{result['gap']:.3f}** ({gap_pct:.1f}%)
-- {analysis_year}년 phase-in: **{result['phase_in']*100:.1f}%**
+- EU benchmark: **{sector['eu_benchmark']:.3f}** {sector['unit']} (초과분 {result['gap']:.3f}, {gap_pct:.1f}%)
+- {analysis_year}년 무상할당 공제: **{result['free_allocation']:.3f}** (= benchmark × CBAM factor {cbam_factor(analysis_year)*100:.1f}%, phase-in {result['phase_in']*100:.1f}%)
+- 인증서 수: **{result['obligation']:.3f}** tCO₂/t
 - EUA: **€{eua_price:.0f}/tCO₂**
 - EU 수출량: **{result['eu_export_t']:,.0f} t/yr**
 
 **단위 제품당 CBAM** = unit cost (€/t) × FX
 **EU 수출가 인상률** = CBAM 단가 / 평균 수출가 × 100%
-**CCS 회피액** = (SEE − SEE×(1−η)) × phase-in × EUA × 수출량, η=90%
+**CCS 회피액** = CCS 도입 전후 CBAM 부담 차이 (포집률 η=90%)
 
 📚 출처:
 - {ref_link("EU_REG_2023_956", "EU Regulation 2023/956")} — CBAM 본법
+- {ref_link("EU_IR_2025_2620", "EU IR 2025/2620")} — 무상할당 공제 계산
 - {ref_link("EU_IR_2025_2621", "EU IR 2025/2621")} — Default values + benchmark
 - {ref_link("Climat_be_PhaseIn", "Phase-in factor table")}
 - {ref_link("EUROMETAL_Bench", "Steel benchmark 1.370/0.481/0.072")}
@@ -2518,7 +2580,8 @@ with tabs[0]:
                         f"단가 €/t ({analysis_year})", f"단가 $/t ({analysis_year})"]
     st.dataframe(df_show, hide_index=True, width="stretch")
     st.caption(
-        f"↑ {analysis_year}년 phase-in {phase_in(analysis_year)*100:.1f}% × EUA €{eua_price:.0f}/tCO₂ 적용. "
+        f"↑ {analysis_year}년 무상할당 공제 = benchmark × {cbam_factor(analysis_year)*100:.1f}% · "
+        f"EUA €{eua_price:.0f}/tCO₂ 적용. "
         f"Unit cost 내림차순 정렬 — 부담 큰 sector가 위."
     )
 
@@ -2659,16 +2722,16 @@ with tabs[2]:
     df_co_show["Annual CBAM (억원)"] = df_co_show["Annual CBAM (억원)"].map(lambda x: f"{x:,.1f}억원")
     st.dataframe(df_co_show, hide_index=True, width="stretch")
 
-    # 2034 완전시행 대비 증가배수 안내 (현재 연도가 이미 2034면 메시지 숨김)
+    # 2034년 안내 — 무상할당 공제가 0이 되면 내재배출 전량에 부과
     pi_now = phase_in(analysis_year)
     if pi_now < 1.0:
-        ratio_2034 = 1.0 / pi_now
-        ratio_msg = f"> 2034 완전 시행 시 **약 {ratio_2034:,.1f}배** 부담 증가 예상.\n"
+        ratio_msg = ("> 2034년에는 무상할당 공제가 0이 되어 **내재배출 전량**에 부과됩니다 "
+                     "(탭 ⑥에서 연도별 추이 확인).\n")
     else:
-        ratio_msg = "> 이미 2034 완전 시행 (phase-in 100%) 분석 중입니다.\n"
+        ratio_msg = "> 이미 2034 완전 시행(무상할당 공제 0%)으로 분석 중입니다.\n"
     st.markdown(
         f"""
-> 📌 위 표는 **{analysis_year}년 phase-in {pi_now*100:.1f}%** 적용.
+> 📌 위 표는 **{analysis_year}년 무상할당 공제 {cbam_factor(analysis_year)*100:.1f}%** (phase-in {pi_now*100:.1f}%) 적용.
 {ratio_msg}> 출처: {ref_link("KOTRA_CBAM")}, {ref_link("KCCI_SGI_22")}, {ref_link("InfluenceMap_KR_Steel")}
 """
     )
@@ -2681,17 +2744,18 @@ with tabs[3]:
     # 4-A: 역산
     st.markdown("##### 🎯 4-A. CBAM 부담 0으로 만들려면?")
 
-    req = required_SEE_reduction(user_SEE, sector["eu_benchmark"])
+    req = required_SEE_reduction(user_SEE, sector["eu_benchmark"], analysis_year)
     if req["already_zero"]:
         st.success(
-            f"✅ 현재 SEE {user_SEE:.3f} ≤ benchmark {sector['eu_benchmark']:.3f} — "
-            f"**CBAM 0** 이미 달성 중입니다."
+            f"✅ 현재 SEE {user_SEE:.3f} ≤ {analysis_year}년 무상할당 공제 {req['target']:.3f} — "
+            f"**CBAM 0** 이미 달성 중입니다. 공제는 매년 줄어 2034년에는 0이 됩니다."
         )
     else:
         st.markdown(
             f"""
 - 현재 SEE: <strong>{user_SEE:.3f}</strong> {sector['unit']}
-- EU benchmark: <strong>{sector['eu_benchmark']:.3f}</strong> {sector['unit']}
+- {analysis_year}년 무상할당 공제: <strong>{req['target']:.3f}</strong> {sector['unit']}
+  (= benchmark {sector['eu_benchmark']:.3f} × CBAM factor {cbam_factor(analysis_year)*100:.1f}%)
 - 필요 감축량: <strong style='color:{C_BAD}'>{req['required']:.3f}</strong>
   (= <strong style='color:{C_BAD}'>−{req['required_pct']:.1f}%</strong>)
 """,
@@ -2705,12 +2769,12 @@ with tabs[3]:
     for opt in ABATEMENT_OPTIONS:
         applies = sector_lit in opt["applies_to"]
         new_SEE = max(0.0, user_SEE * (1.0 - opt["reduction_pct"] / 100.0))
-        achieves = new_SEE <= sector["eu_benchmark"]
+        achieves = new_SEE <= req["target"]
         rows.append({
             "수단": opt["label"],
             "감축율": f"-{opt['reduction_pct']:.0f}%",
             "잔존 SEE": f"{new_SEE:.3f}",
-            "CBAM 0 달성": "✅" if achieves else "❌",
+            f"CBAM 0 ({analysis_year})": "✅" if achieves else "❌",
             "Sector 적합": "✅" if applies else "△",
             "TRL": opt["trl"],
             "비고": opt["note"],
@@ -3004,11 +3068,11 @@ with tabs[5]:
 
     fig_time = go.Figure()
     fig_time.add_trace(go.Bar(
-        x=years, y=factors, name="CBAM 부과율 (%)",
+        x=years, y=factors, name="Phase-in (%)",
         marker_color=C_BAD, text=[f"{f:.1f}%" for f in factors], textposition="outside",
     ))
     fig_time.add_trace(go.Scatter(
-        x=years, y=free_alloc, name="Free allocation (%)",
+        x=years, y=free_alloc, name="CBAM factor — 무상할당 공제 (%)",
         mode="lines+markers", line=dict(color=C_GOOD, width=3),
         yaxis="y2",
     ))
@@ -3016,8 +3080,8 @@ with tabs[5]:
         title="EU CBAM Phase-in vs Free Allowance Phase-out",
         template="plotly_dark", height=460,
         paper_bgcolor=C_BG, plot_bgcolor=C_BG,
-        yaxis=dict(title="CBAM 부과율 (%)", range=[0, 110]),
-        yaxis2=dict(title="Free allocation (%)", overlaying="y", side="right", range=[0, 110]),
+        yaxis=dict(title="Phase-in (%)", range=[0, 110]),
+        yaxis2=dict(title="무상할당 공제 (%)", overlaying="y", side="right", range=[0, 110]),
         legend=dict(orientation="h", yanchor="bottom", y=-0.18),
         margin=dict(l=10, r=10, t=50, b=60),
     )
@@ -3064,7 +3128,7 @@ with tabs[5]:
 
     st.markdown(
         f"""
-> 📌 **변곡점 2030**: phase-in 22.5% → 48.5% (2배 이상 급증). 한국 기업의 본격 충격 시점.
+> 📌 benchmark 초과분은 **2026년부터 전액** 부과됩니다. **변곡점 2030**: 무상할당 공제가 77.5% → 51.5%로 크게 줄어 부담이 가파르게 늘고, 2034년에는 공제 0 → 내재배출 전량 부과.
 > 출처: {ref_link("Climat_be_PhaseIn")}, {ref_link("ICAP_CBAM_2026")}, {ref_link("Coolset_CBAM")}
 """
     )
@@ -3098,6 +3162,7 @@ with tabs[6]:
             cust_rows.append({
                 "Year": y,
                 "Phase-in": f"{phase_in(y)*100:.1f}%",
+                "무상할당 공제": f"{cbam_factor(y)*100:.1f}%",
                 "Unit cost (€/t)": f"€{r['unit_cost_eur']:.2f}",
                 "Annual (€M)": f"€{r['annual_cost_eur']/1e6:.2f}M",
                 "Annual (USD M)": f"${r['annual_cost_eur']/fx_eur_usd/1e6:.2f}M",
@@ -3159,11 +3224,13 @@ with tabs[7]:
 ##### 🧮 핵심 수식
 
 ```
-[Step 1] Gap 계산
-  Gap [tCO₂/t] = max(0, SEE - EU_benchmark)
+[Step 1] 인증서 수 (제품 1톤당)
+  Free_alloc [tCO₂/t] = EU_benchmark × CBAM_factor(연도) × CSCF
+  CBAM_factor = 1 − Phase_in   (2026 97.5% → 2030 51.5% → 2034 0%)
+  Obligation [tCO₂/t] = max(0, SEE × (1 + markup) − Free_alloc)
 
 [Step 2] 단위 제품당 CBAM 부담
-  Unit_cost [€/t] = Gap × (1 + markup) × Phase_in × EUA
+  Unit_cost [€/t] = max(0, Obligation × EUA − K-ETS 차감)
 
 [Step 3] 연간 부담
   Annual [€/yr] = Unit_cost × Annual_Production × EU_share
@@ -3173,13 +3240,17 @@ with tabs[7]:
   KRW = USD × FX(KRW/USD)
 ```
 
+> benchmark 초과분은 **2026년부터 전액** 부과되고, phase-in으로 늘어나는 건 benchmark분에 대한 무상할당 공제가 줄어드는 몫입니다.
+> 근거: {ref_link("EU_IR_2025_2620", "IR 2025/2620")}, {ref_link("EC_CBAM_QA", "집행위 CBAM Q&A 3.7–3.8")}
+
 ##### 📐 핵심 가정
 
 | 항목 | 값 | 출처 |
 |---|---|---|
-| Phase-in factor (2026) | 2.5% | {ref_link("Climat_be_PhaseIn")} |
-| Phase-in factor (2030) | 48.5% | 동일 |
-| Phase-in factor (2034) | 100% | 동일 |
+| CBAM factor — 무상할당 공제 (2026) | 97.5% (phase-in 2.5%) | {ref_link("Climat_be_PhaseIn")} |
+| CBAM factor (2030) | 51.5% (phase-in 48.5%) | 동일 |
+| CBAM factor (2034) | 0% (phase-in 100%) | 동일 |
+| CSCF (교차부문 보정계수) | 1.0 (가정) | {ref_link("EU_IR_2025_2620")} |
 | EUA 가격 (default) | €80/tCO₂ | {ref_link("EEX_EUA")} (2025-2026 평균) |
 | Mark-up (default 사용 시) | 10% (2026~2027) | {ref_link("EU_IR_2025_2621")} |
 | Steel BF-BOF benchmark | 1.370 | {ref_link("EUROMETAL_Bench")} |
@@ -3197,6 +3268,7 @@ with tabs[7]:
 4. **Free benchmark 갱신**: 2025년 IR 2025/2621 기준. 향후 EU 갱신 시 LIT 업데이트 필요.
 5. **Mark-up 진화**: 철강·시멘트·알루미늄 2026 10% → 2028 30%. 본 도구는 'EU Default 사용' 선택 시 분석 연도에 맞춰 자동 적용.
 6. **K-ETS 차감**: 사이드바에서 선택 적용 (Art.9). 차감액 = SEE × K-ETS 가격 × 차감 비율(기본 30%, 무상할당분 제외 가정)로 단순화 — 실제 인정액은 EU 이행규정·검증 결과에 따름. {ref_link("ME_K_ETS")} 참조.
+7. **CSCF 미반영**: 2026~2030 교차부문 보정계수 값을 확인하지 못해 1.0으로 가정. 1보다 작으면 공제가 줄어 부담이 커짐.
 
 ##### 🔄 자동 데이터 갱신
 

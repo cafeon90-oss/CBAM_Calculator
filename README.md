@@ -19,11 +19,11 @@ EU CBAM (Carbon Border Adjustment Mechanism, 탄소국경조정제도)이 **2026
 ### 핵심 수식
 
 ```
-CBAM cost = (SEE − Free EU benchmark) × Phase-in factor × EUA × import volume
+CBAM cost = (SEE − Free EU benchmark × CBAM factor) × EUA × import volume    # CBAM factor = 1 − Phase-in
 ```
 
 - **SEE** (Specific Embedded Emissions): 단위 제품당 내재 탄소배출량 [tCO₂/t]
-- **Phase-in factor**: 2026 2.5% → 2034 100% (선형 ramp)
+- **Phase-in factor**: 2026 2.5% → 2034 100% — benchmark분 무상할당 공제가 줄어드는 비율 (CBAM factor = 1 − phase-in, IR 2025/2620). benchmark 초과분은 2026년부터 전액 부과
 - **EUA**: EU ETS 탄소배출권 가격 (€/tCO₂)
 - **Free benchmark**: EU 무상할당 벤치마크 (sector·공정별)
 
@@ -144,11 +144,11 @@ The **EU CBAM (Carbon Border Adjustment Mechanism)** entered its definitive phas
 ### Core Formula
 
 ```
-CBAM cost = (SEE − Free EU benchmark) × Phase-in factor × EUA × import volume
+CBAM cost = (SEE − Free EU benchmark × CBAM factor) × EUA × import volume    # CBAM factor = 1 − Phase-in
 ```
 
 - **SEE** (Specific Embedded Emissions) — tCO₂ per ton of product
-- **Phase-in factor** — ramps from 2.5% in 2026 to 100% in 2034
+- **Phase-in factor** — 2.5% in 2026 → 100% in 2034; it phases out the free-allocation deduction on the benchmark share (CBAM factor = 1 − phase-in, IR 2025/2620). Emissions above the benchmark are charged in full from 2026
 - **EUA** — EU ETS allowance price (€/tCO₂)
 - **Free benchmark** — EU free allocation benchmark per sector/process
 
