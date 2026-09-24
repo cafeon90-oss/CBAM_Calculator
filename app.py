@@ -1494,9 +1494,10 @@ REFS = {
     },
     "ME_K_ETS": {
         "cat": "report",
-        "date": "2024 (운영 현황)",
+        "date": "2024 (운영 현황) · 가격 2026-09",
         "cite": "환경부 (2024). 「온실가스 배출권의 할당 및 거래에 관한 법률」 K-ETS 운영 현황. "
-                "K-ETS 가격 ~₩7,000~10,000/tCO₂ (2024-2025).",
+                "K-ETS(KAU25) 가격: 2026-08-20 종가 ₩30,100, 2026-09-07 ₩29,950/tCO₂ "
+                "(한국거래소; 4차 계획기간 할당 강화로 1년 새 약 3.5배).",
         "url": "https://www.law.go.kr/",
         "used_for": "K-ETS 가격 (CBAM 차감 가능성)",
     },
@@ -1561,7 +1562,7 @@ TOOLTIPS = {
     "ETS": (
         "Emissions Trading System — 배출권 거래제\n"
         "■ EU ETS: EUA 거래\n"
-        "■ K-ETS: 한국 배출권 거래제 (₩7~10천/tCO₂)\n"
+        "■ K-ETS: 한국 배출권 거래제 (2026-09 약 ₩3만/tCO₂)\n"
         "■ CBAM은 EU ETS 가격을 기준값으로 사용"
     ),
     "Phase-in factor": (
@@ -2149,8 +2150,8 @@ with st.sidebar:
         kets_price_krw = st.number_input(
             "K-ETS 가격 (₩/tCO₂)",
             min_value=1000, max_value=50000,
-            value=8000, step=500,
-            help="K-ETS 시장 가격. 2024-2025 평균 ~₩7,000~10,000.",
+            value=30000, step=500,
+            help="K-ETS 시장 가격(KAU25). 2026-09 기준 약 ₩30,000 (8/20 종가 ₩30,100, 1년 전 ₩8,000대).",
         )
         kets_credit_share = st.slider(
             "Verified 차감 비율 (%)",
@@ -2167,7 +2168,7 @@ with st.sidebar:
         st.caption(f"📌 차감액: **€{k_ets_credit_eur:.2f}/t product**")
     else:
         k_ets_credit_eur = 0.0
-        kets_price_krw = 8000
+        kets_price_krw = 30000
         kets_credit_share = 0
 
     st.markdown("---")
