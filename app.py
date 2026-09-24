@@ -1945,6 +1945,7 @@ with st.sidebar:
 
     if "preset_select" not in st.session_state:
         st.session_state["preset_select"] = "kr_posco_BF"
+        apply_preset()   # 첫 화면에도 기본 프리셋 값(회사명 등)을 채운다
 
     preset_choice = st.selectbox(
         "프리셋 선택",
@@ -2001,10 +2002,10 @@ with st.sidebar:
     )
     sector = LIT[sector_lit]
 
-    # 회사명 (자동·직접 입력)
+    # 회사명 (자동·직접 입력) — key 위젯은 session_state로만 값을 준다 (value= 동시 지정 시 경고)
+    st.session_state.setdefault("company_name", "Custom Company")
     company_name = st.text_input(
         "회사명 (선택)",
-        value=st.session_state.get("company_name", "Custom Company"),
         key="company_name",
         help="결과·차트에 표시될 라벨",
     )
@@ -2016,10 +2017,10 @@ with st.sidebar:
     else:
         prod_unit_label = "Mt/yr (백만톤)"
         prod_unit_caption = "t/yr"
+    st.session_state.setdefault("annual_production_mt", 75.0)
     annual_production_mt = st.number_input(
         f"연 생산량 ({prod_unit_label})",
         min_value=0.001, max_value=500.0,
-        value=float(st.session_state.get("annual_production_mt", 75.0)),
         step=0.1, format="%.3f",
         key="annual_production_mt",
         help=("단위: 백만 톤(Mt). 전력 sector의 경우 GWh로 입력 "
@@ -2039,10 +2040,10 @@ with st.sidebar:
         st.caption(f"≈ {annual_production_mt * 1e6:,.0f} {prod_unit_caption}")
 
     # EU 수출 비중
+    st.session_state.setdefault("eu_export_share_pct", 5.0)
     eu_export_share_pct = st.number_input(
         "EU 수출 비중 (%)",
         min_value=0.0, max_value=100.0,
-        value=float(st.session_state.get("eu_export_share_pct", 5.0)),
         step=0.5, format="%.2f",
         key="eu_export_share_pct",
         help="총 생산량 중 EU 수출분 비율 (0 ~ 100). CBAM 부과 대상 base.",
@@ -2069,10 +2070,10 @@ with st.sidebar:
         mark_up_pct = 0.0
         st.caption(f"🇰🇷 한국 평균 {user_SEE:.3f} {sector['unit']} (출처 link 참조)")
     else:
+        st.session_state.setdefault("user_SEE", float(sector["kr_avg_SEE"]))
         user_SEE = st.number_input(
             f"Verified SEE ({sector['unit']})",
             min_value=0.0, max_value=20.0,
-            value=float(st.session_state.get("user_SEE", sector["kr_avg_SEE"])),
             step=0.01, format="%.3f",
             key="user_SEE",
             help="제3자 검증된 자체 SEE 데이터. CBAM 본격 시행 후 의무.",

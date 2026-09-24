@@ -57,6 +57,13 @@ def test_default_run_renders_all_tabs(app):
     assert len(app.tabs) == TAB_COUNT
 
 
+def test_first_screen_uses_default_preset(app):
+    # 첫 화면에서도 기본 프리셋(POSCO) 값이 채워져야 한다 ("Custom Company" 버그)
+    assert app.text_input(key="company_name").value == "POSCO"
+    box = next(m.value for m in app.markdown if "class='insight-box" in m.value)
+    assert "POSCO" in box
+
+
 def test_default_kpi_matches_calc(app, calc):
     # 기본 화면 = POSCO 프리셋 · Verified SEE 2.127 · 2026년 · mark-up 0 · K-ETS 미적용
     expected = calc.calc_unit_cbam(2.127, 1.370, _eua_price(), 2026)["unit_cost_eur"]
