@@ -2107,14 +2107,14 @@ with st.sidebar:
     fx_eur_usd = st.number_input(
         "환율 (USD/EUR)",
         min_value=0.8, max_value=1.5,
-        value=1.08, step=0.01, format="%.3f",
-        help="2025-2026 평균 추정. 본인 회계 환율로 수정 가능.",
+        value=1.138, step=0.01, format="%.3f",
+        help="2026-09-24 시장 환율 기준 (≈ 1.138). 본인 회계 환율로 수정 가능.",
     )
     fx_usd_krw = st.number_input(
         "환율 (KRW/USD)",
         min_value=800, max_value=2000,
-        value=1400, step=10,
-        help="2025-2026 평균 추정. 본인 헤지/회계 환율로 수정 가능.",
+        value=1370, step=10,
+        help="2026-09-24 시장 환율 기준 (≈ 1,370). 본인 헤지/회계 환율로 수정 가능.",
     )
     fx_eur_krw = fx_eur_usd * fx_usd_krw   # 파생값
 
