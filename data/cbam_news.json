@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0",
-  "last_updated": "2026-09-14",
-  "last_fetched": "2026-09-14T18:20:50Z",
+  "last_updated": "2026-10-01",
+  "last_fetched": "2026-10-01T03:05:59Z",
   "source": "manual_curation",
   "automation": "partial",
   "retention_months": 12,
@@ -21,6 +21,45 @@
     }
   ],
   "items": [
+    {
+      "id": "cbam-de-minimis-threshold-assessment-2026-09-30",
+      "date": "2026-09-30",
+      "category": "other",
+      "importance": "medium",
+      "important": true,
+      "title_ko": "CBAM De Minimis Threshold Assessment",
+      "title_en": "CBAM De Minimis Threshold Assessment",
+      "summary_ko": "(CBAM De Minimis Threshold Assessment) — EU Taxation & Customs. 원문 클릭하여 상세 확인.",
+      "url": "https://taxation-customs.ec.europa.eu/news/cbam-de-minimis-threshold-assessment-2026-09-30_en",
+      "source": "EU Taxation & Customs",
+      "auto_fetched": true
+    },
+    {
+      "id": "webinar-follow-cbam-policy-practice-emissions-calculation-declarations-and-certificates-2026-09-30",
+      "date": "2026-09-30",
+      "category": "other",
+      "importance": "medium",
+      "important": true,
+      "title_ko": "Webinar follow up: “CBAM: from policy to practice - emissions calculation, declarations, and certificates”",
+      "title_en": "Webinar follow up: “CBAM: from policy to practice - emissions calculation, declarations, and certificates”",
+      "summary_ko": "(Webinar follow up: “CBAM: from policy to practice - emissions calculation, decla...) — EU Taxation & Customs. 원문 클릭하여 상세 확인.",
+      "url": "https://taxation-customs.ec.europa.eu/news/webinar-follow-cbam-policy-practice-emissions-calculation-declarations-and-certificates-2026-09-30_en",
+      "source": "EU Taxation & Customs",
+      "auto_fetched": true
+    },
+    {
+      "id": "new-resources-available-cbam-verifiers-2026-09-28",
+      "date": "2026-09-28",
+      "category": "other",
+      "importance": "medium",
+      "important": true,
+      "title_ko": "New resources available for CBAM verifiers",
+      "title_en": "New resources available for CBAM verifiers",
+      "summary_ko": "(New resources available for CBAM verifiers) — EU Taxation & Customs. 원문 클릭하여 상세 확인.",
+      "url": "https://taxation-customs.ec.europa.eu/news/new-resources-available-cbam-verifiers-2026-09-28_en",
+      "source": "EU Taxation & Customs",
+      "auto_fetched": true
+    },
     {
       "id": "european-commission-publishes-guidance-cbam-verifiers-and-accreditation-bodies-2026-08-24",
       "date": "2026-08-24",
@@ -252,7 +291,7 @@
   "fetch_log": [
     [
       "taxud_rss",
-      8
+      10
     ],
     [
       "press_corner_rss",
