@@ -934,8 +934,8 @@ def cbam_factor(year: int, scenario: str = "current") -> float:
 CSCF = 1.0
 
 # 2026년분 CBAM 인증서 가격 = 분기별 EUA 경매 평균가 (집행위 발표, €/tCO₂).
-# 미발표 분기는 사이드바 EUA 입력값을 쓴다. Q3는 2026-10-05, Q4는 2027-01-04 발표 예정.
-CBAM_CERT_PRICE_2026 = {"Q1": 75.36, "Q2": 75.28}
+# 미발표 분기는 사이드바 EUA 입력값을 쓴다. Q4는 2027-01-04 발표 예정 → 발표되면 추가.
+CBAM_CERT_PRICE_2026 = {"Q1": 75.36, "Q2": 75.28, "Q3": 82.32}
 
 
 def certificate_price(year: int, eua_price_eur: float) -> float:
@@ -1321,9 +1321,9 @@ REFS = {
     },
     "EC_CBAM_PRICE": {
         "cat": "regulation",
-        "date": "Q1 2026 published 2026-04-07 · Q2 2026 published 2026-07-06",
+        "date": "Q1 2026 published 2026-04-07 · Q2 2026-07-06 · Q3 2026-10-05",
         "cite": "European Commission, Price of CBAM certificates — 2026: quarterly volume-weighted "
-                "average of EUA auction prices (Q1 €75.36, Q2 €75.28 per tCO₂e; Q3 due 2026-10-05, "
+                "average of EUA auction prices (Q1 €75.36, Q2 €75.28, Q3 €82.32 per tCO₂e; "
                 "Q4 due 2027-01-04). From 2027: weekly average.",
         "url": "https://taxation-customs.ec.europa.eu/carbon-border-adjustment-mechanism/price-cbam-certificates_en",
         "used_for": "2026년분 인증서 가격 (분기 평균)",
@@ -1586,9 +1586,10 @@ REFS = {
     },
     "ME_K_ETS": {
         "cat": "report",
-        "date": "2024 (운영 현황) · 가격 2026-09",
+        "date": "2024 (운영 현황) · 가격 2026-10",
         "cite": "환경부 (2024). 「온실가스 배출권의 할당 및 거래에 관한 법률」 K-ETS 운영 현황. "
-                "K-ETS(KAU25) 가격: 2026-08-20 종가 ₩30,100, 2026-09-07 ₩29,950/tCO₂ "
+                "K-ETS 가격: KAU25 2026-08-20 종가 ₩30,100 · 9/7 ₩29,950, "
+                "KAU26 2026-09-23 ₩30,150 · 10/2 ₩29,600/tCO₂ "
                 "(한국거래소; 4차 계획기간 할당 강화로 1년 새 약 3.5배).",
         "url": "https://www.law.go.kr/",
         "used_for": "K-ETS 가격 (CBAM 차감 가능성)",
@@ -1654,7 +1655,7 @@ TOOLTIPS = {
     "ETS": (
         "Emissions Trading System — 배출권 거래제\n"
         "■ EU ETS: EUA 거래\n"
-        "■ K-ETS: 한국 배출권 거래제 (2026-09 약 ₩3만/tCO₂)\n"
+        "■ K-ETS: 한국 배출권 거래제 (2026-10 약 ₩3만/tCO₂)\n"
         "■ CBAM은 EU ETS 가격을 기준값으로 사용"
     ),
     "Phase-in factor": (
@@ -2292,7 +2293,7 @@ with st.sidebar:
             "K-ETS 가격 (₩/tCO₂)",
             min_value=1000, max_value=50000,
             value=30000, step=500,
-            help="K-ETS 시장 가격(KAU25). 2026-09 기준 약 ₩30,000 (8/20 종가 ₩30,100, 1년 전 ₩8,000대).",
+            help="K-ETS 시장 가격(KAU26). 2026-10 기준 약 ₩30,000 (10/2 종가 ₩29,600, 1년 전 ₩8,000대).",
         )
         kets_credit_share = st.slider(
             "Verified 차감 비율 (%)",
@@ -3355,7 +3356,7 @@ with tabs[7]:
 | CBAM factor (2030) | 51.5% (phase-in 48.5%) | 동일 |
 | CBAM factor (2034) | 0% (phase-in 100%) | 동일 |
 | CSCF (교차부문 보정계수) | 1.0 (2026~2030 미적용) | {ref_link("EU_COM_2026_619")} |
-| 인증서 가격 (2026년분) | Q1 €75.36 · Q2 €75.28 (미발표 분기는 EUA) | {ref_link("EC_CBAM_PRICE")} |
+| 인증서 가격 (2026년분) | Q1 €75.36 · Q2 €75.28 · Q3 €82.32 (Q4는 EUA) | {ref_link("EC_CBAM_PRICE")} |
 | EUA 가격 (2027~ 가정) | 자동 fetch (주 1회) | {ref_link("EEX_EUA")} |
 | Mark-up (default 사용 시) | 10% (2026~2027) | {ref_link("EU_IR_2025_2621")} |
 | Steel BF-BOF benchmark | 1.370 | {ref_link("EUROMETAL_Bench")} |

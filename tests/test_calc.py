@@ -5,7 +5,7 @@
 
 CBAM 인증서 수 = SEE × (1 + mark-up) − benchmark × CBAM factor × CSCF  (음수면 0)
 CBAM factor = 1 − phase-in  (IR 2025/2620, 집행위 CBAM Q&A 3.7–3.8)
-인증서 가격 = 2026년분은 분기 평균(발표 Q1 €75.36·Q2 €75.28 + 미발표 분기는 EUA), 2027년~ EUA
+인증서 가격 = 2026년분은 분기 평균(발표 Q1 €75.36·Q2 €75.28·Q3 €82.32 + 미발표 분기는 EUA), 2027년~ EUA
 """
 import pytest
 
@@ -14,7 +14,7 @@ POSCO_SEE = 2.127
 BF_BOF_BENCHMARK = 1.370
 POSCO_EXPORT_T = 75.0 * 1e6 * 0.05   # 75 Mt × EU 수출 5% = 3.75 Mt
 EUA = 80.0
-PRICE_2026 = (75.36 + 75.28 + 2 * EUA) / 4   # €77.66 — 2026년분 인증서 가격
+PRICE_2026 = (75.36 + 75.28 + 82.32 + EUA) / 4   # €78.24 — 2026년분 인증서 가격
 
 FREE_2026 = BF_BOF_BENCHMARK * 0.975   # 1.33575 — 2026년 무상할당 공제
 FREE_2030 = BF_BOF_BENCHMARK * 0.515   # 0.70555
@@ -84,7 +84,7 @@ def test_cscf_is_one_for_2026_2030(calc):
 
 
 def test_certificate_price_2026_blends_published_quarters(calc):
-    assert calc.certificate_price(2026, EUA) == pytest.approx(PRICE_2026)   # €77.66
+    assert calc.certificate_price(2026, EUA) == pytest.approx(PRICE_2026)   # €78.24
     assert calc.certificate_price(2027, EUA) == EUA
     r = calc.calc_unit_cbam(POSCO_SEE, BF_BOF_BENCHMARK, EUA, 2026)
     assert r["cert_price"] == pytest.approx(PRICE_2026)
