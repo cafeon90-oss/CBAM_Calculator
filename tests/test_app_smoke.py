@@ -81,7 +81,7 @@ def test_eu_default_2034_with_kets_matches_calc(calc):
     side = at.sidebar
     fx_eur_krw = (_by_label(side.number_input, "환율 (USD/EUR)").value
                   * _by_label(side.number_input, "환율 (KRW/USD)").value)
-    default_see = 2.0   # LIT["steel_BF_BOF"]["default_SEE"]
+    default_see = 2.118   # LIT["steel_BF_BOF"]["default_SEE"] — 한국 7208 기본값
     credit = calc.calc_kets_credit(
         default_see,
         _by_label(side.number_input, "K-ETS 가격").value,
@@ -91,6 +91,18 @@ def test_eu_default_2034_with_kets_matches_calc(calc):
     expected = calc.calc_unit_cbam(
         default_see, 1.370, _eua_price(), 2034,
         mark_up_pct=calc.get_markup("steel", 2034), k_ets_credit_eur=credit,
+    )["unit_cost_eur"]
+    assert _unit_kpi(at) == f"€{expected:.2f}/t"
+
+
+def test_eaf_default_uses_default_route_benchmark(calc):
+    # 전기로라도 한국 기본값(경로 (C))을 쓰면 무상할당 공제는 경로 (C) benchmark 1.370
+    at = _new_app()
+    at.selectbox(key="sector_lit").set_value("steel_scrap_EAF")
+    at.radio(key="see_mode_radio").set_value("EU Default 사용 (mark-up 적용)")
+    _run(at)
+    expected = calc.calc_unit_cbam(
+        2.118, 1.370, _eua_price(), 2026, mark_up_pct=calc.get_markup("steel", 2026),
     )["unit_cost_eur"]
     assert _unit_kpi(at) == f"€{expected:.2f}/t"
 

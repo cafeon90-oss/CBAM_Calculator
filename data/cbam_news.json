@@ -247,7 +247,7 @@
       "important": true,
       "title_ko": "CBAM 최종 benchmark·default value 확정 (IR 2025/2621)",
       "title_en": "Final CBAM benchmarks and default values published (IR 2025/2621)",
-      "summary_ko": "철강 HRC: BF/BOF 1.370, DRI/EAF 0.481, scrap-EAF 0.072 tCO₂/t. 시멘트·알루미늄·비료·수소·전력 모두 확정. Mark-up: 2026-2027 10%, 2028+ 30% (철강·시멘트·알루미늄), 비료 1%.",
+      "summary_ko": "철강 HRC: BF/BOF 1.370, DRI/EAF 0.481, scrap-EAF 0.072 tCO₂/t. 시멘트·알루미늄·비료·수소·전력 모두 확정. Mark-up: 2026 10%, 2027 20%, 2028+ 30% (철강·시멘트·알루미늄·수소), 비료 1%. 기본값은 2026-07 IR 2026/1740로 정정됨.",
       "url": "https://eurometal.net/eu-commission-finalizes-cbam-benchmarks-default-values-ahead-of-january-2026-launch/",
       "source": "EUROMETAL"
     },

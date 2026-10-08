@@ -948,13 +948,17 @@ def certificate_price(year: int, eua_price_eur: float) -> float:
 
 
 # 한국 grid 배출계수 (간접 emissions 산정용, kgCO₂/kWh)
-KR_GRID_FACTOR = 0.443    # 2024 한국 평균
 EU_GRID_FACTOR = 0.230    # 2024 EU 평균
 
 
 # ======================================================================
 # Sector 라이브러리 (LIT) — 6개 CBAM sector + 한국 평균 SEE
 # ======================================================================
+# default_SEE: 한국 기본값 (IR 2026/1740로 정정된 IR 2025/2621 기본값표, 집행위 Excel 2026-08-06).
+#   철강·알루미늄·수소는 직접배출만, 시멘트·비료는 직접+간접 합계. 한국 값이 '-'면 기타국가 값.
+# eu_benchmark: 집행위 CBAM benchmark Excel (2026-02) Column B — 전 공정 기준.
+# default_benchmark: 기본값을 쓰면 무상할당 공제도 기본값의 생산경로 benchmark를 쓴다
+#   (예: 한국 7208 기본값은 경로 (C) BF-BOF → 1.370). 없으면 eu_benchmark.
 LIT = {
     # ─────────────── 철강 ───────────────
     "steel_BF_BOF": {
@@ -963,15 +967,15 @@ LIT = {
         "sector_key": "steel",
         "process": "BF-BOF",
         "product": "Hot-rolled coil",
-        "default_SEE": 2.0,           # CBAM default value (Annex I 평균 추정)
+        "default_SEE": 2.118,         # 한국 7208 (HRC) 기본값, 경로 (C)
         "kr_avg_SEE": 2.127,          # POSCO 2025 Climate Risk 자료
-        "eu_benchmark": 1.370,        # EU finalized free allocation benchmark
+        "eu_benchmark": 1.370,        # 7208 경로 (C) BF-BOF
         "unit": "tCO₂/t crude steel",
         "product_unit": "ton",
         "ccus_sector": "steel_BF_BOF",
         "kr_eu_export_usd_2021": 4.3e9,  # ~$4.3B
         "color": "#90A4AE",
-        "refs": ["EU_IR_2025_2621", "EU_REG_2023_956", "EUROMETAL_Bench", "POSCO_Climate_2025", "WSA_2024"],
+        "refs": ["EU_IR_2026_1740", "EC_CBAM_BENCHMARKS", "EU_IR_2025_2621", "EU_REG_2023_956", "EUROMETAL_Bench", "POSCO_Climate_2025", "WSA_2024"],
     },
     "steel_DRI_EAF": {
         "name": "철강 (DRI-EAF, 수소 환원)",
@@ -979,15 +983,16 @@ LIT = {
         "sector_key": "steel",
         "process": "DRI-EAF",
         "product": "Steel (DRI)",
-        "default_SEE": 0.85,
+        "default_SEE": 2.118,          # 한국 7208 기본값은 경로 (C) 하나뿐 — 공정 무관
+        "default_benchmark": 1.370,    # 기본값 경로 (C)의 benchmark
         "kr_avg_SEE": 0.95,
-        "eu_benchmark": 0.481,
+        "eu_benchmark": 0.481,         # 7208 경로 (D) DRI-EAF
         "unit": "tCO₂/t crude steel",
         "product_unit": "ton",
         "ccus_sector": "steel_BF_BOF",
         "kr_eu_export_usd_2021": 0,
         "color": "#A5D6A7",
-        "refs": ["EUROMETAL_Bench", "EU_REG_2023_956", "WSA_2024"],
+        "refs": ["EU_IR_2026_1740", "EC_CBAM_BENCHMARKS", "EUROMETAL_Bench", "EU_REG_2023_956", "WSA_2024"],
     },
     "steel_scrap_EAF": {
         "name": "철강 (Scrap-EAF, 전기로)",
@@ -995,15 +1000,16 @@ LIT = {
         "sector_key": "steel",
         "process": "Scrap-EAF",
         "product": "Steel (EAF)",
-        "default_SEE": 0.40,
+        "default_SEE": 2.118,          # 한국 7208 기본값 (경로 (C))
+        "default_benchmark": 1.370,    # 기본값 경로 (C)의 benchmark
         "kr_avg_SEE": 0.40,            # 현대제철 EAF
-        "eu_benchmark": 0.072,
+        "eu_benchmark": 0.072,         # 7208 경로 (E) scrap-EAF
         "unit": "tCO₂/t crude steel",
         "product_unit": "ton",
         "ccus_sector": "steel_EAF",
         "kr_eu_export_usd_2021": 0,
         "color": "#81C784",
-        "refs": ["EUROMETAL_Bench", "EU_REG_2023_956", "Hyundai_Steel_2024"],
+        "refs": ["EU_IR_2026_1740", "EC_CBAM_BENCHMARKS", "EUROMETAL_Bench", "EU_REG_2023_956", "Hyundai_Steel_2024"],
     },
     # ─────────────── 시멘트 ───────────────
     "cement_clinker": {
@@ -1012,15 +1018,15 @@ LIT = {
         "sector_key": "cement",
         "process": "Dry kiln",
         "product": "Clinker",
-        "default_SEE": 0.85,
+        "default_SEE": 0.92,           # 한국 2523 10 00 90 회색 clinker, 직접 0.88 + 간접 0.03
         "kr_avg_SEE": 0.85,
-        "eu_benchmark": 0.693,
+        "eu_benchmark": 0.666,         # 2523 10 00 경로 (A) 회색 clinker
         "unit": "tCO₂/t clinker",
         "product_unit": "ton",
         "ccus_sector": "cement",
         "kr_eu_export_usd_2021": 1e6,
         "color": "#BCAAA4",
-        "refs": ["EU_IR_2025_2621", "Norcem_Brevik_2024", "IEAGHG_Cement"],
+        "refs": ["EU_IR_2026_1740", "EC_CBAM_BENCHMARKS", "EU_IR_2025_2621", "Norcem_Brevik_2024", "IEAGHG_Cement"],
     },
     # ─────────────── 알루미늄 ───────────────
     "aluminum_primary": {
@@ -1029,19 +1035,19 @@ LIT = {
         "sector_key": "aluminum",
         "process": "Hall-Héroult",
         "product": "Primary aluminum ingot",
-        # IAI 2023 글로벌 평균 14.8 tCO₂/t (전년 15.1 → 2023 14.8 감소 추세)
-        # 한국은 primary smelter 없이 ingot 수입(중국·러시아·중동) → 수입품 SEE가 적용됨
-        # 중국 평균 ~18 (석탄 grid 의존), 중동 ~9 (가스 + 수력 mix), 러시아 ~3 (수력)
-        # 가중평균(중국 비중 큼) 약 16
-        "default_SEE": 16.0,
-        "kr_avg_SEE": 16.0,            # 한국 수입품의 가중평균 (중국 ingot 의존도 큼)
-        "eu_benchmark": 1.514,
+        # CBAM은 알루미늄의 직접배출만 센다 (전력 간접배출 제외) — IAI 14.8 같은
+        # 전력 포함 전 과정 값과 다르다.
+        # 한국은 primary smelter가 없어 한국 7601 기본값은 경로 (L) 재생(2차) 알루미늄 값이다.
+        "default_SEE": 0.36,           # 한국 7601 기본값, 경로 (L)
+        "default_benchmark": 0.091,    # 7601 경로 (L) benchmark
+        "kr_avg_SEE": 3.0,             # 수입 primary ingot 대표값 = 중국 7601 기본값 (경로 (K))
+        "eu_benchmark": 1.423,         # 7601 경로 (K) primary
         "unit": "tCO₂/t Al",
         "product_unit": "ton",
         "ccus_sector": "aluminum",
         "kr_eu_export_usd_2021": 5e8,
         "color": "#B0BEC5",
-        "refs": ["EU_IR_2025_2621", "IAI_Aluminum_2024", "Novelis_Korea"],
+        "refs": ["EU_IR_2026_1740", "EC_CBAM_BENCHMARKS", "EU_IR_2025_2621", "IAI_Aluminum_2024", "Novelis_Korea"],
     },
     # ─────────────── 비료 ───────────────
     "fertilizer_NH3": {
@@ -1050,15 +1056,15 @@ LIT = {
         "sector_key": "fertilizer",
         "process": "Haber-Bosch (SMR)",
         "product": "Ammonia",
-        "default_SEE": 2.0,
+        "default_SEE": 3.13,           # 2814 10 00 — 한국 값 없음 → 기타국가 (직접 2.97 + 간접 0.15)
         "kr_avg_SEE": 2.0,
-        "eu_benchmark": 1.619,
+        "eu_benchmark": 1.522,
         "unit": "tCO₂/t NH₃",
         "product_unit": "ton",
         "ccus_sector": "fertilizer_NH3",
         "kr_eu_export_usd_2021": 5e6,
         "color": "#CE93D8",
-        "refs": ["EU_IR_2025_2621", "IFA_Fertilizer", "Hanwha_Solutions"],
+        "refs": ["EU_IR_2026_1740", "EC_CBAM_BENCHMARKS", "EU_IR_2025_2621", "IFA_Fertilizer", "Hanwha_Solutions"],
     },
     # ─────────────── 수소 ───────────────
     "hydrogen_gray": {
@@ -1070,15 +1076,15 @@ LIT = {
         # IEA Global Hydrogen Review 2024: SMR with unabated NG → 10~14 tCO₂/t H₂
         # (process 8~9 + upstream methane/NG 2~5)
         # 한국 SMR은 LNG 기반(상대적으로 낮은 upstream) → ~11
-        "default_SEE": 11.0,
+        "default_SEE": 14.03,          # 한국 2804 10 00 기본값 (직접배출)
         "kr_avg_SEE": 11.0,
-        "eu_benchmark": 8.85,
+        "eu_benchmark": 5.089,
         "unit": "tCO₂/t H₂",
         "product_unit": "ton",
         "ccus_sector": "hydrogen_SMR",
         "kr_eu_export_usd_2021": 0,
         "color": "#FFAB91",
-        "refs": ["EU_IR_2025_2621", "IEA_Hydrogen_2024", "SK_ES_H2"],
+        "refs": ["EU_IR_2026_1740", "EC_CBAM_BENCHMARKS", "EU_IR_2025_2621", "IEA_Hydrogen_2024", "SK_ES_H2"],
     },
     "hydrogen_blue": {
         "name": "수소 (Blue, SMR + CCS)",
@@ -1086,15 +1092,15 @@ LIT = {
         "sector_key": "hydrogen",
         "process": "SMR + CCS (90%)",
         "product": "H₂",
-        "default_SEE": 1.2,
+        "default_SEE": 14.03,          # 기본값은 생산방식 구분 없음 — Blue도 검증값을 내야 이득
         "kr_avg_SEE": 1.0,
-        "eu_benchmark": 8.85,           # 동일 benchmark — Blue는 default 보다 훨씬 낮음
+        "eu_benchmark": 5.089,          # Gray와 같은 benchmark
         "unit": "tCO₂/t H₂",
         "product_unit": "ton",
         "ccus_sector": "hydrogen_SMR",
         "kr_eu_export_usd_2021": 0,
         "color": "#80DEEA",
-        "refs": ["EU_IR_2025_2621", "IEA_Hydrogen_2024", "Northern_Lights_2024"],
+        "refs": ["EU_IR_2026_1740", "EC_CBAM_BENCHMARKS", "EU_IR_2025_2621", "IEA_Hydrogen_2024", "Northern_Lights_2024"],
     },
     # ─────────────── 전력 ───────────────
     "electricity": {
@@ -1105,13 +1111,13 @@ LIT = {
         "product": "Electricity",
         "default_SEE": 0.443,           # 한국 grid (kgCO₂/kWh = tCO₂/MWh)
         "kr_avg_SEE": 0.443,
-        "eu_benchmark": 0.230,           # EU grid 평균
+        "eu_benchmark": 0.0,             # 전력은 무상할당 공제 없음 (IR 2025/2620)
         "unit": "tCO₂/MWh",
         "product_unit": "MWh",
         "ccus_sector": "power",
         "kr_eu_export_usd_2021": 0,
         "color": "#FFE082",
-        "refs": ["EU_IR_2025_2621", "IEA_Elec_Maps_2024", "KEPCO_2024"],
+        "refs": ["EU_IR_2025_2620", "EU_IR_2025_2621", "IEA_Elec_Maps_2024", "KEPCO_2024"],
     },
 }
 
@@ -1183,10 +1189,10 @@ PRESETS = {
         "settings": {
             "annual_production_mt": 1.5,
             "eu_export_share_pct": 15.0,
-            # 재활용 알루미늄 SEE = 0.5~3.0 (primary의 5% 에너지)
-            # 노벨리스는 재활용 60%+ 비중 → primary 16 × 0.4 + recycled 1.5 × 0.6 ≈ 7.3
-            # 더 보수적으로 6.0 (실제 verified 값 입력 권장)
-            "user_SEE": 6.0,
+            # CBAM 직접배출 기준 (전력 간접배출 제외). 재활용 60%+ 비중 →
+            # primary 3.0 (중국 기본값) × 0.4 + 재생 0.36 (한국 기본값) × 0.6 ≈ 1.42
+            # 추정치 — 실제 verified 값 입력 권장
+            "user_SEE": 1.42,
             "company_name": "노벨리스 코리아",
         },
     },
@@ -1356,10 +1362,27 @@ REFS = {
         "date": "2025 · part of definitive phase package",
         "cite": "Commission Implementing Regulation (EU) 2025/2621 — country-specific default "
                 "values (Annex I) and electricity emission factors (Annex II) for CBAM definitive "
-                "phase. Mark-up: 10% (2026-2027) → 30% (2028+) for steel/cement/aluminium; "
-                "1% for fertilizer.",
+                "phase. Mark-up: 10% (2026) → 20% (2027) → 30% (2028+) for steel/cement/"
+                "aluminium/hydrogen; 1% for fertilisers; none for electricity.",
         "url": "https://taxation-customs.ec.europa.eu/carbon-border-adjustment-mechanism/cbam-legislation-and-guidance_en",
         "used_for": "Default SEE 값 + 전력 EF (2026~ 본격 시행)",
+    },
+    "EU_IR_2026_1740": {
+        "cat": "regulation",
+        "date": "2026-07 · 집행위 Excel 2026-08-06",
+        "cite": "Commission Implementing Regulation (EU) 2026/1740 correcting IR 2025/2621 — "
+                "corrected country-specific default values. Commission Excel "
+                "'DV correcting act_final update_06.08'.",
+        "url": "https://taxation-customs.ec.europa.eu/document/download/1c05d211-80cb-4aaa-8ef0-e08005a95d7e_en?filename=DV%20correcting%20act_final%20update_06.08.xlsx",
+        "used_for": "한국 기본값 (철강 7208 2.118, clinker 0.92, 알루미늄 7601 0.36, 수소 14.03) · 기타국가 NH₃ 3.13",
+    },
+    "EC_CBAM_BENCHMARKS": {
+        "cat": "regulation",
+        "date": "2026-02 (CBAM Benchmarks_20260206)",
+        "cite": "European Commission — CBAM benchmarks for the free allocation adjustment "
+                "(IR 2025/2620), by CN code and production route. Column B used.",
+        "url": "https://taxation-customs.ec.europa.eu/document/download/9877523c-2a02-4926-a211-aefae7cf6d0d_en?filename=CBAM%20Benchmarks_20260206.xlsx",
+        "used_for": "EU benchmark (HRC C 1.370·D 0.481·E 0.072, clinker 0.666, Al K 1.423·L 0.091, NH₃ 1.522, H₂ 5.089)",
     },
     "EU_CBAM_TaxCustoms": {
         "cat": "regulation",
@@ -1624,7 +1647,7 @@ def ref_link(ref_id: str, label: str = None) -> str:
 TOOLTIPS = {
     "SEE": (
         "Specific Embedded Emissions — 단위 제품당 내재 탄소배출량 [tCO₂/t]\n"
-        "■ Direct (Scope 1) + Indirect (Scope 2, 일부 sector만) 합산\n"
+        "■ 직접배출 + 전력 간접배출 — 간접배출은 시멘트·비료만 포함\n"
         "■ EU CBAM은 verified 데이터 우선, 미제출 시 default 값 + mark-up\n"
         "■ 출처: EU Regulation 2023/956 Annex IV, IR 2025/2621"
     ),
@@ -1665,8 +1688,8 @@ TOOLTIPS = {
     ),
     "Embedded emissions": (
         "내재 배출량 — 제품 생산 과정에서 발생한 누적 CO₂\n"
-        "■ Scope 1 (직접) + Scope 2 (전력 간접)\n"
-        "■ 일부 sector(시멘트·비료)는 indirect 포함"
+        "■ 직접배출 (Scope 1) — 철강·알루미늄·수소는 이것만\n"
+        "■ 시멘트·비료는 전력 간접배출 (Scope 2)도 포함"
     ),
     "BF-BOF": (
         "Blast Furnace + Basic Oxygen Furnace — 고로-전로 일관제철법\n"
@@ -1707,18 +1730,18 @@ TOOLTIPS = {
 # ======================================================================
 
 def get_markup(sector_key: str, year: int) -> float:
-    """EU IR 2025/2621 sector × year mark-up.
-    철강·시멘트·알루미늄: 2026-2027 10% → 2028+ 30%
+    """기본값 mark-up (IR 2025/2621, IR 2026/1740로 정정).
+    철강·시멘트·알루미늄·수소: 2026 10% → 2027 20% → 2028+ 30%
     비료: 1% (계속)
-    수소·전력: 0% (default 값 신뢰도 높음)
+    전력: 0% (mark-up 없음)
     """
     if sector_key == "fertilizer":
         return 1.0
-    if sector_key in ("hydrogen", "electricity"):
+    if sector_key == "electricity":
         return 0.0
-    if sector_key in ("steel", "cement", "aluminum"):
-        return 10.0 if year < 2028 else 30.0
-    return 10.0   # 기본값
+    if year <= 2026:
+        return 10.0
+    return 20.0 if year == 2027 else 30.0
 
 
 def calc_unit_cbam(SEE: float, benchmark: float, eua_price_eur: float,
@@ -1981,11 +2004,12 @@ ABATEMENT_OPTIONS = [
     {
         "key": "re100",
         "label": "🟡 RE100 / Grid 청정화 (-15%)",
-        "applies_to": ["aluminum_primary", "electricity", "hydrogen_gray",
-                        "steel_scrap_EAF", "steel_DRI_EAF"],
+        # CBAM은 철강·알루미늄·수소의 전력 간접배출을 세지 않으므로 전력 sector에만 적용
+        "applies_to": ["electricity"],
         "reduction_pct": 15.0,
         "trl": 9,
-        "note": "전력 grid factor 감축. 알루미늄·전기로에 효과 큼. 한국 grid 의존.",
+        "note": "전력 grid factor 감축. CBAM 대상 배출이 줄어드는 건 전력 sector뿐 "
+                "(철강·알루미늄·수소는 간접배출 미포함).",
     },
     # ─── Bio-CCS sector 확장 (시멘트·철강 추가) ───
     {
@@ -2131,7 +2155,7 @@ with st.sidebar:
         index=2,
         key="see_mode_radio",
         help=("SEE = Specific Embedded Emissions, 단위 제품당 내재 탄소배출량 [tCO₂/t]. "
-              "Direct(Scope 1) + Indirect(Scope 2, 일부 sector) 합산. "
+              "직접배출(Scope 1) 기준, 시멘트·비료만 전력 간접배출(Scope 2) 포함. "
               "2024.7 이후 verified 데이터 의무, 미제출 시 default + mark-up. "
               "출처: EU Reg 2023/956 Annex IV, IR 2025/2621"),
     )
@@ -2155,48 +2179,19 @@ with st.sidebar:
         )
         mark_up_pct = 0.0
 
-    st.caption(f"📌 EU benchmark: **{sector['eu_benchmark']:.3f}** {sector['unit']}")
+    # 무상할당 공제 benchmark — 기본값을 쓰면 기본값 생산경로의 benchmark를 쓴다
+    active_benchmark = sector["eu_benchmark"]
+    if see_mode == "EU Default 사용 (mark-up 적용)" and "default_benchmark" in sector:
+        active_benchmark = sector["default_benchmark"]
+        st.caption(f"📌 EU benchmark: **{active_benchmark:.3f}** {sector['unit']} "
+                   f"(기본값 생산경로 기준 — 공정별 값은 {sector['eu_benchmark']:.3f})")
+    else:
+        st.caption(f"📌 EU benchmark: **{active_benchmark:.3f}** {sector['unit']}")
 
-    # ─── Scope 2 (전력 간접배출) — 알루미늄·수소·전력 sector 한정 ───
-    SCOPE2_INTENSIVE = {
-        "aluminum_primary": {"kwh_per_unit": 14000, "label": "알루미늄 (~14,000 kWh/t)"},
-        "hydrogen_gray": {"kwh_per_unit": 50000,
-                            "label": "수소 SMR (전력+가스, ~50,000 kWh/t equivalent)"},
-        "electricity": {"kwh_per_unit": 0, "label": "전력 (자체)"},
-        "steel_scrap_EAF": {"kwh_per_unit": 600, "label": "Scrap-EAF (~600 kWh/t)"},
-        "steel_DRI_EAF": {"kwh_per_unit": 800, "label": "DRI-EAF (~800 kWh/t)"},
-    }
-    if sector_lit in SCOPE2_INTENSIVE:
-        with st.expander("⚡ Scope 2 (전력 간접배출) 상세 입력 — 선택"):
-            sc2_meta = SCOPE2_INTENSIVE[sector_lit]
-            st.caption(
-                f"이 sector는 전력 사용이 SEE에 큰 영향을 줍니다. "
-                f"표준 사용량: {sc2_meta['label']}. "
-                f"한국 grid 기본값 {KR_GRID_FACTOR} tCO₂/MWh."
-            )
-            override_grid = st.checkbox(
-                "전력 배출계수 직접 입력 (RE100·계약 청정전력 등)",
-                value=False, key="override_grid",
-            )
-            if override_grid and sector_lit != "electricity":
-                custom_grid = st.number_input(
-                    "전력 배출계수 (tCO₂/MWh)",
-                    min_value=0.0, max_value=1.5,
-                    value=KR_GRID_FACTOR, step=0.01, format="%.3f",
-                    help=("한국 평균 0.443. RE100 ~0.05. 100% 그린파워 0. "
-                          "중국 grid 0.85. 계약 청정전력 인증 시 차감 가능."),
-                )
-                # SEE 자동 재계산 (kwh × grid_factor / 1000)
-                see_grid_component = sc2_meta["kwh_per_unit"] * custom_grid / 1000.0
-                see_direct_estimate = max(0, user_SEE - sc2_meta["kwh_per_unit"]
-                                            * KR_GRID_FACTOR / 1000.0)
-                user_SEE_recalc = see_direct_estimate + see_grid_component
-                st.caption(
-                    f"🔄 SEE 재산정: direct ~{see_direct_estimate:.2f} + "
-                    f"electricity {see_grid_component:.2f} = "
-                    f"**{user_SEE_recalc:.3f}** {sector['unit']}"
-                )
-                user_SEE = user_SEE_recalc
+    # CBAM 내재배출 범위 — 철강·알루미늄·수소는 직접배출만 (기본값표의 간접배출 "N/A")
+    if sector["sector_key"] in ("steel", "aluminum", "hydrogen"):
+        st.caption("ℹ️ 철강·알루미늄·수소는 CBAM이 **직접배출만** 셉니다. "
+                   "전력 간접배출(Scope 2)은 SEE에 넣지 마세요.")
 
     st.markdown("---")
 
@@ -2270,7 +2265,7 @@ with st.sidebar:
                f"· 무상할당 공제 {cbam_factor(analysis_year, reg_scenario)*100:.1f}%")
 
     # ─── Mark-up 자동 결정 (sector × year) ─────────────────────
-    # EU IR 2025/2621: 철강·시멘트·알루미늄 2026-2027 10% → 2028+ 30%
+    # 철강·시멘트·알루미늄·수소 2026 10% → 2027 20% → 2028+ 30%, 비료 1%
     auto_markup = get_markup(sector["sector_key"], analysis_year)
     if see_mode == "EU Default 사용 (mark-up 적용)":
         mark_up_pct = auto_markup
@@ -2422,7 +2417,7 @@ result = calc_total_cbam(
     annual_production_mt=annual_production_mt,
     eu_export_share_pct=eu_export_share_pct,
     SEE=user_SEE,
-    benchmark=sector["eu_benchmark"],
+    benchmark=active_benchmark,
     eua_price_eur=eua_price,
     year=analysis_year,
     mark_up_pct=mark_up_pct,
@@ -2444,7 +2439,7 @@ if already_zero:
     # 무상할당 공제는 매년 줄어든다 — 부담이 처음 생기는 해를 함께 안내
     first_cost_year = next(
         (y for y in range(analysis_year + 1, 2039)
-         if result["effective_SEE"] > sector["eu_benchmark"] * cbam_factor(y, reg_scenario) * CSCF),
+         if result["effective_SEE"] > active_benchmark * cbam_factor(y, reg_scenario) * CSCF),
         None,
     )
     later_msg = (f" 다만 공제가 매년 줄어 <strong>{first_cost_year}년</strong>부터 부담이 생깁니다."
@@ -2455,7 +2450,7 @@ if already_zero:
     insight_msg = (
         f"SEE <strong>{user_SEE:.3f}</strong> ≤ {analysis_year}년 무상할당 공제 "
         f"<strong>{result['free_allocation']:.3f}</strong> {sector['unit']} "
-        f"(benchmark {sector['eu_benchmark']:.3f} × {cbam_factor(analysis_year, reg_scenario)*100:.1f}%) — "
+        f"(benchmark {active_benchmark:.3f} × {cbam_factor(analysis_year, reg_scenario)*100:.1f}%) — "
         f"{analysis_year}년 CBAM 부담 없음.{later_msg}"
     )
 elif result["gap"] == 0:
@@ -2464,7 +2459,7 @@ elif result["gap"] == 0:
     insight_badge = f"<span class='warn'>benchmark 이하</span>"
     insight_msg = (
         f"SEE <strong>{user_SEE:.3f}</strong> ≤ benchmark "
-        f"<strong>{sector['eu_benchmark']:.3f}</strong>이지만 {analysis_year}년 무상할당 공제가 "
+        f"<strong>{active_benchmark:.3f}</strong>이지만 {analysis_year}년 무상할당 공제가 "
         f"{cbam_factor(analysis_year, reg_scenario)*100:.1f}%로 줄어 연간 부담 "
         f"<span class='warn'>{fmt_eur(result['annual_cost_eur'])}</span> "
         f"(≈ {fmt_money(annual_usd, fx_usd_krw, currency_mode_key)}) 발생."
@@ -2475,7 +2470,7 @@ elif gap_pct < 20:
     insight_badge = f"<span class='warn'>+{gap_pct:.1f}% 초과</span>"
     insight_msg = (
         f"SEE <strong>{user_SEE:.3f}</strong> vs benchmark "
-        f"<strong>{sector['eu_benchmark']:.3f}</strong>. "
+        f"<strong>{active_benchmark:.3f}</strong>. "
         f"{analysis_year}년 연간 부담 <span class='warn'>{fmt_eur(result['annual_cost_eur'])}</span> "
         f"(≈ {fmt_money(annual_usd, fx_usd_krw, currency_mode_key)}). "
         f"benchmark 초과분은 전액 부과되므로 <span class='warn'>에너지 효율 개선</span> · "
@@ -2487,7 +2482,7 @@ else:
     insight_badge = f"<span class='bad'>+{gap_pct:.1f}% 초과</span>"
     insight_msg = (
         f"SEE <strong>{user_SEE:.3f}</strong> vs benchmark "
-        f"<strong>{sector['eu_benchmark']:.3f}</strong>. "
+        f"<strong>{active_benchmark:.3f}</strong>. "
         f"{analysis_year}년 연간 부담 <span class='bad'>{fmt_eur(result['annual_cost_eur'])}</span> "
         f"(≈ {fmt_money(annual_usd, fx_usd_krw, currency_mode_key)}). "
         f"<span class='warn'>CCS 90%</span> 또는 <span class='warn'>공정 전환(DRI-H₂/EAF)</span> 권장 → "
@@ -2543,7 +2538,7 @@ with col3:
 with col4:
     # CCS 90% 도입 시 회피액 — K-ETS 차감 후 net 비교
     avoided = ccs_avoided_cbam(
-        SEE=user_SEE, benchmark=sector["eu_benchmark"],
+        SEE=user_SEE, benchmark=active_benchmark,
         capture_rate=0.90, eua_price_eur=eua_price,
         year=analysis_year, eu_export_t=result["eu_export_t"],
         mark_up_pct=mark_up_pct,
@@ -2566,7 +2561,7 @@ with st.expander("📖 KPI 정의 보기 (클릭)", expanded=False):
         f"""
 **연간 CBAM 부담** = (SEE × (1+mark-up) − benchmark × CBAM factor) × 인증서 가격 × EU 수출량 − K-ETS 차감
 - 현재 SEE: **{user_SEE:.3f}** {sector['unit']}
-- EU benchmark: **{sector['eu_benchmark']:.3f}** {sector['unit']} (초과분 {result['gap']:.3f}, {gap_pct:.1f}%)
+- EU benchmark: **{active_benchmark:.3f}** {sector['unit']} (초과분 {result['gap']:.3f}, {gap_pct:.1f}%)
 - {analysis_year}년 무상할당 공제: **{result['free_allocation']:.3f}** (= benchmark × CBAM factor {cbam_factor(analysis_year, reg_scenario)*100:.1f}%, phase-in {result['phase_in']*100:.1f}%)
 - 인증서 수: **{result['obligation']:.3f}** tCO₂/t
 - 인증서 가격: **€{result['cert_price']:.2f}/tCO₂** ({'2026년분 분기 평균 반영' if analysis_year == 2026 else 'EUA 입력값'}) · 규제 시나리오: {SCENARIOS[reg_scenario]}
@@ -2692,7 +2687,7 @@ with tabs[1]:
 
     col_a, col_b, col_c = st.columns([1, 1, 1])
     with col_a:
-        st.metric("Default SEE (CBAM)", f"{sector['default_SEE']:.3f}", help="EU IR 2025/2621 Annex I")
+        st.metric("Default SEE (CBAM)", f"{sector['default_SEE']:.3f}", help="한국 기본값 — IR 2025/2621 (IR 2026/1740 정정)")
     with col_b:
         st.metric("한국 평균 SEE", f"{sector['kr_avg_SEE']:.3f}", help="한국 산업 평균")
     with col_c:
@@ -2844,7 +2839,7 @@ with tabs[3]:
     # 4-A: 역산
     st.markdown("##### 🎯 4-A. CBAM 부담 0으로 만들려면?")
 
-    req = required_SEE_reduction(user_SEE, sector["eu_benchmark"], analysis_year,
+    req = required_SEE_reduction(user_SEE, active_benchmark, analysis_year,
                                  scenario=reg_scenario)
     if req["already_zero"]:
         st.success(
@@ -2856,7 +2851,7 @@ with tabs[3]:
             f"""
 - 현재 SEE: <strong>{user_SEE:.3f}</strong> {sector['unit']}
 - {analysis_year}년 무상할당 공제: <strong>{req['target']:.3f}</strong> {sector['unit']}
-  (= benchmark {sector['eu_benchmark']:.3f} × CBAM factor {cbam_factor(analysis_year, reg_scenario)*100:.1f}%)
+  (= benchmark {active_benchmark:.3f} × CBAM factor {cbam_factor(analysis_year, reg_scenario)*100:.1f}%)
 - 필요 감축량: <strong style='color:{C_BAD}'>{req['required']:.3f}</strong>
   (= <strong style='color:{C_BAD}'>−{req['required_pct']:.1f}%</strong>)
 """,
@@ -2908,7 +2903,7 @@ with tabs[3]:
         cap_rate = get_tech_capture_rate(ccus_data, tk)
         is_recommended = tk in fit_techs
         avoided = ccs_avoided_cbam(
-            SEE=user_SEE, benchmark=sector["eu_benchmark"],
+            SEE=user_SEE, benchmark=active_benchmark,
             capture_rate=cap_rate, eua_price_eur=eua_price,
             year=analysis_year, eu_export_t=result["eu_export_t"],
             mark_up_pct=mark_up_pct,
@@ -2987,7 +2982,7 @@ with tabs[3]:
     )
     npv_tdata = ccus_data["technologies"][npv_tech]
     npv_result = ccs_npv_analysis(
-        SEE=user_SEE, benchmark=sector["eu_benchmark"],
+        SEE=user_SEE, benchmark=active_benchmark,
         capture_rate=get_tech_capture_rate(ccus_data, npv_tech),
         eua_price_eur=eua_price,
         eu_export_t=result["eu_export_t"],
@@ -3207,7 +3202,7 @@ with tabs[5]:
         r = calc_total_cbam(
             annual_production_mt=annual_production_mt,
             eu_export_share_pct=eu_export_share_pct,
-            SEE=user_SEE, benchmark=sector["eu_benchmark"],
+            SEE=user_SEE, benchmark=active_benchmark,
             eua_price_eur=eua_price, year=y, mark_up_pct=y_markup,
             k_ets_credit_eur=k_ets_credit_eur, scenario=reg_scenario,
         )
@@ -3256,7 +3251,7 @@ with tabs[6]:
             r = calc_total_cbam(
                 annual_production_mt=annual_production_mt,
                 eu_export_share_pct=eu_export_share_pct,
-                SEE=user_SEE, benchmark=sector["eu_benchmark"],
+                SEE=user_SEE, benchmark=active_benchmark,
                 eua_price_eur=eua_price, year=y, mark_up_pct=y_markup,
                 k_ets_credit_eur=k_ets_credit_eur, scenario=reg_scenario,
             )
@@ -3297,7 +3292,7 @@ with tabs[6]:
         r = calc_total_cbam(
             annual_production_mt=annual_production_mt,
             eu_export_share_pct=eu_export_share_pct,
-            SEE=user_SEE, benchmark=sector["eu_benchmark"],
+            SEE=user_SEE, benchmark=active_benchmark,
             eua_price_eur=ep, year=analysis_year, mark_up_pct=mark_up_pct,
             k_ets_credit_eur=k_ets_credit_eur, scenario=reg_scenario,
         )
@@ -3358,21 +3353,23 @@ with tabs[7]:
 | CSCF (교차부문 보정계수) | 1.0 (2026~2030 미적용) | {ref_link("EU_COM_2026_619")} |
 | 인증서 가격 (2026년분) | Q1 €75.36 · Q2 €75.28 · Q3 €82.32 (Q4는 EUA) | {ref_link("EC_CBAM_PRICE")} |
 | EUA 가격 (2027~ 가정) | 자동 fetch (주 1회) | {ref_link("EEX_EUA")} |
-| Mark-up (default 사용 시) | 10% (2026~2027) | {ref_link("EU_IR_2025_2621")} |
-| Steel BF-BOF benchmark | 1.370 | {ref_link("EUROMETAL_Bench")} |
-| Steel DRI-EAF benchmark | 0.481 | 동일 |
-| Steel Scrap-EAF benchmark | 0.072 | 동일 |
-| Cement clinker benchmark | 0.693 | 동일 |
+| Mark-up (default 사용 시) | 10% (2026) · 20% (2027) · 30% (2028~), 비료 1%, 전력 0% | {ref_link("EU_IR_2025_2621")} |
+| 기본값 (한국) | 철강 HRC 2.118 · clinker 0.92 · 알루미늄 0.36 · 수소 14.03 (NH₃는 기타국가 3.13) | {ref_link("EU_IR_2026_1740")} |
+| Steel benchmark (HRC) | BF-BOF 1.370 · DRI-EAF 0.481 · Scrap-EAF 0.072 | {ref_link("EC_CBAM_BENCHMARKS")} |
+| 기본값 사용 시 benchmark | 기본값 생산경로 기준 (한국 HRC 기본값은 경로 (C) → 1.370) | 동일 |
+| Cement clinker benchmark | 0.666 | 동일 |
+| Aluminium benchmark | primary 1.423 · 재생 0.091 | 동일 |
+| NH₃ / H₂ benchmark | 1.522 / 5.089 | 동일 |
+| 전력 무상할당 공제 | 없음 (benchmark 0) | {ref_link("EU_IR_2025_2620")} |
 | 한국 grid factor | 0.443 tCO₂/MWh | {ref_link("KEPCO_2024")} |
-| EU grid factor | 0.230 tCO₂/MWh | {ref_link("IEA_Elec_Maps_2024")} |
 
 ##### ⚠️ 한계와 가정
 
 1. **SEE는 verified 우선**: 2024.7 이후 default 사용 시 mark-up. 본 도구는 사용자 입력을 우선.
-2. **Indirect emissions**: 시멘트·비료만 indirect 포함 (CBAM 규정). 본 도구는 단순화하여 sector별 평균 적용.
+2. **Indirect emissions**: 시멘트·비료만 전력 간접배출 포함 (CBAM 규정). 철강·알루미늄·수소는 직접배출만 셉니다.
 3. **EUA 가격 변동성**: 매주 평균 변동. 본 도구는 사용자 슬라이더 + 자동 fetch 옵션 제공.
-4. **Free benchmark 갱신**: 2025년 IR 2025/2621 기준. 향후 EU 갱신 시 LIT 업데이트 필요.
-5. **Mark-up 진화**: 철강·시멘트·알루미늄 2026 10% → 2028 30%. 본 도구는 'EU Default 사용' 선택 시 분석 연도에 맞춰 자동 적용.
+4. **기본값·benchmark 갱신**: 기본값은 IR 2026/1740 정정본(2026-08 Excel), benchmark는 2026-02 집행위 Excel 기준. 향후 EU 갱신 시 LIT 업데이트 필요.
+5. **Mark-up 진화**: 철강·시멘트·알루미늄·수소 2026 10% → 2027 20% → 2028 30%. 본 도구는 'EU Default 사용' 선택 시 분석 연도에 맞춰 자동 적용.
 6. **K-ETS 차감**: 사이드바에서 선택 적용 (Art.9). 차감액 = SEE × K-ETS 가격 × 차감 비율(기본 30%, 무상할당분 제외 가정)로 단순화 — 실제 인정액은 EU 이행규정·검증 결과에 따름. {ref_link("ME_K_ETS")} 참조.
 7. **CSCF**: 2026~2030은 적용되지 않아 1.0 ({ref_link("EU_COM_2026_619")}). 2031년 이후(개편안 시나리오의 15% 잔여 공제 구간)는 달라질 수 있으나 미반영.
 

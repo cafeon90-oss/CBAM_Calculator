@@ -90,12 +90,13 @@ def test_certificate_price_2026_blends_published_quarters(calc):
     assert r["cert_price"] == pytest.approx(PRICE_2026)
 
 
-# ── get_markup: IR 2025/2621 ─────────────────────────────────────────
+# ── get_markup: IR 2025/2621 (IR 2026/1740 정정) ─────────────────────
 @pytest.mark.parametrize("sector, year, expected", [
-    ("steel", 2026, 10.0), ("steel", 2027, 10.0), ("steel", 2028, 30.0),
-    ("cement", 2030, 30.0), ("aluminum", 2027, 10.0),
+    ("steel", 2026, 10.0), ("steel", 2027, 20.0), ("steel", 2028, 30.0),
+    ("cement", 2030, 30.0), ("aluminum", 2027, 20.0),
+    ("hydrogen", 2026, 10.0), ("hydrogen", 2027, 20.0), ("hydrogen", 2030, 30.0),
     ("fertilizer", 2026, 1.0), ("fertilizer", 2030, 1.0),
-    ("hydrogen", 2030, 0.0), ("electricity", 2030, 0.0),
+    ("electricity", 2026, 0.0), ("electricity", 2030, 0.0),
 ])
 def test_get_markup_schedule(calc, sector, year, expected):
     assert calc.get_markup(sector, year) == expected
