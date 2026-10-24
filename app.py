@@ -622,12 +622,12 @@ CCUS_JSON_URL = ("https://raw.githubusercontent.com/cafeon90-oss/CCUS_benchmark/
 CCUS_SECTOR_FIT = {
     # 철강 BF-BOF (CO₂ 25~30%, retrofit 어려움)
     "steel_BF_BOF":   ["MHI_KS21", "Cansolv_DC103", "Aker_S26",
-                        "CAP_B12C", "CaL", "MEA_baseline"],
+                        "CaL", "MEA_baseline"],
     # 철강 EAF (CO₂ 5~10%, 저농도)
     "steel_EAF":      ["TSA_Solid", "Biphasic_DMX", "MEA_baseline"],
     # 시멘트 (calcination CO₂, CaL 자연 통합)
     "cement":         ["CaL", "Aker_S26", "MHI_KS21",
-                        "CAP_B12C", "MEA_baseline"],
+                        "MEA_baseline"],
     # 알루미늄 (anode CO₂ + 전력 grid)
     "aluminum":       ["MEA_baseline", "Cansolv_DC103", "Biphasic_DMX"],
     # 비료 NH₃ (고농도 부생 CO₂)
@@ -637,7 +637,7 @@ CCUS_SECTOR_FIT = {
                         "K2CO3_KIERSOL", "MHI_KS21"],
     # 발전 (CO₂ 12~15%, 표준)
     "power":          ["MHI_KS21", "Cansolv_DC103", "Aker_S26",
-                        "CAP_B12C", "CaL", "MEA_baseline"],
+                        "CaL", "MEA_baseline"],
 }
 
 # CBAM 업종 → CCUS 벤치마크의 배출원 업종 키. CCUS JSON에 applicable_sectors가 있는 기술
