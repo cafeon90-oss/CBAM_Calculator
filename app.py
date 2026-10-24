@@ -930,7 +930,7 @@ def cbam_factor(year: int, scenario: str = "current") -> float:
 
 
 # 교차부문 보정계수 (Cross-Sectoral Correction Factor) — 무상할당 공제에 곱해진다.
-# 2026~2030은 적용되지 않도록 설계돼 있어 1.0 (집행위 COM(2026) 619 설명, 최근 이행규정).
+# 2026~2030은 100% = 1.0으로 확정 (집행위 이행결정 (EU) 2026/1862, 2026-07-23).
 CSCF = 1.0
 
 # 2026년분 CBAM 인증서 가격 = 분기별 EUA 경매 평균가 (집행위 발표, €/tCO₂).
@@ -1323,7 +1323,15 @@ REFS = {
                 "free allocation for 2026–2030 while keeping the cross-sectoral correction factor "
                 "from being triggered, as committed in recent implementing regulations.",
         "url": "https://climate.ec.europa.eu/document/download/672f0f66-a1c2-41d4-a6d6-ff82fea1eb62_en",
-        "used_for": "CSCF 2026~2030 = 1.0 근거",
+        "used_for": "CSCF 미적용 방침 (제안 당시 설명)",
+    },
+    "EU_DEC_2026_1862": {
+        "cat": "regulation",
+        "date": "2026-07-23 (OJ 2026-07-24)",
+        "cite": "Commission Implementing Decision (EU) 2026/1862 — uniform cross-sectoral correction "
+                "factor of 100 % for each year 2026–2030 (Art. 1).",
+        "url": "https://eur-lex.europa.eu/eli/dec_impl/2026/1862/oj/eng",
+        "used_for": "CSCF 2026~2030 = 1.0 확정",
     },
     "EC_CBAM_PRICE": {
         "cat": "regulation",
@@ -3350,7 +3358,7 @@ with tabs[7]:
 | CBAM factor — 무상할당 공제 (2026) | 97.5% (phase-in 2.5%) | {ref_link("Climat_be_PhaseIn")} |
 | CBAM factor (2030) | 51.5% (phase-in 48.5%) | 동일 |
 | CBAM factor (2034) | 0% (phase-in 100%) | 동일 |
-| CSCF (교차부문 보정계수) | 1.0 (2026~2030 미적용) | {ref_link("EU_COM_2026_619")} |
+| CSCF (교차부문 보정계수) | 1.0 (2026~2030 100% 확정) | {ref_link("EU_DEC_2026_1862")} |
 | 인증서 가격 (2026년분) | Q1 €75.36 · Q2 €75.28 · Q3 €82.32 (Q4는 EUA) | {ref_link("EC_CBAM_PRICE")} |
 | EUA 가격 (2027~ 가정) | 자동 fetch (주 1회) | {ref_link("EEX_EUA")} |
 | Mark-up (default 사용 시) | 10% (2026) · 20% (2027) · 30% (2028~), 비료 1%, 전력 0% | {ref_link("EU_IR_2025_2621")} |
@@ -3371,7 +3379,7 @@ with tabs[7]:
 4. **기본값·benchmark 갱신**: 기본값은 IR 2026/1740 정정본(2026-08 Excel), benchmark는 2026-02 집행위 Excel 기준. 향후 EU 갱신 시 LIT 업데이트 필요.
 5. **Mark-up 진화**: 철강·시멘트·알루미늄·수소 2026 10% → 2027 20% → 2028 30%. 본 도구는 'EU Default 사용' 선택 시 분석 연도에 맞춰 자동 적용.
 6. **K-ETS 차감**: 사이드바에서 선택 적용 (Art.9). 차감액 = SEE × K-ETS 가격 × 차감 비율(기본 30%, 무상할당분 제외 가정)로 단순화 — 실제 인정액은 EU 이행규정·검증 결과에 따름. {ref_link("ME_K_ETS")} 참조.
-7. **CSCF**: 2026~2030은 적용되지 않아 1.0 ({ref_link("EU_COM_2026_619")}). 2031년 이후(개편안 시나리오의 15% 잔여 공제 구간)는 달라질 수 있으나 미반영.
+7. **CSCF**: 2026~2030은 100%(1.0)로 확정 ({ref_link("EU_DEC_2026_1862")}). 2031년 이후(개편안 시나리오의 15% 잔여 공제 구간)는 달라질 수 있으나 미반영.
 
 ##### 🔄 자동 데이터 갱신
 
