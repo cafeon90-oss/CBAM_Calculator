@@ -985,7 +985,9 @@ LIT = {
         "process": "BF-BOF",
         "product": "Hot-rolled coil",
         "default_SEE": 2.118,         # 한국 7208 (HRC) 기본값, 경로 (C)
-        "kr_avg_SEE": 2.127,          # POSCO 2025 Climate Risk 자료
+        # POSCO 2024 ESG Factbook: 직접배출(Scope 1) 69.67 Mt ÷ 조강 35.0 Mt = 1.99 (공시 원단위 2.03은 Scope 1+2).
+        # Scope 1에 코크스로·자가발전이 들어 있어 CBAM 경계 기준으로는 상한값
+        "kr_avg_SEE": 1.99,
         "eu_benchmark": 1.370,        # 7208 경로 (C) BF-BOF
         "unit": "tCO₂/t crude steel",
         "product_unit": "ton",
@@ -1002,14 +1004,14 @@ LIT = {
         "product": "Steel (DRI)",
         "default_SEE": 2.118,          # 한국 7208 기본값은 경로 (C) 하나뿐 — 공정 무관
         "default_benchmark": 1.370,    # 기본값 경로 (C)의 benchmark
-        "kr_avg_SEE": 0.95,
+        "kr_avg_SEE": 1.0,             # IEA 철강 로드맵: 천연가스 DRI-EAF 직접배출 1.0 (전력 포함 1.4). 국내 DRI 없음
         "eu_benchmark": 0.481,         # 7208 경로 (D) DRI-EAF
         "unit": "tCO₂/t crude steel",
         "product_unit": "ton",
         "ccus_sector": "steel_BF_BOF",
         "kr_eu_export_usd_2021": 0,
         "color": "#A5D6A7",
-        "refs": ["EU_IR_2026_1740", "EC_CBAM_BENCHMARKS", "EUROMETAL_Bench", "EU_REG_2023_956", "WSA_2024"],
+        "refs": ["EU_IR_2026_1740", "EC_CBAM_BENCHMARKS", "EUROMETAL_Bench", "EU_REG_2023_956", "IEA_Steel_Roadmap_2020", "WSA_2024"],
     },
     "steel_scrap_EAF": {
         "name": "철강 (Scrap-EAF, 전기로)",
@@ -1019,14 +1021,15 @@ LIT = {
         "product": "Steel (EAF)",
         "default_SEE": 2.118,          # 한국 7208 기본값 (경로 (C))
         "default_benchmark": 1.370,    # 기본값 경로 (C)의 benchmark
-        "kr_avg_SEE": 0.40,            # 현대제철 EAF
+        # 직접배출만: 전기로 조강 0.04~0.1 (IEA) + 열연 가열로 ~0.08. 이전 0.40은 전력 배출이 대부분
+        "kr_avg_SEE": 0.15,
         "eu_benchmark": 0.072,         # 7208 경로 (E) scrap-EAF
         "unit": "tCO₂/t crude steel",
         "product_unit": "ton",
         "ccus_sector": "steel_EAF",
         "kr_eu_export_usd_2021": 0,
         "color": "#81C784",
-        "refs": ["EU_IR_2026_1740", "EC_CBAM_BENCHMARKS", "EUROMETAL_Bench", "EU_REG_2023_956", "Hyundai_Steel_2024"],
+        "refs": ["EU_IR_2026_1740", "EC_CBAM_BENCHMARKS", "EUROMETAL_Bench", "EU_REG_2023_956", "IEA_Steel_Roadmap_2020", "Hyundai_Steel_2024"],
     },
     # ─────────────── 시멘트 ───────────────
     "cement_clinker": {
@@ -1036,14 +1039,16 @@ LIT = {
         "process": "Dry kiln",
         "product": "Clinker",
         "default_SEE": 0.92,           # 한국 2523 10 00 90 회색 clinker, 직접 0.88 + 간접 0.03
-        "kr_avg_SEE": 0.85,
+        # 아시아시멘트 0.79·한라시멘트 0.83 (2023, Scope 1+2 / 클링커), 6개사 평균 0.821 —
+        # 시멘트 분쇄 전력은 CBAM 클링커 범위 밖이라 약간 낮춤
+        "kr_avg_SEE": 0.81,
         "eu_benchmark": 0.666,         # 2523 10 00 경로 (A) 회색 clinker
         "unit": "tCO₂/t clinker",
         "product_unit": "ton",
         "ccus_sector": "cement",
         "kr_eu_export_usd_2021": 1e6,
         "color": "#BCAAA4",
-        "refs": ["EU_IR_2026_1740", "EC_CBAM_BENCHMARKS", "EU_IR_2025_2621", "Norcem_Brevik_2024", "IEAGHG_Cement"],
+        "refs": ["EU_IR_2026_1740", "EC_CBAM_BENCHMARKS", "EU_IR_2025_2621", "AsiaCement_2024", "Norcem_Brevik_2024", "IEAGHG_Cement"],
     },
     # ─────────────── 알루미늄 ───────────────
     "aluminum_primary": {
@@ -1081,7 +1086,7 @@ LIT = {
         "ccus_sector": "fertilizer_NH3",
         "kr_eu_export_usd_2021": 5e6,
         "color": "#CE93D8",
-        "refs": ["EU_IR_2026_1740", "EC_CBAM_BENCHMARKS", "EU_IR_2025_2621", "IFA_Fertilizer", "Hanwha_Solutions"],
+        "refs": ["EU_IR_2026_1740", "EC_CBAM_BENCHMARKS", "EU_IR_2025_2621", "IEA_Ammonia_2021", "IFA_Fertilizer"],
     },
     # ─────────────── 수소 ───────────────
     "hydrogen_gray": {
@@ -1090,18 +1095,17 @@ LIT = {
         "sector_key": "hydrogen",
         "process": "SMR (no CCS)",
         "product": "H₂",
-        # IEA Global Hydrogen Review 2024: SMR with unabated NG → 10~14 tCO₂/t H₂
-        # (process 8~9 + upstream methane/NG 2~5)
-        # 한국 SMR은 LNG 기반(상대적으로 낮은 upstream) → ~11
+        # IEA: 천연가스 SMR 전과정 10~14 kgCO₂e/kgH₂ 중 상류·중류(메탄 등) 1~5.
+        # CBAM은 생산 공정 배출(공정 CO₂ + 연소)만 세므로 상류를 뺀 ~9
         "default_SEE": 14.03,          # 한국 2804 10 00 기본값 (직접배출)
-        "kr_avg_SEE": 11.0,
+        "kr_avg_SEE": 9.0,
         "eu_benchmark": 5.089,
         "unit": "tCO₂/t H₂",
         "product_unit": "ton",
         "ccus_sector": "hydrogen_SMR",
         "kr_eu_export_usd_2021": 0,
         "color": "#FFAB91",
-        "refs": ["EU_IR_2026_1740", "EC_CBAM_BENCHMARKS", "EU_IR_2025_2621", "IEA_Hydrogen_2024", "SK_ES_H2"],
+        "refs": ["EU_IR_2026_1740", "EC_CBAM_BENCHMARKS", "EU_IR_2025_2621", "IEA_H2_Definitions_2023", "IEA_Hydrogen_2024", "SK_ES_H2"],
     },
     "hydrogen_blue": {
         "name": "수소 (Blue, SMR + CCS)",
@@ -1127,14 +1131,14 @@ LIT = {
         "process": "Mixed grid",
         "product": "Electricity",
         "default_SEE": 0.443,           # 한국 grid (kgCO₂/kWh = tCO₂/MWh)
-        "kr_avg_SEE": 0.443,
+        "kr_avg_SEE": 0.417,            # 국가 전력 배출계수 2023 (0.4173, 2025-12 확정)
         "eu_benchmark": 0.0,             # 전력은 무상할당 공제 없음 (IR 2025/2620)
         "unit": "tCO₂/MWh",
         "product_unit": "MWh",
         "ccus_sector": "power",
         "kr_eu_export_usd_2021": 0,
         "color": "#FFE082",
-        "refs": ["EU_IR_2025_2620", "EU_IR_2025_2621", "IEA_Elec_Maps_2024", "KEPCO_2024"],
+        "refs": ["EU_IR_2025_2620", "EU_IR_2025_2621", "KR_GRID_2023", "IEA_Elec_Maps_2024"],
     },
 }
 
@@ -1162,7 +1166,7 @@ PRESETS = {
         "settings": {
             "annual_production_mt": 75.0,
             "eu_export_share_pct": 5.0,
-            "user_SEE": 2.127,
+            "user_SEE": 1.99,              # 2024 ESG Factbook 직접배출 / 조강
             "company_name": "POSCO",
         },
     },
@@ -1184,7 +1188,7 @@ PRESETS = {
         "settings": {
             "annual_production_mt": 5.0,
             "eu_export_share_pct": 10.0,
-            "user_SEE": 0.40,
+            "user_SEE": 0.15,              # 직접배출 기준 (전력 제외) — 공정별 공시 없음, IEA 범위
             "company_name": "현대제철 (EAF)",
         },
     },
@@ -1195,7 +1199,7 @@ PRESETS = {
         "settings": {
             "annual_production_mt": 10.0,
             "eu_export_share_pct": 0.05,
-            "user_SEE": 0.85,
+            "user_SEE": 0.81,              # 업계 평균 (클링커, 직접 + 클링커 공정 전력)
             "company_name": "쌍용·한일시멘트",
         },
     },
@@ -1214,14 +1218,14 @@ PRESETS = {
         },
     },
     "kr_hanwha": {
-        "label": "🇰🇷 한화솔루션 (NH₃ 200 kt/yr)",
-        "description": "비료·암모니아 — EU 수출 미미 (Korea Trade)",
+        "label": "🌐 천연가스 SMR 암모니아 (참고 · 국내 생산 없음)",
+        "description": "한국은 암모니아를 생산하지 않음(수입 의존) — 가스 SMR 공장 참고값 (IEA 직접 1.8 + 전력)",
         "sector_lit": "fertilizer_NH3",
         "settings": {
             "annual_production_mt": 0.2,
             "eu_export_share_pct": 5.0,
             "user_SEE": 2.0,
-            "company_name": "한화솔루션",
+            "company_name": "가스 SMR 암모니아 (참고)",
         },
     },
     "kr_sk_h2_gray": {
@@ -1231,7 +1235,7 @@ PRESETS = {
         "settings": {
             "annual_production_mt": 0.1,
             "eu_export_share_pct": 5.0,
-            "user_SEE": 11.0,
+            "user_SEE": 9.0,               # 생산 공정 배출만 (상류 메탄 제외)
             "company_name": "SK E&S (Gray)",
         },
     },
@@ -1483,10 +1487,10 @@ REFS = {
     "POSCO_Climate_2025": {
         "cat": "report",
         "date": "2025 (annual disclosure)",
-        "cite": "POSCO Holdings (2025). Climate Risk Disclosure — Carbon intensity 2.127 tCO₂/t crude steel "
-                "(scope 1+2). Hydrogen DRI roadmap 2030+.",
-        "url": "https://www.posco.co.kr/",
-        "used_for": "POSCO SEE 검증",
+        "cite": "POSCO (2025). 2024 POSCO ESG Factbook — Domestic Worksites, p.5. Scope 1 "
+                "69,665,353 tCO₂e, Scope 2 1,399,825 tCO₂e, intensity (Scope 1&2) 2.03 t/t crude steel (2024).",
+        "url": "https://sustainability.posco.com/assets_eng/file/2024_POSCO_ESG_Factbook_eng.pdf",
+        "used_for": "POSCO 직접배출 원단위 1.99 (Scope 1 ÷ 조강)",
     },
     "KOTRA_CBAM": {
         "cat": "report",
@@ -1553,7 +1557,23 @@ REFS = {
         "date": "2024 (annual)",
         "cite": "현대제철 지속가능성보고서 (2024). EAF 라인 + 친환경 강재 EU 수출 전략.",
         "url": "https://www.hyundai-steel.com/",
-        "used_for": "현대제철 EAF SEE 검증",
+        "used_for": "현대제철 공정 개요 (EAF 직접배출 원단위는 공시 없음 → IEA 범위 사용)",
+    },
+    "IEA_Steel_Roadmap_2020": {
+        "cat": "report",
+        "date": "2020-10",
+        "cite": "IEA (2020). Iron and Steel Technology Roadmap, p.39·43 — direct CO₂ intensity: "
+                "BF-BOF 1.2, scrap-EAF 0.04, gas DRI-EAF 1.0 t/t crude steel (direct + indirect 2.2 / 0.3 / 1.4).",
+        "url": "https://iea.blob.core.windows.net/assets/eb0c8ec1-3665-4959-97d0-187ceca189a8/Iron_and_Steel_Technology_Roadmap.pdf",
+        "used_for": "전기로·DRI 직접배출 원단위",
+    },
+    "AsiaCement_2024": {
+        "cat": "report",
+        "date": "2024-06",
+        "cite": "아시아시멘트 (2024). 2024 지속가능경영보고서 — 클링커당 배출 집약도 0.79 tCO₂e/t (2023, "
+                "Scope 1+2), 한라시멘트 0.83. 증권사 6개사 평균 0.821.",
+        "url": "https://kind.krx.co.kr/external/2024/06/27/000377/20240627000712/2024%20%EC%A7%80%EC%86%8D%EA%B0%80%EB%8A%A5%EA%B2%BD%EC%98%81%EB%B3%B4%EA%B3%A0%EC%84%9C.pdf",
+        "used_for": "시멘트 클링커 한국 평균 0.81",
     },
     "IFA_Fertilizer": {
         "cat": "report",
@@ -1563,12 +1583,13 @@ REFS = {
         "url": "https://www.ifastat.org/",
         "used_for": "비료/NH₃ sector SEE",
     },
-    "Hanwha_Solutions": {
+    "IEA_Ammonia_2021": {
         "cat": "report",
-        "date": "2024 (annual ESG)",
-        "cite": "한화솔루션 ESG 보고서 (2024). 비료·NH₃ 사업부 탄소집약도 공시.",
-        "url": "https://www.hanwhasolutions.com/",
-        "used_for": "한화솔루션 NH₃ SEE 검증",
+        "date": "2021-10",
+        "cite": "IEA (2021). Ammonia Technology Roadmap — natural gas SMR direct 1.8 tCO₂/t NH₃ "
+                "(global average all feedstocks 2.4).",
+        "url": "https://www.fertilizer.org/wp-content/uploads/2023/03/2021_IEA_Ammonia-Technology-Roadmap.pdf",
+        "used_for": "가스 SMR 암모니아 참고값 (한국은 국내 생산 없음)",
     },
     "IEA_Hydrogen_2024": {
         "cat": "report",
@@ -1577,6 +1598,14 @@ REFS = {
                 "production cost.",
         "url": "https://www.iea.org/reports/global-hydrogen-review-2024",
         "used_for": "수소 sector SEE",
+    },
+    "IEA_H2_Definitions_2023": {
+        "cat": "report",
+        "date": "2023",
+        "cite": "IEA (2023). Towards hydrogen definitions based on their emissions intensity — "
+                "unabated gas 10–14 kgCO₂e/kgH₂, of which upstream/midstream 1–5.",
+        "url": "https://www.iea.org/reports/towards-hydrogen-definitions-based-on-their-emissions-intensity/executive-summary",
+        "used_for": "회색수소 생산 공정 배출 ~9 (상류 제외)",
     },
     "SK_ES_H2": {
         "cat": "report",
@@ -1597,17 +1626,17 @@ REFS = {
     "IEA_Elec_Maps_2024": {
         "cat": "report",
         "date": "2024 (live database)",
-        "cite": "IEA / Electricity Maps (2024). Grid Carbon Intensity Database. "
-                "Korea 443, EU 230 gCO₂/kWh.",
+        "cite": "IEA / Electricity Maps (2024). Grid Carbon Intensity Database (live).",
         "url": "https://app.electricitymaps.com/",
         "used_for": "Grid 배출계수",
     },
-    "KEPCO_2024": {
-        "cat": "report",
-        "date": "2024 (annual)",
-        "cite": "한국전력공사 (2024). 한국 전력 평균 배출계수 공시.",
-        "url": "https://home.kepco.co.kr/",
-        "used_for": "한국 grid factor 0.443 tCO₂/MWh",
+    "KR_GRID_2023": {
+        "cat": "regulation",
+        "date": "2025-12 (2023년 값 확정)",
+        "cite": "기후에너지환경부 (2025). 국가 전력 배출계수 2023년 0.4173 tCO₂eq/MWh (소비단 기준, "
+                "2020~22 평균 0.4541 대비 −8.1%).",
+        "url": "https://www.korea.kr/briefing/pressReleaseView.do?newsId=156735726",
+        "used_for": "한국 전력 평균 0.417",
     },
     "EEX_EUA": {
         "cat": "market",
@@ -3412,7 +3441,7 @@ with tabs[7]:
 | Aluminium benchmark | primary 1.423 · 재생 0.091 | 동일 |
 | NH₃ / H₂ benchmark | 1.522 / 5.089 | 동일 |
 | 전력 무상할당 공제 | 없음 (benchmark 0) | {ref_link("EU_IR_2025_2620")} |
-| 한국 grid factor | 0.443 tCO₂/MWh | {ref_link("KEPCO_2024")} |
+| 한국 전력 배출계수 | 0.417 tCO₂/MWh (2023 국가) | {ref_link("KR_GRID_2023")} |
 
 ##### ⚠️ 한계와 가정
 

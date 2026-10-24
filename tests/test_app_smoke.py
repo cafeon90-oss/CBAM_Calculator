@@ -65,8 +65,8 @@ def test_first_screen_uses_default_preset(app):
 
 
 def test_default_kpi_matches_calc(app, calc):
-    # 기본 화면 = POSCO 프리셋 · Verified SEE 2.127 · 2026년 · mark-up 0 · K-ETS 미적용
-    expected = calc.calc_unit_cbam(2.127, 1.370, _eua_price(), 2026)["unit_cost_eur"]
+    # 기본 화면 = POSCO 프리셋 · Verified SEE 1.99 · 2026년 · mark-up 0 · K-ETS 미적용
+    expected = calc.calc_unit_cbam(1.99, 1.370, _eua_price(), 2026)["unit_cost_eur"]
     assert _unit_kpi(app) == f"€{expected:.2f}/t"
 
 
@@ -114,7 +114,7 @@ def test_reform_scenario_matches_calc(calc):
     _by_label(at.sidebar.selectbox, "분석 연도").select(2034)
     _run(at)
     assert any("제안" in w.value for w in at.warning)
-    expected = calc.calc_unit_cbam(2.127, 1.370, _eua_price(), 2034,
+    expected = calc.calc_unit_cbam(1.99, 1.370, _eua_price(), 2034,
                                    scenario="reform_2040")["unit_cost_eur"]
     assert _unit_kpi(at) == f"€{expected:.2f}/t"
 
