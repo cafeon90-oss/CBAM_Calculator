@@ -1,7 +1,10 @@
 """reg_alerts.py — reg_tracker 피드에서 이 계산기 몫만 고르고 확인 완료를 걸러 내는지 (네트워크 없음)."""
 import json
+import sys
+from pathlib import Path
 
-import reg_alerts as ra
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+import reg_alerts as ra   # noqa: E402
 
 
 def _feed(*alerts, version=1):
