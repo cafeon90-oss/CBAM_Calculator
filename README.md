@@ -29,21 +29,17 @@ CBAM cost = (SEE − Free EU benchmark × CBAM factor) × EUA × import volume  
 - **EUA**: EU ETS 탄소배출권 가격 (€/tCO₂)
 - **Free benchmark**: EU 무상할당 벤치마크 (sector·공정별)
 
-### 11개 탭 구성 (+ 설명서)
+### 5개 탭 구성
 
-| # | 탭 | 내용 |
-|---|---|---|
-| ① | 종합 영향 | 9개 sector × 한국 평균 SEE × EU benchmark 비교 |
-| ② | Sector별 분석 | 선택 sector deep-dive (default vs 한국 vs benchmark) |
-| ③ | 한국 기업 영향 | 9개 프리셋 기업 비교 (POSCO, 현대제철 BF/EAF, 시멘트 등) |
-| ④ | 감축 시뮬레이터 | "CBAM=0 만들려면 얼마 감축?" 역산 + 9개 CCUS BEP 분석 |
-| ⑤ | CCUS 연계 | 자매 도구(CCUS Benchmark) 기술 비교 (업종에 맞는 기술만) — Phase 2에서 live fetch |
-| ⑥ | 시간 흐름 | 2023~2034 phase-in 시각화 + 회사별 trajectory |
-| ⑦ | Custom 입력 | Multi-year 비교 + EUA 가격 민감도 |
-| ⑧ | 방법론 | 계산식, 가정, 한계 |
-| ⑨ | 참고문헌 | 30+ 출처 카탈로그 (regulation, report, paper, market) |
-| ⑩ | 📰 EU CBAM 뉴스 | EU 위원회 + Eur-Lex의 주요 공지 — 수동 큐레이션 + GitHub Actions 월 1회 자동 수집 |
-| ⑪ | SEE 산정 (철강) | 공장 탄소 투입·산출 자료로 EU 규칙(IR 2025/2547 물질수지)대로 철강 SEE·실측 공제 계산 → 사이드바에 적용 (`see_steel.py`) |
+| 탭 | 내용 |
+|---|---|
+| 결과 | 우리 회사 연도별 CBAM 부담(2026~2038), 무상할당 공제 축소 일정, 연도·EUA 가격 민감도 |
+| 업종·기업 비교 | 9개 업종 한국 평균 vs EU benchmark, 선택 업종 상세, 주요 기업 프리셋 비교 |
+| SEE 산정 (철강) | 공장 탄소 투입·산출 자료로 EU 규칙(IR 2025/2547 물질수지)대로 철강 SEE·실측 공제 계산 → 사이드바에 적용 (`see_steel.py`) |
+| 감축·CCUS | "CBAM 0 만들려면 얼마 감축?" 역산, 감축 수단 비교, CCS 단년도·NPV BEP, 자매 도구(CCUS Benchmark) 기술 비교 |
+| 자료 | 방법론(계산식·가정·한계) · 출처 카탈로그 · EU CBAM 공지(월 1회 자동 수집) · 설명서 |
+
+사이드바 입력은 세 묶음입니다: ① 회사·제품 ② 가격·연도·시나리오 ③ K-ETS 차감·수출가.
 
 ### 시나리오 프리셋 (9개 + Custom)
 
@@ -123,7 +119,7 @@ CBAM_calculator/
 - **Market**: EEX, Sandbag, ICE EUA Futures
 - **Standards**: IEA, IEAGHG, NETL, World Steel Association
 
-전체 30+ 출처는 앱 내 탭 ⑨ 참고문헌 또는 [REFS 섹션](app.py#L600) 참조.
+전체 30+ 출처는 앱 내 '자료 > 출처' 또는 [REFS 섹션](app.py#L600) 참조.
 
 ### 기여·문의
 
@@ -157,19 +153,13 @@ CBAM cost = (SEE − Free EU benchmark × CBAM factor) × EUA × import volume  
 
 ### Tabs
 
-| # | Tab | Description |
-|---|---|---|
-| ① | Overview | 6-sector comparison (Korea avg vs EU benchmark) |
-| ② | Sector Deep-dive | Selected sector: default vs Korea vs benchmark |
-| ③ | Korean Companies | 9 preset comparison (POSCO, Hyundai Steel, etc.) |
-| ④ | Abatement Sim | "How much reduction needed for CBAM=0?" + BEP |
-| ⑤ | CCUS Linkage | Sister tool integration — Phase 2 |
-| ⑥ | Timeline | 2023~2034 phase-in viz + per-company trajectory |
-| ⑦ | Custom Input | Multi-year compare + EUA sensitivity |
-| ⑧ | Methodology | Formulas, assumptions, limitations |
-| ⑨ | References | 30+ source catalog (regulation/report/paper/market) |
-| ⑩ | CBAM News | Curated + monthly auto-collected EU notices |
-| ⑪ | Steel SEE calculator | Plant carbon mass balance → SEE and actual-data free allocation (IR 2025/2547, 2025/2620) |
+| Tab | Description |
+|---|---|
+| Results | Company CBAM cost by year (2026–2038), phase-in schedule, year/EUA sensitivity |
+| Sector & company comparison | Korea average vs EU benchmark for 9 sectors, sector detail, preset companies |
+| Steel SEE calculator | Plant carbon mass balance → SEE and actual-data free allocation (IR 2025/2547, 2025/2620) |
+| Abatement & CCUS | Required reduction, abatement options, CCS BEP and NPV, sister-tool CCUS technologies |
+| Reference | Methodology · sources · EU CBAM notices · user guide |
 
 ### Auto Data Refresh
 
@@ -199,7 +189,7 @@ streamlit run app.py
 - **Market**: EEX, Sandbag, ICE EUA Futures
 - **Standards**: IEA, IEAGHG, NETL, World Steel Association
 
-Full reference catalog (30+ entries) inside the app at Tab ⑨ References.
+Full reference catalog (30+ entries) inside the app under Reference > Sources.
 
 ### License
 

@@ -13,7 +13,7 @@ from streamlit.testing.v1 import AppTest
 REPO = Path(__file__).resolve().parent.parent
 APP = REPO / "app.py"
 TIMEOUT = 180   # 첫 실행은 pandas·plotly import 포함 ~20초
-TAB_COUNT = 12
+TAB_COUNT = 9
 
 
 def _preset_keys():

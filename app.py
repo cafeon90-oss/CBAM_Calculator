@@ -60,453 +60,139 @@ from ccus_metrics_loader import (
 )
 
 # ======================================================================
-# 페이지 설정 + 다크모드 CSS
+# 페이지 설정 + 라이트 테마 CSS
 # ======================================================================
 st.set_page_config(
     page_title="EU CBAM 영향 계산기",
     page_icon="🌍",
     layout="wide",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="auto",   # 데스크톱은 펼침, 모바일은 접힘
 )
 
 st.markdown(
     """
 <style>
-    /* ─────────────────────────────────────────────────
-       전역 — 차분한 다크모드 (Linear/Vercel 톤)
-       ───────────────────────────────────────────────── */
-    .stApp,
-    [data-testid="stAppViewContainer"],
-    [data-testid="stMain"],
-    [data-testid="stMainBlockContainer"],
-    .main, .block-container,
-    body, html { background-color: #0a0d14 !important; }
-    body, [class*="st"] { color: #F0F2F5; }
-
-    /* Streamlit 상단 헤더 / 툴바 / 데코레이션 — 흰 띠 제거 */
-    header[data-testid="stHeader"],
-    [data-testid="stToolbar"],
-    [data-testid="stDecoration"],
-    [data-testid="stStatusWidget"],
-    .stApp > header {
-        background-color: #0a0d14 !important;
-        background: #0a0d14 !important;
-    }
-    /* 헤더 안의 모든 흰색 배경 요소 차단 */
-    header[data-testid="stHeader"] * {
-        background-color: transparent !important;
-    }
-    /* Streamlit 상단의 가는 흰색 띠 (deploy bar / running bar) */
-    [data-testid="stDecoration"] {
-        background-image: none !important;
-        height: 0 !important;
-    }
-    /* 햄버거 메뉴, share 버튼 등 아이콘 색상 */
-    header[data-testid="stHeader"] svg,
-    header[data-testid="stHeader"] button {
-        color: #A8AEB6 !important;
-        fill: #A8AEB6 !important;
-    }
-    /* 본문 영역 패딩 정돈 (헤더 가렸을 때 본문이 위로 밀리지 않게) */
-    .main .block-container {
-        padding-top: 2rem !important;
-    }
-
-    /* 본문 헤더 */
-    h1 {
-        font-weight: 600 !important;
-        letter-spacing: -0.02em !important;
-        color: #F0F2F5 !important;
-    }
-    h2, h3, h4 {
-        font-weight: 500 !important;
-        color: #F0F2F5 !important;
-    }
-
-    /* 사이드바 완전 불투명 + 차분 */
-    section[data-testid="stSidebar"] {
-        background-color: #0a0d14 !important;
-        opacity: 1 !important;
-        border-right: 1px solid #1f2733;
-    }
-    section[data-testid="stSidebar"] > div:first-child { background-color: #0a0d14 !important; }
-    section[data-testid="stSidebar"] * { background-color: transparent; }
-    section[data-testid="stSidebar"] h3 {
-        font-size: 0.78rem !important;
-        text-transform: uppercase;
-        letter-spacing: 0.06em;
-        color: #A8AEB6 !important;
-        font-weight: 500 !important;
-        margin-top: 4px !important;
-    }
-
-    /* 탭 — 모던 underline 스타일 */
-    div[data-baseweb="tab-list"] {
-        overflow-x: auto !important;
-        flex-wrap: nowrap !important;
-        scrollbar-width: thin;
-        gap: 0 !important;
-        border-bottom: 1px solid #1f2733;
-    }
-    div[data-baseweb="tab-list"]::-webkit-scrollbar { height: 4px; }
-    div[data-baseweb="tab-list"]::-webkit-scrollbar-thumb { background: #2a3346; border-radius: 2px; }
-    div[data-baseweb="tab-list"] button {
-        flex-shrink: 0 !important;
-        white-space: nowrap;
-        font-size: 0.82rem !important;
-        font-weight: 500 !important;
-        color: #A8AEB6 !important;
-        padding: 9px 8px !important;       /* 좌우 패딩 압축으로 10개 다 보이게 */
-        border-bottom: 2px solid transparent !important;
-        transition: color 0.15s ease;
-        min-width: auto !important;
-    }
-    /* 데스크톱에서 탭 사이 간격 미세조정 */
-    div[data-baseweb="tab-list"] button + button {
-        margin-left: 4px !important;
-    }
-    /* 모바일에서는 더 압축 + 가로 스크롤 허용 */
-    @media (max-width: 768px) {
-        div[data-baseweb="tab-list"] button {
-            font-size: 0.76rem !important;
-            padding: 8px 7px !important;
-        }
-    }
-    div[data-baseweb="tab-list"] button[aria-selected="true"] {
-        color: #4FC3F7 !important;
-        border-bottom-color: #4FC3F7 !important;
-    }
-    div[data-baseweb="tab-list"] button:hover { color: #B0BEC5 !important; }
-
-    /* 메트릭 카드 — 좌측 strip + flat */
-    div[data-testid="stMetric"] {
-        background-color: #11161e;
-        padding: 13px 16px 13px 18px;
-        border-radius: 10px;
-        border: 1px solid #1f2733;
-        position: relative;
-        overflow: hidden;
-        transition: border-color 0.15s ease;
-    }
-    div[data-testid="stMetric"]:hover { border-color: #2a3346; }
-    /* KPI 카드 좌측 strip은 nth-child로 색상 부여 */
-    div[data-testid="stMetric"]::before {
-        content: "";
-        position: absolute;
-        top: 0; left: 0; bottom: 0;
-        width: 2px;
-        background: #4FC3F7;
-    }
-    /* 4개 컬럼 KPI 카드의 색상 strip 다양화 */
-    div[data-testid="stHorizontalBlock"] > div:nth-child(1) div[data-testid="stMetric"]::before { background: #4FC3F7; }
-    div[data-testid="stHorizontalBlock"] > div:nth-child(2) div[data-testid="stMetric"]::before { background: #9575CD; }
-    div[data-testid="stHorizontalBlock"] > div:nth-child(3) div[data-testid="stMetric"]::before { background: #FFB74D; }
-    div[data-testid="stHorizontalBlock"] > div:nth-child(4) div[data-testid="stMetric"]::before { background: #81C784; }
-
-    div[data-testid="stMetricLabel"] {
-        font-size: 0.66rem !important;
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
-        color: #A8AEB6 !important;
-        font-weight: 500 !important;
-    }
-    div[data-testid="stMetricLabel"] > div { font-weight: 500 !important; }
-    div[data-testid="stMetricValue"] {
-        font-size: 1.35rem !important;
-        font-weight: 600 !important;
-        line-height: 1.2;
-        color: #F0F2F5 !important;
-        letter-spacing: -0.02em;
-        margin-top: 4px !important;
-    }
-    div[data-testid="stMetricDelta"] {
-        font-size: 0.7rem !important;
-        color: #D4D8DD !important;
-    }
-    div[data-testid="stMetricDelta"] svg { display: none; }
-
-    /* 인사이트 박스 — flat + 좌측 strip */
-    .insight-box {
-        background: #11161e;
-        border: 1px solid #1f2733;
-        border-left: 2px solid #4FC3F7;
-        padding: 13px 16px;
-        margin: 10px 0;
-        border-radius: 0 8px 8px 0;
-        color: #D4D8DD;
-        font-size: 0.88rem;
-        line-height: 1.65;
-    }
-    .insight-box strong { color: #F0F2F5; font-weight: 500; }
-    .insight-box.good { border-left-color: #81C784; }
-    .insight-box.warn { border-left-color: #FFB74D; }
-    .insight-box.bad  { border-left-color: #E57373; }
-    .insight-box .good { color: #A5D6A7; font-weight: 500; }
-    .insight-box .warn { color: #FFCC80; font-weight: 500; }
-    .insight-box .bad  { color: #EF9A9A; font-weight: 500; }
-
-    /* Omnibus 알림 — 컴팩트 */
-    .omnibus-banner {
-        display: flex;
-        gap: 10px;
-        align-items: center;
-        background: #11161e;
-        border: 1px solid #1f2733;
-        border-radius: 8px;
-        padding: 9px 14px;
-        margin: 10px 0 16px 0;
-        font-size: 0.8rem;
-        color: #D4D8DD;
-    }
-    .omnibus-banner .new-badge {
-        background: #1d2b22;
-        color: #81C784;
-        font-size: 0.66rem;
-        font-weight: 500;
-        padding: 2px 7px;
-        border-radius: 4px;
-        letter-spacing: 0.04em;
-        flex-shrink: 0;
-    }
-    .omnibus-banner a {
-        color: #81C784;
-        text-decoration: none;
-        font-size: 0.78rem;
-        margin-left: auto;
-        flex-shrink: 0;
-    }
-
-    /* 자매도구 안내 카드 — 차분 톤 */
-    .sister-card {
-        background: #11161e;
-        border: 1px solid #1f2733;
-        border-left: 2px solid #9b8de8;
-        border-radius: 0 8px 8px 0;
-        padding: 13px 16px;
-        margin: 10px 0;
-        font-size: 0.88rem;
-        color: #D4D8DD;
-        line-height: 1.6;
-    }
-    .sister-card a { color: #9b8de8; text-decoration: none; font-weight: 500; }
-    .sister-card a:hover { text-decoration: underline; }
-    .sister-card h4 { color: #F0F2F5 !important; font-weight: 500 !important; }
+    @import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css");
 
     /* ─────────────────────────────────────────────────
-       DataFrame — Streamlit 자동 다크모드에 맡기되, 외곽만 정돈
-       (canvas 기반 glide-data-grid는 CSS color가 안 먹힘 — 강제 X)
+       라이트 테마 — 보고서형 (남색 단일 강조, 흰 카드, 얇은 테두리)
        ───────────────────────────────────────────────── */
-    div[data-testid="stDataFrame"] {
-        border: 1px solid #1f2733;
-        border-radius: 8px;
-        overflow: hidden;
+    :root {
+        --bg: #F6F7F9; --surface: #FFFFFF; --border: #E2E6EC; --border-strong: #CBD2DC;
+        --text: #111827; --text2: #374151; --text3: #6B7280;
+        --primary: #1F3A8A; --primary-soft: #EEF2FB;
+        --good: #15803D; --warn: #B45309; --bad: #B91C1C;
     }
+    html, body, .stApp, p, li, label, input, textarea, button, h1, h2, h3, h4, h5, h6,
+    [data-testid="stMarkdownContainer"], [data-testid="stMetricValue"], [data-testid="stMetricLabel"],
+    [data-baseweb="select"] div, [data-baseweb="tab"] {
+        font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont,
+                     "Malgun Gothic", "Apple SD Gothic Neo", sans-serif !important;
+    }
+    /* 아이콘 글꼴은 그대로 둔다 (펼침 화살표 등) */
+    [data-testid="stIconMaterial"], span[class*="material-symbols"], .material-icons {
+        font-family: "Material Symbols Rounded" !important;
+    }
+    .stApp, [data-testid="stAppViewContainer"], [data-testid="stMain"] { background: var(--bg) !important; }
+    body, .stMarkdown, .stMarkdown p, .stMarkdown li { color: var(--text2); font-weight: 500; }
+    header[data-testid="stHeader"] { background: var(--bg) !important; }
+    [data-testid="stDecoration"] { display: none !important; }
+    .main .block-container, [data-testid="stMainBlockContainer"] { padding-top: 3.6rem !important; max-width: 1400px; }
 
-    /* ─────────────────────────────────────────────────
-       Select / Dropdown — 텍스트 안 보이는 문제 수정
-       ───────────────────────────────────────────────── */
-    /* 닫힌 select 박스 */
-    div[data-baseweb="select"] > div {
-        background-color: #11161e !important;
-        border-color: #1f2733 !important;
-        color: #F0F2F5 !important;
-    }
-    div[data-baseweb="select"] > div:hover { border-color: #2a3346 !important; }
-    div[data-baseweb="select"] > div > div,
-    div[data-baseweb="select"] span,
-    div[data-baseweb="select"] input {
-        color: #F0F2F5 !important;
-        background-color: transparent !important;
-    }
-    /* 열린 dropdown 메뉴 (포털로 body 직속 렌더링됨) */
-    div[data-baseweb="popover"],
-    div[data-baseweb="menu"],
-    ul[role="listbox"] {
-        background-color: #11161e !important;
-        border: 1px solid #1f2733 !important;
-    }
-    div[data-baseweb="popover"] li,
-    div[data-baseweb="menu"] li,
-    ul[role="listbox"] li {
-        background-color: #11161e !important;
-        color: #F0F2F5 !important;
-    }
-    div[data-baseweb="popover"] li:hover,
-    div[data-baseweb="menu"] li:hover,
-    ul[role="listbox"] li:hover,
-    li[aria-selected="true"] {
-        background-color: #1a2330 !important;
-        color: #F0F2F5 !important;
-    }
+    h1, h2, h3, h4, h5 { color: var(--text) !important; letter-spacing: -0.01em; }
+    h2, h3 { font-weight: 800 !important; }
+    h4, h5 { font-weight: 700 !important; }
+    [data-testid="stHeadingWithActionElements"] h3 { font-size: 1.25rem !important; margin-top: 0.4rem; }
+    hr { border-color: var(--border) !important; }
 
-    /* Text input + number input */
-    div[data-baseweb="input"] > div,
-    div[data-baseweb="base-input"] {
-        background-color: #11161e !important;
-        border-color: #1f2733 !important;
-    }
-    div[data-baseweb="input"] input,
-    div[data-baseweb="base-input"] input,
-    .stNumberInput input, .stTextInput input {
-        background-color: #11161e !important;
-        color: #F0F2F5 !important;
-    }
-
-    /* ─────────────────────────────────────────────────
-       Radio 버튼 — 텍스트 + 동그라미 둘 다 보이게
-       ───────────────────────────────────────────────── */
-    /* 라벨 텍스트 */
-    .stRadio label,
-    div[data-testid="stRadio"] label,
-    .stRadio p {
-        color: #F0F2F5 !important;
-        font-size: 0.86rem !important;
-    }
-    /* radiogroup 가로 정렬 */
-    div[role="radiogroup"] {
-        display: flex !important;
-        flex-wrap: wrap !important;
-        gap: 14px !important;
-        align-items: center !important;
-    }
-    div[role="radiogroup"] > label {
-        display: inline-flex !important;
-        flex-direction: row !important;
-        align-items: center !important;
-        gap: 6px !important;
-        white-space: nowrap !important;
-        margin: 0 !important;
-    }
-
-    /* 동그라미 가시성 — Streamlit 기본 동그라미가 어두운 배경에 묻히는 문제 해결 */
-    /* 외부 원: 흰색 1.5px 테두리 + 본문보다 살짝 밝은 채움으로 윤곽 살림 */
-    div[data-baseweb="radio"] > div:first-child {
-        border-color: #A8AEB6 !important;
-        border-width: 1.5px !important;
-        background-color: #1a2028 !important;
-    }
-    /* 호버 시 테두리 더 밝게 */
-    div[data-baseweb="radio"]:hover > div:first-child {
-        border-color: #F0F2F5 !important;
-    }
-    /* 선택 시: cyan으로 채움 */
-    div[data-baseweb="radio"] > div[aria-checked="true"],
-    div[data-baseweb="radio"] > div:first-child:has(input:checked) {
-        background-color: #4FC3F7 !important;
-        border-color: #4FC3F7 !important;
-    }
-
-    /* Checkbox */
-    .stCheckbox label { color: #F0F2F5 !important; }
-
-    /* MultiSelect 칩 */
-    span[data-baseweb="tag"] {
-        background-color: #1a2330 !important;
-        color: #F0F2F5 !important;
-        border-color: #2a3346 !important;
-    }
-
-    /* 슬라이더 — cyan accent */
-    div[data-baseweb="slider"] [role="slider"] {
-        background-color: #4FC3F7 !important;
-        border-color: #4FC3F7 !important;
-    }
-    div[data-baseweb="slider"] [data-testid="stTickBar"] {
-        color: #A8AEB6 !important;
-    }
-
-    /* Expander — 차분 */
-    div[data-testid="stExpander"] {
-        background-color: #11161e;
-        border: 1px solid #1f2733 !important;
-        border-radius: 8px !important;
-    }
-    div[data-testid="stExpander"] summary { color: #D4D8DD !important; }
-    div[data-testid="stExpander"] details > summary:hover { color: #F0F2F5 !important; }
-
-    /* 캡션 — 명도 보장 */
-    .stCaption, [data-testid="stCaptionContainer"] {
-        color: #A8AEB6 !important;
-    }
-
-    /* Help (?) 아이콘 툴팁 */
-    [data-testid="stTooltipIcon"] svg { fill: #6b7689 !important; }
-
-    /* 모바일 폰트 축소 */
-    @media (max-width: 640px) {
-        h1 { font-size: 1.35rem !important; }
-        h2 { font-size: 1.1rem !important; }
-        div[data-testid="stMetricValue"] { font-size: 1.05rem !important; }
-        div[data-testid="stMetricLabel"] { font-size: 0.62rem !important; }
-        .insight-box, .sister-card { font-size: 0.82rem; }
-        .omnibus-banner { font-size: 0.75rem; padding: 8px 12px; }
-        div[data-baseweb="tab-list"] button { font-size: 0.78rem !important; padding: 9px 11px !important; }
-    }
-
-    /* 그래프 완전 정적화 — 모바일 핀치/터치 줌 차단 강화 */
-    .js-plotly-plot, .plotly, .plot-container, .main-svg,
-    div[data-testid="stPlotlyChart"], div[data-testid="stPlotlyChart"] * {
-        touch-action: pan-y !important;       /* 페이지 세로 스크롤만 허용 */
-        -ms-touch-action: pan-y !important;
-        -webkit-user-select: none !important;
-        user-select: none !important;
-        -webkit-tap-highlight-color: transparent !important;
-    }
-    /* 차트 내부의 모든 SVG 요소에서 포인터 이벤트 차단 (drilldown 차단 핵심) */
-    .js-plotly-plot .plotly svg,
-    .js-plotly-plot .main-svg .draglayer,
-    .js-plotly-plot .main-svg .nsewdrag,
-    .js-plotly-plot .main-svg .cursor-pointer {
-        pointer-events: none !important;
-    }
-    /* hover, modebar, cursor 모두 무력화 */
-    .js-plotly-plot .plotly .modebar,
-    .js-plotly-plot .plotly .modebar-container,
-    .js-plotly-plot .plotly .hoverlayer,
-    .js-plotly-plot .plotly .hovertext { display: none !important; }
-    .js-plotly-plot * { cursor: default !important; }
-    /* 핀치줌·더블탭줌 방지 (메타뷰포트와 별개로 차트 영역만 격리) */
-    .js-plotly-plot { -webkit-touch-callout: none !important; }
-
-    /* 사이드바 multiselect 칩 글자 잘림 방지 */
-    section[data-testid="stSidebar"] [data-baseweb="tag"] {
-        max-width: 100% !important;
-        height: auto !important;
-        margin: 2px 2px !important;
-    }
-    section[data-testid="stSidebar"] [data-baseweb="tag"] > div {
-        white-space: normal !important;
-        word-break: break-word !important;
-        overflow: visible !important;
-        text-overflow: clip !important;
-        line-height: 1.3 !important;
-    }
-
-    /* 데스크톱 사이드바 폭 */
+    /* 사이드바 */
+    section[data-testid="stSidebar"] { background: var(--surface) !important; border-right: 1px solid var(--border); }
+    section[data-testid="stSidebar"] [data-testid="stExpander"] { border: 1px solid var(--border) !important; background: var(--surface); }
+    section[data-testid="stSidebar"] [data-testid="stExpander"] summary p { font-weight: 700 !important; color: var(--text) !important; font-size: 0.92rem; }
+    .sidebar-brand { font-size: 0.78rem; color: var(--text3); letter-spacing: 0.02em; margin: 2px 0 10px; }
+    .sidebar-brand b { color: var(--text); font-weight: 800; font-size: 0.95rem; letter-spacing: -0.01em; }
     @media (min-width: 768px) {
-        section[data-testid="stSidebar"] {
-            min-width: 360px !important;
-            width: 360px !important;
-        }
+        section[data-testid="stSidebar"] { min-width: 360px !important; width: 360px !important; }
         section[data-testid="stSidebar"] > div { min-width: 360px !important; }
     }
 
-    /* 푸터 카드 — 차분 */
-    .footer-card {
-        background: #11161e;
-        border-radius: 12px;
-        padding: 18px 22px;
-        margin: 24px 0 8px 0;
-        border: 1px solid #1f2733;
-        position: relative;
+    /* 헤더 */
+    .app-header { border-bottom: 1px solid var(--border); padding-bottom: 14px; margin-bottom: 14px; }
+    .app-title { font-size: 1.7rem; font-weight: 800; color: var(--text); letter-spacing: -0.02em; line-height: 1.25; }
+    .app-sub { font-size: 0.86rem; color: var(--text3); margin-top: 4px; }
+    .app-sub a { color: var(--primary); text-decoration: none; font-weight: 600; }
+    .app-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+    .app-meta span { font-size: 0.74rem; color: var(--text2); background: var(--surface);
+                     border: 1px solid var(--border); border-radius: 999px; padding: 2px 10px; }
+
+    /* 탭 — 밑줄형, 남색 */
+    div[data-baseweb="tab-list"] { gap: 6px !important; border-bottom: 1px solid var(--border); overflow-x: auto; flex-wrap: nowrap; }
+    div[data-baseweb="tab-list"] button { flex-shrink: 0; padding: 10px 14px !important; }
+    div[data-baseweb="tab-list"] button p { font-size: 0.95rem !important; font-weight: 600 !important; color: var(--text3) !important; }
+    div[data-baseweb="tab-list"] button[aria-selected="true"] p { color: var(--primary) !important; font-weight: 800 !important; }
+    div[data-baseweb="tab-highlight"] { background-color: var(--primary) !important; height: 3px !important; }
+    /* 자료 탭 안의 작은 탭 */
+    div[data-baseweb="tab-panel"] div[data-baseweb="tab-list"] button p { font-size: 0.86rem !important; }
+
+    /* KPI 카드 */
+    div[data-testid="stMetric"] { background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+                                  padding: 14px 16px; box-shadow: 0 1px 2px rgba(17,24,39,0.04); }
+    div[data-testid="stMetricLabel"] p { font-size: 0.8rem !important; color: var(--text3) !important; font-weight: 600 !important; }
+    div[data-testid="stMetricValue"] { font-size: 1.3rem !important; font-weight: 800 !important; color: var(--text) !important;
+                                       letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+    div[data-testid="stMetricValue"] div, div[data-testid="stMetricValue"] p {
+        white-space: normal !important; overflow: visible !important; text-overflow: clip !important; line-height: 1.25; }
+    div[data-testid="stMetricDelta"] { font-size: 0.76rem !important; }
+    div[data-testid="stMetricDelta"] svg { display: none; }
+
+    /* 요약 박스 */
+    .insight-box { background: var(--surface); border: 1px solid var(--border); border-left: 4px solid var(--primary);
+                   border-radius: 8px; padding: 12px 16px; margin: 6px 0 14px; color: var(--text2);
+                   font-size: 0.92rem; line-height: 1.65; }
+    .insight-box strong { color: var(--text); font-weight: 800; }
+    .insight-box.good { border-left-color: var(--good); }
+    .insight-box.warn { border-left-color: var(--warn); }
+    .insight-box.bad  { border-left-color: var(--bad); }
+    .insight-box .good { color: var(--good); font-weight: 700; }
+    .insight-box .warn { color: var(--warn); font-weight: 700; }
+    .insight-box .bad  { color: var(--bad); font-weight: 700; }
+
+    .sister-card { background: var(--surface); border: 1px solid var(--border); border-left: 4px solid #4338CA;
+                   border-radius: 8px; padding: 13px 16px; margin: 10px 0; font-size: 0.9rem; color: var(--text2); line-height: 1.6; }
+    .sister-card a { color: #4338CA; text-decoration: none; font-weight: 700; }
+    .sister-card h4 { color: var(--text) !important; }
+
+    /* 표·펼침·캡션 */
+    div[data-testid="stDataFrame"] { border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: var(--surface); }
+    div[data-testid="stExpander"] { background: var(--surface); border: 1px solid var(--border) !important; border-radius: 8px !important; }
+    div[data-testid="stExpander"] summary p { font-weight: 600; color: var(--text2); }
+    [data-testid="stCaptionContainer"], .stCaption { color: var(--text3) !important; }
+    div[data-testid="stPlotlyChart"] { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 6px; }
+
+    /* 그래프 정적화 — 모바일 터치 줌 차단 */
+    .js-plotly-plot, .plotly, .plot-container, .main-svg,
+    div[data-testid="stPlotlyChart"], div[data-testid="stPlotlyChart"] * {
+        touch-action: pan-y !important; -ms-touch-action: pan-y !important;
+        -webkit-user-select: none !important; user-select: none !important;
+        -webkit-tap-highlight-color: transparent !important;
     }
-    .footer-card::before {
-        content: "";
-        position: absolute;
-        top: 0; left: 0; right: 0;
-        height: 2px;
-        background: linear-gradient(90deg, #4FC3F7 0%, #9b8de8 100%);
-        border-radius: 12px 12px 0 0;
+    .js-plotly-plot .plotly svg, .js-plotly-plot .main-svg .draglayer,
+    .js-plotly-plot .main-svg .nsewdrag, .js-plotly-plot .main-svg .cursor-pointer { pointer-events: none !important; }
+    .js-plotly-plot .plotly .modebar, .js-plotly-plot .plotly .modebar-container,
+    .js-plotly-plot .plotly .hoverlayer, .js-plotly-plot .plotly .hovertext { display: none !important; }
+    .js-plotly-plot * { cursor: default !important; }
+    .js-plotly-plot { -webkit-touch-callout: none !important; }
+
+    /* 푸터 */
+    .footer-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+                   padding: 18px 22px; margin: 28px 0 8px 0; }
+
+    @media (max-width: 640px) {
+        .app-title { font-size: 1.3rem; }
+        div[data-testid="stMetricValue"] { font-size: 1.1rem !important; }
+        div[data-baseweb="tab-list"] button { padding: 8px 9px !important; }
+        div[data-baseweb="tab-list"] button p { font-size: 0.85rem !important; }
+        .insight-box { font-size: 0.85rem; }
     }
 </style>
 """,
@@ -517,24 +203,26 @@ st.markdown(
 # Plotly 정적화 config (모든 차트 공통)
 # ======================================================================
 # ─────────────────────────────────────────────────
-# 색상 팔레트 (차분 다크모드 v3 — 톤다운된 흰색 통일)
-# 모든 텍스트는 흰색 계열, 명도만 단계 — 회색 일절 사용 X
+# 색상 팔레트 — 라이트 보고서형 (남색 단일 강조)
 # ─────────────────────────────────────────────────
-C_BG       = "#0a0d14"   # 본문 배경
-C_CARD     = "#11161e"   # 카드 배경
-C_PRIMARY  = "#4FC3F7"   # 정보 (cyan)
-C_ACCENT   = "#9575CD"   # 보조 강조 (soft purple)
-C_GOOD     = "#81C784"   # 좋음 (녹색)
-C_WARN     = "#FFB74D"   # 주의 (주황)
-C_BAD      = "#E57373"   # 나쁨 (빨강)
-C_HIGH     = "#FFEB3B"   # 강조 (노랑)
-C_TEXT     = "#F0F2F5"   # primary text (90% white)
-C_TEXT2    = "#D4D8DD"   # secondary text (75% white) — 부제, 설명
-C_TEXT3    = "#A8AEB6"   # tertiary text (60% white) — caption, label
-C_TEXT4    = "#7A8089"   # quaternary text (45% white) — placeholder, footer
-C_BORDER   = "#252b36"   # 테두리
-# 호환용 alias (구버전에서 C_MUTED 참조 시 안전)
+C_BG       = "#FFFFFF"   # 차트 배경 (흰 카드)
+C_PAGE     = "#F6F7F9"   # 페이지 배경
+C_CARD     = "#FFFFFF"   # 카드 배경
+C_PRIMARY  = "#1F3A8A"   # 주 강조 (남색)
+C_ACCENT   = "#64748B"   # 보조 (슬레이트)
+C_GOOD     = "#15803D"   # 좋음
+C_WARN     = "#B45309"   # 주의
+C_BAD      = "#B91C1C"   # 나쁨
+C_HIGH     = "#B45309"   # 강조선
+C_TEXT     = "#111827"   # 본문 제목
+C_TEXT2    = "#374151"   # 본문
+C_TEXT3    = "#6B7280"   # 보조 글자
+C_TEXT4    = "#9CA3AF"   # 흐린 글자
+C_BORDER   = "#E2E6EC"   # 테두리
+C_GRID     = "#EDF0F4"   # 차트 격자
 C_MUTED    = C_TEXT4
+PLOTLY_TEMPLATE = "plotly_white"
+FONT_FAMILY = "Pretendard Variable, Pretendard, -apple-system, Malgun Gothic, sans-serif"
 
 PLOTLY_CONFIG = {
     "displayModeBar": False,
@@ -557,7 +245,7 @@ PLOTLY_CONFIG = {
 
 
 def lock_static(fig):
-    """차트 정적 잠금 + 톤다운된 흰색 텍스트 강제 (다크모드 가독성).
+    """차트 정적 잠금 + 라이트 테마 글꼴·색 통일.
     모든 fig 직전에 호출."""
     # 기본 layout 갱신 — title은 강제로 건드리지 않음
     # (title.text가 None인 fig에 title.font를 강제하면 빈 객체로 그려져 'undefined' 노출)
@@ -565,7 +253,7 @@ def lock_static(fig):
         dragmode=False,
         hovermode=False,
         clickmode="none",
-        font=dict(color=C_TEXT2, family="-apple-system, sans-serif", size=12),
+        font=dict(color=C_TEXT2, family=FONT_FAMILY, size=12),
         legend=dict(font=dict(color=C_TEXT2, size=11)),
         paper_bgcolor=C_BG,
         plot_bgcolor=C_BG,
@@ -583,9 +271,9 @@ def lock_static(fig):
         color=C_TEXT2,
         tickfont=dict(color=C_TEXT3, size=11),
         title_font=dict(color=C_TEXT2, size=12),
-        gridcolor="#1f2733",
-        linecolor="#252b36",
-        zerolinecolor="#252b36",
+        gridcolor=C_GRID,
+        linecolor=C_BORDER,
+        zerolinecolor=C_BORDER,
         fixedrange=True,
     )
     fig.update_xaxes(**axis_style)
@@ -768,19 +456,19 @@ def load_cbam_news():
 
 # 카테고리별 표시 색상 + 이모지
 NEWS_CATEGORY_META = {
-    "milestone":   {"emoji": "🚀", "label": "이정표",  "color": "#4FC3F7"},
-    "regulation":  {"emoji": "⚖️", "label": "규제",   "color": "#FFB74D"},
-    "guidance":    {"emoji": "📘", "label": "가이드", "color": "#9575CD"},
-    "notice":      {"emoji": "📢", "label": "공지",   "color": "#81C784"},
-    "proposal":    {"emoji": "💡", "label": "제안",   "color": "#80DEEA"},
-    "negotiation": {"emoji": "🗳️", "label": "협상",   "color": "#B0BEC5"},
-    "other":       {"emoji": "📰", "label": "기타",   "color": "#A8AEB6"},
+    "milestone":   {"emoji": "🚀", "label": "이정표",  "color": "#1F3A8A"},
+    "regulation":  {"emoji": "⚖️", "label": "규제",   "color": "#B45309"},
+    "guidance":    {"emoji": "📘", "label": "가이드", "color": "#4338CA"},
+    "notice":      {"emoji": "📢", "label": "공지",   "color": "#15803D"},
+    "proposal":    {"emoji": "💡", "label": "제안",   "color": "#0E7490"},
+    "negotiation": {"emoji": "🗳️", "label": "협상",   "color": "#64748B"},
+    "other":       {"emoji": "📰", "label": "기타",   "color": "#6B7280"},
 }
 
 NEWS_IMPORTANCE_BADGE = {
-    "high":   {"label": "⚠️ 중요",  "bg": "#3a1f1f", "fg": "#EF9A9A"},
-    "medium": {"label": "○ 보통",  "bg": "#1f2733", "fg": "#A8AEB6"},
-    "low":    {"label": "·",       "bg": "#1f2733", "fg": "#7A8089"},
+    "high":   {"label": "⚠️ 중요",  "bg": "#FEF2F2", "fg": "#B91C1C"},
+    "medium": {"label": "○ 보통",  "bg": "#E2E6EC", "fg": "#6B7280"},
+    "low":    {"label": "·",       "bg": "#E2E6EC", "fg": "#6B7280"},
 }
 
 
@@ -814,10 +502,10 @@ def render_news_card(item: dict, compact: bool = False) -> str:
     if compact:
         return (
             '<div style="border-left:2px solid ' + color + ';padding:10px 14px;'
-            'margin:6px 0;background:#11161e;border-radius:0 6px 6px 0;">'
-            '<div style="font-size:0.72rem;color:#A8AEB6;margin-bottom:4px;">'
+            'margin:6px 0;background:#FFFFFF;border-radius:0 6px 6px 0;">'
+            '<div style="font-size:0.72rem;color:#6B7280;margin-bottom:4px;">'
             + cat_emoji + ' ' + date + ' · ' + cat_label + '</div>'
-            '<div style="font-size:0.88rem;color:#F0F2F5;font-weight:500;'
+            '<div style="font-size:0.88rem;color:#111827;font-weight:500;'
             'margin-bottom:6px;line-height:1.4;">' + title + '</div>'
             '<a href="' + url + '" target="_blank" style="color:' + color + ';'
             'text-decoration:none;font-size:0.76rem;">원문 보기 ↗</a>'
@@ -826,7 +514,7 @@ def render_news_card(item: dict, compact: bool = False) -> str:
 
     return (
         '<div style="border-left:3px solid ' + color + ';padding:14px 18px;'
-        'margin:10px 0;background:#11161e;border:1px solid #1f2733;'
+        'margin:10px 0;background:#FFFFFF;border:1px solid #E2E6EC;'
         'border-left-width:3px;border-radius:0 8px 8px 0;">'
         # 메타 행
         '<div style="display:flex;align-items:center;gap:10px;'
@@ -834,17 +522,17 @@ def render_news_card(item: dict, compact: bool = False) -> str:
         '<span style="background:' + color_bg + ';color:' + color + ';'
         'font-size:0.72rem;padding:2px 8px;border-radius:4px;font-weight:500;">'
         + cat_emoji + ' ' + cat_label + '</span>'
-        '<span style="color:#A8AEB6;font-size:0.78rem;">' + date + '</span>'
-        '<span style="color:#7A8089;font-size:0.74rem;">· ' + src + '</span>'
+        '<span style="color:#6B7280;font-size:0.78rem;">' + date + '</span>'
+        '<span style="color:#6B7280;font-size:0.74rem;">· ' + src + '</span>'
         '<span style="margin-left:auto;background:' + imp_meta['bg'] + ';'
         'color:' + imp_meta['fg'] + ';font-size:0.7rem;padding:2px 8px;'
         'border-radius:4px;">' + imp_meta['label'] + '</span>'
         '</div>'
         # 제목
-        '<div style="font-size:0.96rem;color:#F0F2F5;font-weight:500;'
+        '<div style="font-size:0.96rem;color:#111827;font-weight:500;'
         'margin-bottom:8px;line-height:1.4;">' + title + '</div>'
         # 요약
-        '<div style="color:#D4D8DD;font-size:0.86rem;line-height:1.65;'
+        '<div style="color:#374151;font-size:0.86rem;line-height:1.65;'
         'margin-bottom:10px;">' + summary + '</div>'
         # 원문 링크
         '<a href="' + url + '" target="_blank" style="color:' + color + ';'
@@ -993,7 +681,7 @@ LIT = {
         "product_unit": "ton",
         "ccus_sector": "steel_BF_BOF",
         "kr_eu_export_usd_2021": 4.3e9,  # ~$4.3B
-        "color": "#90A4AE",
+        "color": "#1F3A8A",
         "refs": ["EU_IR_2026_1740", "EC_CBAM_BENCHMARKS", "EU_IR_2025_2621", "EU_REG_2023_956", "EUROMETAL_Bench", "POSCO_Climate_2025", "WSA_2024"],
     },
     "steel_DRI_EAF": {
@@ -1010,7 +698,7 @@ LIT = {
         "product_unit": "ton",
         "ccus_sector": "steel_BF_BOF",
         "kr_eu_export_usd_2021": 0,
-        "color": "#A5D6A7",
+        "color": "#2563EB",
         "refs": ["EU_IR_2026_1740", "EC_CBAM_BENCHMARKS", "EUROMETAL_Bench", "EU_REG_2023_956", "IEA_Steel_Roadmap_2020", "WSA_2024"],
     },
     "steel_scrap_EAF": {
@@ -1028,7 +716,7 @@ LIT = {
         "product_unit": "ton",
         "ccus_sector": "steel_EAF",
         "kr_eu_export_usd_2021": 0,
-        "color": "#81C784",
+        "color": "#60A5FA",
         "refs": ["EU_IR_2026_1740", "EC_CBAM_BENCHMARKS", "EUROMETAL_Bench", "EU_REG_2023_956", "IEA_Steel_Roadmap_2020", "Hyundai_Steel_2024"],
     },
     # ─────────────── 시멘트 ───────────────
@@ -1047,7 +735,7 @@ LIT = {
         "product_unit": "ton",
         "ccus_sector": "cement",
         "kr_eu_export_usd_2021": 1e6,
-        "color": "#BCAAA4",
+        "color": "#78716C",
         "refs": ["EU_IR_2026_1740", "EC_CBAM_BENCHMARKS", "EU_IR_2025_2621", "AsiaCement_2024", "Norcem_Brevik_2024", "IEAGHG_Cement"],
     },
     # ─────────────── 알루미늄 ───────────────
@@ -1068,7 +756,7 @@ LIT = {
         "product_unit": "ton",
         "ccus_sector": "aluminum",
         "kr_eu_export_usd_2021": 5e8,
-        "color": "#B0BEC5",
+        "color": "#64748B",
         "refs": ["EU_IR_2026_1740", "EC_CBAM_BENCHMARKS", "EU_IR_2025_2621", "IAI_Aluminum_2024", "Novelis_Korea"],
     },
     # ─────────────── 비료 ───────────────
@@ -1085,7 +773,7 @@ LIT = {
         "product_unit": "ton",
         "ccus_sector": "fertilizer_NH3",
         "kr_eu_export_usd_2021": 5e6,
-        "color": "#CE93D8",
+        "color": "#7C3AED",
         "refs": ["EU_IR_2026_1740", "EC_CBAM_BENCHMARKS", "EU_IR_2025_2621", "IEA_Ammonia_2021", "IFA_Fertilizer"],
     },
     # ─────────────── 수소 ───────────────
@@ -1104,7 +792,7 @@ LIT = {
         "product_unit": "ton",
         "ccus_sector": "hydrogen_SMR",
         "kr_eu_export_usd_2021": 0,
-        "color": "#FFAB91",
+        "color": "#B45309",
         "refs": ["EU_IR_2026_1740", "EC_CBAM_BENCHMARKS", "EU_IR_2025_2621", "IEA_H2_Definitions_2023", "IEA_Hydrogen_2024", "SK_ES_H2"],
     },
     "hydrogen_blue": {
@@ -1120,7 +808,7 @@ LIT = {
         "product_unit": "ton",
         "ccus_sector": "hydrogen_SMR",
         "kr_eu_export_usd_2021": 0,
-        "color": "#80DEEA",
+        "color": "#0E7490",
         "refs": ["EU_IR_2026_1740", "EC_CBAM_BENCHMARKS", "EU_IR_2025_2621", "IEA_Hydrogen_2024", "Northern_Lights_2024"],
     },
     # ─────────────── 전력 ───────────────
@@ -1137,7 +825,7 @@ LIT = {
         "product_unit": "MWh",
         "ccus_sector": "power",
         "kr_eu_export_usd_2021": 0,
-        "color": "#FFE082",
+        "color": "#CA8A04",
         "refs": ["EU_IR_2025_2620", "EU_IR_2025_2621", "KR_GRID_2023", "IEA_Elec_Maps_2024"],
     },
 }
@@ -1271,8 +959,8 @@ PRESETS = {
 
 
 def apply_see_calc(sector_lit, see, benchmark):
-    """SEE 산정기(탭 ⑪) 결과를 사이드바에 반영 — Verified 모드 + 실측 공제 benchmark."""
-    see = float(min(max(see, 0.0), 20.0))   # 반올림하지 않음 — 탭 ⑪과 사이드바 결과가 같아야 함
+    """SEE 산정 탭 결과를 사이드바에 반영 — Verified 모드 + 실측 공제 benchmark."""
+    see = float(min(max(see, 0.0), 20.0))   # 반올림하지 않음 — SEE 산정 탭과 사이드바 결과가 같아야 함
     st.session_state["sector_lit"] = sector_lit
     st.session_state["see_mode_radio"] = "Verified 자체 데이터"
     st.session_state["user_SEE"] = see
@@ -2106,386 +1794,306 @@ ABATEMENT_OPTIONS = [
 # 사이드바
 # ======================================================================
 with st.sidebar:
-    st.markdown("### 🚀 빠른 시작 — 시나리오 프리셋")
-    preset_keys = list(PRESETS.keys())
-    preset_labels = [PRESETS[k]["label"] for k in preset_keys]
+    st.markdown("<div class='sidebar-brand'><b>입력</b> · 바꾸면 모든 탭이 다시 계산됩니다</div>",
+                unsafe_allow_html=True)
+    with st.expander("1. 회사·제품", expanded=True):
+        preset_keys = list(PRESETS.keys())
+        preset_labels = [PRESETS[k]["label"] for k in preset_keys]
 
-    if "preset_select" not in st.session_state:
-        st.session_state["preset_select"] = "kr_posco_BF"
-        apply_preset()   # 첫 화면에도 기본 프리셋 값(회사명 등)을 채운다
+        if "preset_select" not in st.session_state:
+            st.session_state["preset_select"] = "kr_posco_BF"
+            apply_preset()   # 첫 화면에도 기본 프리셋 값(회사명 등)을 채운다
 
-    preset_choice = st.selectbox(
-        "프리셋 선택",
-        options=preset_keys,
-        format_func=lambda k: PRESETS[k]["label"],
-        key="preset_select",
-        on_change=apply_preset,
-        help="한국 주요 기업 시나리오를 자동 채움. 선택 후 개별 입력 미세조정 가능.",
-    )
-    st.caption(f"💡 _{PRESETS[preset_choice]['description']}_")
-
-    st.markdown("---")
-
-    # 통화 표시
-    st.markdown("### 💱 표시 통화")
-    currency_mode = st.radio(
-        "통화 표시 모드",
-        ["Both (USD+KRW)", "USD만", "KRW만"],
-        index=0,
-        horizontal=True,
-        label_visibility="collapsed",
-        key="currency_mode_radio",
-    )
-    if "USD만" in currency_mode:
-        currency_mode_key = "USD"
-    elif "KRW만" in currency_mode:
-        currency_mode_key = "KRW"
-    else:
-        currency_mode_key = "Both"
-    # 시각적으로 선택 상태를 즉시 인지할 수 있도록 배지 형식
-    st.markdown(
-        f"<div style='font-size:0.78rem; color:#D4D8DD; margin-top:6px;'>"
-        f"현재 표시: <span style='background:#1a2330; color:#4FC3F7; "
-        f"padding:2px 8px; border-radius:4px; font-weight:500;'>"
-        f"{currency_mode_key}</span></div>",
-        unsafe_allow_html=True,
-    )
-
-    st.markdown("---")
-
-    # 도메인 입력
-    st.markdown("### ⚙️ 입력 파라미터")
-
-    # Sector 선택
-    sector_keys = list(LIT.keys())
-    if "sector_lit" not in st.session_state:
-        st.session_state["sector_lit"] = PRESETS[preset_choice]["sector_lit"]
-    sector_lit = st.selectbox(
-        "Sector / 공정",
-        options=sector_keys,
-        format_func=lambda k: f"{LIT[k]['name']}",
-        key="sector_lit",
-        help="EU CBAM 6개 sector 중 선택. 공정별 default benchmark 자동 적용.",
-    )
-    sector = LIT[sector_lit]
-
-    # 회사명 (자동·직접 입력) — key 위젯은 session_state로만 값을 준다 (value= 동시 지정 시 경고)
-    st.session_state.setdefault("company_name", "Custom Company")
-    company_name = st.text_input(
-        "회사명 (선택)",
-        key="company_name",
-        help="결과·차트에 표시될 라벨",
-    )
-
-    # 연 생산량 — sector별 단위 분기
-    if sector_lit == "electricity":
-        prod_unit_label = "GWh/yr"
-        prod_unit_caption = "MWh/yr"
-    else:
-        prod_unit_label = "Mt/yr (백만톤)"
-        prod_unit_caption = "t/yr"
-    st.session_state.setdefault("annual_production_mt", 75.0)
-    annual_production_mt = st.number_input(
-        f"연 생산량 ({prod_unit_label})",
-        min_value=0.001, max_value=500.0,
-        step=0.1, format="%.3f",
-        key="annual_production_mt",
-        help=("단위: 백만 톤(Mt). 전력 sector의 경우 GWh로 입력 "
-              "(내부적으로 1 GWh = 1,000 MWh = 0.001 Mt-equivalent로 환산)."),
-    )
-    # 🔧 Bug fix #1 (2026-05): electricity sector는 GWh → Mt-MWh 동등치(/1000)로 환산.
-    # calc_total_cbam이 *1e6을 곱하므로 GWh/1000 * 1e6 = MWh가 되어 일관성 유지.
-    # session_state는 raw 입력값 유지, local 변수만 환산.
-    if sector_lit == "electricity":
-        st.caption(
-            f"≈ {annual_production_mt * 1000:,.0f} {prod_unit_caption} "
-            f"(내부 환산: {annual_production_mt:.3f} GWh → "
-            f"{annual_production_mt / 1000.0:.6f} Mt-MWh 등가)"
+        preset_choice = st.selectbox(
+            "프리셋 선택",
+            options=preset_keys,
+            format_func=lambda k: PRESETS[k]["label"],
+            key="preset_select",
+            on_change=apply_preset,
+            help="한국 주요 기업 시나리오를 자동 채움. 선택 후 개별 입력 미세조정 가능.",
         )
-        annual_production_mt = annual_production_mt / 1000.0   # GWh → Mt-MWh
-    else:
-        st.caption(f"≈ {annual_production_mt * 1e6:,.0f} {prod_unit_caption}")
+        st.caption(f"_{PRESETS[preset_choice]['description']}_")
 
-    # EU 수출 비중
-    st.session_state.setdefault("eu_export_share_pct", 5.0)
-    eu_export_share_pct = st.number_input(
-        "EU 수출 비중 (%)",
-        min_value=0.0, max_value=100.0,
-        step=0.5, format="%.2f",
-        key="eu_export_share_pct",
-        help="총 생산량 중 EU 수출분 비율 (0 ~ 100). CBAM 부과 대상 base.",
-    )
+        # 도메인 입력
 
-    # SEE (사용자 자체 데이터 우선)
-    # key 위젯 기본값은 session_state로만 준다 (SEE 산정기 적용 버튼이 이 값을 바꿈)
-    st.session_state.setdefault("see_mode_radio", "Verified 자체 데이터")
-    see_mode = st.radio(
-        "📊 SEE 입력 방식",
-        ["EU Default 사용 (mark-up 적용)", "한국 평균 사용", "Verified 자체 데이터"],
-        key="see_mode_radio",
-        help=("SEE = Specific Embedded Emissions, 단위 제품당 내재 탄소배출량 [tCO₂/t]. "
-              "직접배출(Scope 1) 기준, 시멘트·비료만 전력 간접배출(Scope 2) 포함. "
-              "2024.7 이후 verified 데이터 의무, 미제출 시 default + mark-up. "
-              "출처: EU Reg 2023/956 Annex IV, IR 2025/2621"),
-    )
-    # Mark-up은 사이드바 하단의 analysis_year 결정 후 자동 적용 (get_markup)
-    if see_mode == "EU Default 사용 (mark-up 적용)":
-        user_SEE = sector["default_SEE"]
-        mark_up_pct = 10.0   # 임시값 — analysis_year 입력 후 자동 갱신
-        st.caption(f"⚠️ Default {user_SEE:.3f} {sector['unit']} (mark-up은 분석연도 따라 자동)")
-    elif see_mode == "한국 평균 사용":
-        user_SEE = sector["kr_avg_SEE"]
-        mark_up_pct = 0.0
-        st.caption(f"🇰🇷 한국 평균 {user_SEE:.3f} {sector['unit']} (출처 link 참조)")
-    else:
-        st.session_state.setdefault("user_SEE", float(sector["kr_avg_SEE"]))
-        user_SEE = st.number_input(
-            f"Verified SEE ({sector['unit']})",
-            min_value=0.0, max_value=20.0,
-            step=0.01, format="%.3f",
-            key="user_SEE",
-            help="제3자 검증된 자체 SEE 데이터. CBAM 본격 시행 후 의무.",
+        # Sector 선택
+        sector_keys = list(LIT.keys())
+        if "sector_lit" not in st.session_state:
+            st.session_state["sector_lit"] = PRESETS[preset_choice]["sector_lit"]
+        sector_lit = st.selectbox(
+            "Sector / 공정",
+            options=sector_keys,
+            format_func=lambda k: f"{LIT[k]['name']}",
+            key="sector_lit",
+            help="EU CBAM 6개 sector 중 선택. 공정별 default benchmark 자동 적용.",
         )
-        mark_up_pct = 0.0
+        sector = LIT[sector_lit]
 
-    # 무상할당 공제 benchmark — 기본값을 쓰면 기본값 생산경로의 benchmark를 쓴다
-    active_benchmark = sector["eu_benchmark"]
-    # SEE 산정기(탭 ⑪)를 적용했고 sector·SEE가 그대로면 실측 공제(Column A 연쇄)를 쓴다
-    see_calc = st.session_state.get("see_calc_applied")
-    if (see_calc and see_mode == "Verified 자체 데이터"
-            and sector_lit == see_calc["sector_lit"] and abs(user_SEE - see_calc["see"]) < 1e-9):
-        active_benchmark = see_calc["benchmark"]
-        st.caption(f"🧮 SEE 산정기 값 사용 중 — 실측 공제 benchmark **{active_benchmark:.3f}** "
-                   f"(Column B {sector['eu_benchmark']:.3f} 대신)")
-        st.button("산정기 값 해제", key="see_calc_clear", on_click=clear_see_calc)
-    elif see_mode == "EU Default 사용 (mark-up 적용)" and "default_benchmark" in sector:
-        active_benchmark = sector["default_benchmark"]
-        st.caption(f"📌 EU benchmark: **{active_benchmark:.3f}** {sector['unit']} "
-                   f"(기본값 생산경로 기준 — 공정별 값은 {sector['eu_benchmark']:.3f})")
-    else:
-        st.caption(f"📌 EU benchmark: **{active_benchmark:.3f}** {sector['unit']}")
-
-    # CBAM 내재배출 범위 — 철강·알루미늄·수소는 직접배출만 (기본값표의 간접배출 "N/A")
-    if sector["sector_key"] in ("steel", "aluminum", "hydrogen"):
-        st.caption("ℹ️ 철강·알루미늄·수소는 CBAM이 **직접배출만** 셉니다. "
-                   "전력 간접배출(Scope 2)은 SEE에 넣지 마세요.")
-
-    st.markdown("---")
-
-    # 경제성 가정
-    st.markdown("### 💰 경제성 가정")
-
-    # EUA 자동 fetch
-    eua_default, eua_date, eua_mode = load_eua_price()
-    eua_price = st.number_input(
-        "EUA 가격 (€/tCO₂)",
-        min_value=20.0, max_value=300.0,
-        value=float(eua_default), step=1.0, format="%.1f",
-        help=("EU Emissions Allowance — EU ETS 탄소배출권 가격 [€/tCO₂]. "
-              "CBAM 인증서 가격: 2026년분은 분기 평균(발표값 반영), 2027년부터 EUA 주간 평균 — "
-              "이 입력값은 미발표 분기와 2027년 이후 가격 가정으로 쓰임. "
-              "2025 평균 ~€75, 2026 예상 ~€85, 2030 컨센서스 €126. "
-              "출처: ICE / EEX, Sandbag, GMK Center"),
-    )
-    if eua_mode == "auto":
-        st.caption(f"✅ 자동 fetch (`{eua_date}`)")
-    elif eua_mode == "fallback":
-        st.caption("⚠️ JSON 미존재 — 기본값 €80 사용 중")
-    else:
-        st.caption(f"📌 GitHub Actions 주1회 갱신 예정 (`data/eua_price.json`)")
-    _published = " · ".join(f"{q} €{p:.2f}" for q, p in CBAM_CERT_PRICE_2026.items())
-    st.caption(f"🧾 2026년분 인증서 가격 **€{certificate_price(2026, eua_price):.2f}** "
-               f"(발표 {_published}, 미발표 분기는 위 EUA)")
-
-    # 환율
-    fx_eur_usd = st.number_input(
-        "환율 (USD/EUR)",
-        min_value=0.8, max_value=1.5,
-        value=1.138, step=0.01, format="%.3f",
-        help="2026-09-24 시장 환율 기준 (≈ 1.138). 본인 회계 환율로 수정 가능.",
-    )
-    fx_usd_krw = st.number_input(
-        "환율 (KRW/USD)",
-        min_value=800, max_value=2000,
-        value=1370, step=10,
-        help="2026-09-24 시장 환율 기준 (≈ 1,370). 본인 헤지/회계 환율로 수정 가능.",
-    )
-    fx_eur_krw = fx_eur_usd * fx_usd_krw   # 파생값
-
-    # 규제 시나리오 — 기본은 현행법. 개편안은 제안 단계라 선택형으로만 제공
-    reg_scenario = st.radio(
-        "규제 시나리오",
-        list(SCENARIOS.keys()),
-        format_func=lambda k: SCENARIOS[k],
-        index=0,
-        key="reg_scenario",
-        help=("현행법: 2034년 무상할당 공제 0%. 2040 개편안(2026-07-17 집행위 제안): "
-              "2028년부터 공제가 완만히 줄고 2034~2037년 15% 유지, 2038년 0%. "
-              "의회·이사회 입장 미정."),
-    )
-    full_year = 2034 if reg_scenario == "current" else 2038   # 무상할당 공제가 0이 되는 해
-    if reg_scenario != "current":
-        st.warning("⚠️ 2040 개편안은 집행위 **제안** 단계로 확정되지 않았습니다 "
-                   "(COM(2026) 616). 참고용으로만 쓰세요.")
-
-    # 분석 연도 — 항목 이름·도움말은 시나리오와 무관해야 한다
-    # (위젯 식별에 쓰여서, 바뀌면 선택이 2026으로 초기화됨)
-    analysis_year = st.selectbox(
-        "분석 연도 (Phase-in 적용)",
-        options=list(range(2026, 2039)),
-        index=0,
-        format_func=lambda y: f"{y}년",
-        help=("phase-in만큼 benchmark분 무상할당 공제가 줄어듦. "
-              "현행법 2034년, 2040 개편안 2038년에 100%(공제 0)"),
-    )
-    st.caption(f"📌 {analysis_year}년 phase-in **{phase_in(analysis_year, reg_scenario)*100:.1f}%** "
-               f"· 무상할당 공제 {cbam_factor(analysis_year, reg_scenario)*100:.1f}%")
-
-    # ─── Mark-up 자동 결정 (sector × year) ─────────────────────
-    # 철강·시멘트·알루미늄·수소 2026 10% → 2027 20% → 2028+ 30%, 비료 1%
-    auto_markup = get_markup(sector["sector_key"], analysis_year)
-    if see_mode == "EU Default 사용 (mark-up 적용)":
-        mark_up_pct = auto_markup
-        st.caption(f"📌 자동 mark-up: **{mark_up_pct:.0f}%** "
-                   f"({sector['sector_key']}, {analysis_year}년 기준 — IR 2025/2621)")
-
-    st.markdown("---")
-
-    # ─── K-ETS 차감 (한국 할당대상업체) ─────────────────────
-    st.markdown("### 🇰🇷 K-ETS 차감")
-    use_kets = st.checkbox(
-        "K-ETS 지불액 차감 (Reg 2023/956 Art.9)",
-        value=False,
-        help=("한국 K-ETS 할당대상업체는 K-ETS에서 이미 지불한 carbon price를 "
-              "EU CBAM에서 verified 차감 가능. Reg 2023/956 Art.9. "
-              "POSCO·현대제철 등 대형 배출원에 적용."),
-    )
-    if use_kets:
-        kets_price_krw = st.number_input(
-            "K-ETS 가격 (₩/tCO₂)",
-            min_value=1000, max_value=50000,
-            value=30000, step=500,
-            help="K-ETS 시장 가격(KAU26). 2026-10 기준 약 ₩30,000 (10/2 종가 ₩29,600, 1년 전 ₩8,000대).",
+        # 회사명 (자동·직접 입력) — key 위젯은 session_state로만 값을 준다 (value= 동시 지정 시 경고)
+        st.session_state.setdefault("company_name", "Custom Company")
+        company_name = st.text_input(
+            "회사명 (선택)",
+            key="company_name",
+            help="결과·차트에 표시될 라벨",
         )
-        kets_credit_share = st.slider(
-            "Verified 차감 비율 (%)",
-            min_value=0, max_value=100, value=30, step=5,
-            help=("K-ETS 가격 중 차감이 인정되는 비율. Art.9는 '실제 지불한' 탄소가격만 "
-                  "차감하므로 무상할당분은 빠진다. 기본 30% ≈ 철강 무상할당(~69%)을 뺀 몫 "
-                  "(TTI Korea 2026 추정: 차감액 €2.92/tCO₂, EU 가격의 3.4%). "
-                  "낙관적: 50~100%, 비관적: 0%."),
+
+        # 연 생산량 — sector별 단위 분기
+        if sector_lit == "electricity":
+            prod_unit_label = "GWh/yr"
+            prod_unit_caption = "MWh/yr"
+        else:
+            prod_unit_label = "Mt/yr (백만톤)"
+            prod_unit_caption = "t/yr"
+        st.session_state.setdefault("annual_production_mt", 75.0)
+        annual_production_mt = st.number_input(
+            f"연 생산량 ({prod_unit_label})",
+            min_value=0.001, max_value=500.0,
+            step=0.1, format="%.3f",
+            key="annual_production_mt",
+            help=("단위: 백만 톤(Mt). 전력 sector의 경우 GWh로 입력 "
+                  "(내부적으로 1 GWh = 1,000 MWh = 0.001 Mt-equivalent로 환산)."),
         )
-        k_ets_credit_eur = calc_kets_credit(
-            user_SEE, kets_price_krw,
-            fx_eur_krw, kets_credit_share,
+        # Bug fix #1 (2026-05): electricity sector는 GWh → Mt-MWh 동등치(/1000)로 환산.
+        # calc_total_cbam이 *1e6을 곱하므로 GWh/1000 * 1e6 = MWh가 되어 일관성 유지.
+        # session_state는 raw 입력값 유지, local 변수만 환산.
+        if sector_lit == "electricity":
+            st.caption(
+                f"≈ {annual_production_mt * 1000:,.0f} {prod_unit_caption} "
+                f"(내부 환산: {annual_production_mt:.3f} GWh → "
+                f"{annual_production_mt / 1000.0:.6f} Mt-MWh 등가)"
+            )
+            annual_production_mt = annual_production_mt / 1000.0   # GWh → Mt-MWh
+        else:
+            st.caption(f"≈ {annual_production_mt * 1e6:,.0f} {prod_unit_caption}")
+
+        # EU 수출 비중
+        st.session_state.setdefault("eu_export_share_pct", 5.0)
+        eu_export_share_pct = st.number_input(
+            "EU 수출 비중 (%)",
+            min_value=0.0, max_value=100.0,
+            step=0.5, format="%.2f",
+            key="eu_export_share_pct",
+            help="총 생산량 중 EU 수출분 비율 (0 ~ 100). CBAM 부과 대상 base.",
         )
-        st.caption(f"📌 차감액: **€{k_ets_credit_eur:.2f}/t product**")
-    else:
-        k_ets_credit_eur = 0.0
-        kets_price_krw = 30000
-        kets_credit_share = 0
 
-    st.markdown("---")
+        # SEE (사용자 자체 데이터 우선)
+        # key 위젯 기본값은 session_state로만 준다 (SEE 산정기 적용 버튼이 이 값을 바꿈)
+        st.session_state.setdefault("see_mode_radio", "Verified 자체 데이터")
+        see_mode = st.radio(
+            "SEE 입력 방식",
+            ["EU Default 사용 (mark-up 적용)", "한국 평균 사용", "Verified 자체 데이터"],
+            key="see_mode_radio",
+            help=("SEE = Specific Embedded Emissions, 단위 제품당 내재 탄소배출량 [tCO₂/t]. "
+                  "직접배출(Scope 1) 기준, 시멘트·비료만 전력 간접배출(Scope 2) 포함. "
+                  "2024.7 이후 verified 데이터 의무, 미제출 시 default + mark-up. "
+                  "출처: EU Reg 2023/956 Annex IV, IR 2025/2621"),
+        )
+        # Mark-up은 사이드바 하단의 analysis_year 결정 후 자동 적용 (get_markup)
+        if see_mode == "EU Default 사용 (mark-up 적용)":
+            user_SEE = sector["default_SEE"]
+            mark_up_pct = 10.0   # 임시값 — analysis_year 입력 후 자동 갱신
+            st.caption(f"⚠️ Default {user_SEE:.3f} {sector['unit']} (mark-up은 분석연도 따라 자동)")
+        elif see_mode == "한국 평균 사용":
+            user_SEE = sector["kr_avg_SEE"]
+            mark_up_pct = 0.0
+            st.caption(f"한국 평균 {user_SEE:.3f} {sector['unit']} (출처 link 참조)")
+        else:
+            st.session_state.setdefault("user_SEE", float(sector["kr_avg_SEE"]))
+            user_SEE = st.number_input(
+                f"Verified SEE ({sector['unit']})",
+                min_value=0.0, max_value=20.0,
+                step=0.01, format="%.3f",
+                key="user_SEE",
+                help="제3자 검증된 자체 SEE 데이터. CBAM 본격 시행 후 의무.",
+            )
+            mark_up_pct = 0.0
 
-    # ─── EU 수출 평균가 (인상률 KPI 계산용) ───────────────────
-    st.markdown("### 📈 EU 수출 평균가")
-    DEFAULT_REF_PRICES = {
-        "steel_BF_BOF": 700, "steel_DRI_EAF": 800, "steel_scrap_EAF": 650,
-        "cement_clinker": 100, "aluminum_primary": 2400,
-        "fertilizer_NH3": 500, "hydrogen_gray": 2500, "hydrogen_blue": 4000,
-        "electricity": 100,
-    }
-    ref_unit_price = st.number_input(
-        f"평균 수출가 (USD/{sector['product_unit']})",
-        min_value=10, max_value=10000,
-        value=DEFAULT_REF_PRICES.get(sector_lit, 700),
-        step=10,
-        help=("EU 수출가 인상률 KPI 산정용 분모. LME(알루미늄), "
-              "SBB(철강), CemNet(시멘트) 등 시장가 기준. 본인의 실제 수출가로 조정."),
-    )
+        # 무상할당 공제 benchmark — 기본값을 쓰면 기본값 생산경로의 benchmark를 쓴다
+        active_benchmark = sector["eu_benchmark"]
+        # SEE 산정 탭 값을 적용했고 sector·SEE가 그대로면 실측 공제(Column A 연쇄)를 쓴다
+        see_calc = st.session_state.get("see_calc_applied")
+        if (see_calc and see_mode == "Verified 자체 데이터"
+                and sector_lit == see_calc["sector_lit"] and abs(user_SEE - see_calc["see"]) < 1e-9):
+            active_benchmark = see_calc["benchmark"]
+            st.caption(f"SEE 산정기 값 사용 중 — 실측 공제 benchmark **{active_benchmark:.3f}** "
+                       f"(Column B {sector['eu_benchmark']:.3f} 대신)")
+            st.button("산정기 값 해제", key="see_calc_clear", on_click=clear_see_calc)
+        elif see_mode == "EU Default 사용 (mark-up 적용)" and "default_benchmark" in sector:
+            active_benchmark = sector["default_benchmark"]
+            st.caption(f"EU benchmark: **{active_benchmark:.3f}** {sector['unit']} "
+                       f"(기본값 생산경로 기준 — 공정별 값은 {sector['eu_benchmark']:.3f})")
+        else:
+            st.caption(f"EU benchmark: **{active_benchmark:.3f}** {sector['unit']}")
 
-    st.markdown("---")
+        # CBAM 내재배출 범위 — 철강·알루미늄·수소는 직접배출만 (기본값표의 간접배출 "N/A")
+        if sector["sector_key"] in ("steel", "aluminum", "hydrogen"):
+            st.caption("철강·알루미늄·수소는 CBAM이 **직접배출만** 셉니다. "
+                       "전력 간접배출(Scope 2)은 SEE에 넣지 마세요.")
 
-    # 작성자 카드 (항상 사이드바 하단) — 차분 톤
-    st.markdown(
-        """
-<div style='background:#11161e; border:1px solid #1f2733; border-left:2px solid #4FC3F7;
-            border-radius:0 8px 8px 0; padding:12px 14px; margin-top:8px;'>
-    <div style='font-size:0.66rem; color:#A8AEB6; text-transform:uppercase;
-                letter-spacing:0.08em; font-weight:500;'>Built by</div>
-    <div style='font-size:0.95rem; font-weight:500; color:#F0F2F5; margin-top:4px;'>송봉관 / Song BK</div>
-    <div style='font-size:0.72rem; color:#D4D8DD; margin:3px 0 8px;'>DAC & CCUS 기술사업화 전문가</div>
-    <div style='font-size:0.74rem; line-height:1.8; color:#D4D8DD;'>
-        <a href='https://github.com/cafeon90-oss' style='color:#81C784; text-decoration:none;'>↗ GitHub</a> &nbsp;
-        <a href='https://www.linkedin.com/in/bongkwan-song-95a0213ba/' style='color:#81C784; text-decoration:none;'>↗ LinkedIn</a><br>
-        <a href='https://cdrmaster.tistory.com/' style='color:#81C784; text-decoration:none;'>↗ Blog</a> &nbsp;
-        <a href='mailto:cafeon90@gmail.com' style='color:#81C784; text-decoration:none;'>↗ Email</a>
-    </div>
-    <div style='font-size:0.66rem; color:#7A8089; margin-top:8px; padding-top:8px;
-                border-top:1px solid #1f2733;'>
-        © 2026 Song BK · MIT License
-    </div>
-</div>
-""",
-        unsafe_allow_html=True,
-    )
+    with st.expander("2. 가격·연도·시나리오", expanded=True):
+        # 경제성 가정
 
+        # EUA 자동 fetch
+        eua_default, eua_date, eua_mode = load_eua_price()
+        eua_price = st.number_input(
+            "EUA 가격 (€/tCO₂)",
+            min_value=20.0, max_value=300.0,
+            value=float(eua_default), step=1.0, format="%.1f",
+            help=("EU Emissions Allowance — EU ETS 탄소배출권 가격 [€/tCO₂]. "
+                  "CBAM 인증서 가격: 2026년분은 분기 평균(발표값 반영), 2027년부터 EUA 주간 평균 — "
+                  "이 입력값은 미발표 분기와 2027년 이후 가격 가정으로 쓰임. "
+                  "2025 평균 ~€75, 2026 예상 ~€85, 2030 컨센서스 €126. "
+                  "출처: ICE / EEX, Sandbag, GMK Center"),
+        )
+        if eua_mode == "auto":
+            st.caption(f"자동 fetch (`{eua_date}`)")
+        elif eua_mode == "fallback":
+            st.caption("⚠️ JSON 미존재 — 기본값 €80 사용 중")
+        else:
+            st.caption(f"GitHub Actions 주1회 갱신 예정 (`data/eua_price.json`)")
+        _published = " · ".join(f"{q} €{p:.2f}" for q, p in CBAM_CERT_PRICE_2026.items())
+        st.caption(f"2026년분 인증서 가격 **€{certificate_price(2026, eua_price):.2f}** "
+                   f"(발표 {_published}, 미발표 분기는 위 EUA)")
+
+        # 환율
+        fx_eur_usd = st.number_input(
+            "환율 (USD/EUR)",
+            min_value=0.8, max_value=1.5,
+            value=1.138, step=0.01, format="%.3f",
+            help="2026-09-24 시장 환율 기준 (≈ 1.138). 본인 회계 환율로 수정 가능.",
+        )
+        fx_usd_krw = st.number_input(
+            "환율 (KRW/USD)",
+            min_value=800, max_value=2000,
+            value=1370, step=10,
+            help="2026-09-24 시장 환율 기준 (≈ 1,370). 본인 헤지/회계 환율로 수정 가능.",
+        )
+        fx_eur_krw = fx_eur_usd * fx_usd_krw   # 파생값
+
+        # 규제 시나리오 — 기본은 현행법. 개편안은 제안 단계라 선택형으로만 제공
+        reg_scenario = st.radio(
+            "규제 시나리오",
+            list(SCENARIOS.keys()),
+            format_func=lambda k: SCENARIOS[k],
+            index=0,
+            key="reg_scenario",
+            help=("현행법: 2034년 무상할당 공제 0%. 2040 개편안(2026-07-17 집행위 제안): "
+                  "2028년부터 공제가 완만히 줄고 2034~2037년 15% 유지, 2038년 0%. "
+                  "의회·이사회 입장 미정."),
+        )
+        full_year = 2034 if reg_scenario == "current" else 2038   # 무상할당 공제가 0이 되는 해
+        if reg_scenario != "current":
+            st.warning("⚠️ 2040 개편안은 집행위 **제안** 단계로 확정되지 않았습니다 "
+                       "(COM(2026) 616). 참고용으로만 쓰세요.")
+
+        # 분석 연도 — 항목 이름·도움말은 시나리오와 무관해야 한다
+        # (위젯 식별에 쓰여서, 바뀌면 선택이 2026으로 초기화됨)
+        analysis_year = st.selectbox(
+            "분석 연도 (Phase-in 적용)",
+            options=list(range(2026, 2039)),
+            index=0,
+            format_func=lambda y: f"{y}년",
+            help=("phase-in만큼 benchmark분 무상할당 공제가 줄어듦. "
+                  "현행법 2034년, 2040 개편안 2038년에 100%(공제 0)"),
+        )
+        st.caption(f"{analysis_year}년 phase-in **{phase_in(analysis_year, reg_scenario)*100:.1f}%** "
+                   f"· 무상할당 공제 {cbam_factor(analysis_year, reg_scenario)*100:.1f}%")
+
+        # ─── Mark-up 자동 결정 (sector × year) ─────────────────────
+        # 철강·시멘트·알루미늄·수소 2026 10% → 2027 20% → 2028+ 30%, 비료 1%
+        auto_markup = get_markup(sector["sector_key"], analysis_year)
+        if see_mode == "EU Default 사용 (mark-up 적용)":
+            mark_up_pct = auto_markup
+            st.caption(f"자동 mark-up: **{mark_up_pct:.0f}%** "
+                       f"({sector['sector_key']}, {analysis_year}년 기준 — IR 2025/2621)")
+
+        # 통화 표시
+        currency_mode = st.radio(
+            "표시 통화",
+            ["Both (USD+KRW)", "USD만", "KRW만"],
+            index=0,
+            horizontal=True,
+            key="currency_mode_radio",
+        )
+        if "USD만" in currency_mode:
+            currency_mode_key = "USD"
+        elif "KRW만" in currency_mode:
+            currency_mode_key = "KRW"
+        else:
+            currency_mode_key = "Both"
+
+    with st.expander("3. K-ETS 차감 · 수출가", expanded=False):
+        # ─── K-ETS 차감 (한국 할당대상업체) ─────────────────────
+        use_kets = st.checkbox(
+            "K-ETS 지불액 차감 (Reg 2023/956 Art.9)",
+            value=False,
+            help=("한국 K-ETS 할당대상업체는 K-ETS에서 이미 지불한 carbon price를 "
+                  "EU CBAM에서 verified 차감 가능. Reg 2023/956 Art.9. "
+                  "POSCO·현대제철 등 대형 배출원에 적용."),
+        )
+        if use_kets:
+            kets_price_krw = st.number_input(
+                "K-ETS 가격 (₩/tCO₂)",
+                min_value=1000, max_value=50000,
+                value=30000, step=500,
+                help="K-ETS 시장 가격(KAU26). 2026-10 기준 약 ₩30,000 (10/2 종가 ₩29,600, 1년 전 ₩8,000대).",
+            )
+            kets_credit_share = st.slider(
+                "Verified 차감 비율 (%)",
+                min_value=0, max_value=100, value=30, step=5,
+                help=("K-ETS 가격 중 차감이 인정되는 비율. Art.9는 '실제 지불한' 탄소가격만 "
+                      "차감하므로 무상할당분은 빠진다. 기본 30% ≈ 철강 무상할당(~69%)을 뺀 몫 "
+                      "(TTI Korea 2026 추정: 차감액 €2.92/tCO₂, EU 가격의 3.4%). "
+                      "낙관적: 50~100%, 비관적: 0%."),
+            )
+            k_ets_credit_eur = calc_kets_credit(
+                user_SEE, kets_price_krw,
+                fx_eur_krw, kets_credit_share,
+            )
+            st.caption(f"차감액: **€{k_ets_credit_eur:.2f}/t product**")
+        else:
+            k_ets_credit_eur = 0.0
+            kets_price_krw = 30000
+            kets_credit_share = 0
+
+
+        # ─── EU 수출 평균가 (인상률 KPI 계산용) ───────────────────
+        st.markdown("**EU 수출 평균가**")
+        DEFAULT_REF_PRICES = {
+            "steel_BF_BOF": 700, "steel_DRI_EAF": 800, "steel_scrap_EAF": 650,
+            "cement_clinker": 100, "aluminum_primary": 2400,
+            "fertilizer_NH3": 500, "hydrogen_gray": 2500, "hydrogen_blue": 4000,
+            "electricity": 100,
+        }
+        ref_unit_price = st.number_input(
+            f"평균 수출가 (USD/{sector['product_unit']})",
+            min_value=10, max_value=10000,
+            value=DEFAULT_REF_PRICES.get(sector_lit, 700),
+            step=10,
+            help=("EU 수출가 인상률 KPI 산정용 분모. LME(알루미늄), "
+                  "SBB(철강), CemNet(시멘트) 등 시장가 기준. 본인의 실제 수출가로 조정."),
+        )
 
 # ======================================================================
 # 메인 화면 — 헤더
 # ======================================================================
-# 헤더 — 그라디언트 아이콘 + 본문
+_news_items, _news_updated, _news_mode = load_cbam_news()
 st.markdown(
     f"""
-<div style='display: flex; align-items: center; gap: 14px; margin-bottom: 4px;'>
-    <div style='width: 40px; height: 40px; border-radius: 10px;
-                background: linear-gradient(135deg, #4FC3F7 0%, #7C4DFF 100%);
-                display: flex; align-items: center; justify-content: center;
-                font-size: 20px; flex-shrink: 0;'>🌍</div>
-    <div style='min-width: 0;'>
-        <div style='font-size: 1.55rem; font-weight: 600; letter-spacing: -0.02em;
-                    color: #F0F2F5; line-height: 1.2;'>EU CBAM 영향 계산기</div>
-        <div style='font-size: 0.8rem; color: #A8AEB6; margin-top: 3px;'>
-            한국 기업의 EU 탄소국경조정제도(CBAM) 부담 시뮬레이션 ·
-            본격 시행 2026.1.1 → 2034 ·
-            자매 도구: <a href='{CCUS_APP_URL}' target='_blank' style='color:#9b8de8; text-decoration:none;'>🌫️ CCUS 벤치마크 ↗</a>
-        </div>
+<div class='app-header'>
+    <div class='app-title'>EU CBAM 영향 계산기</div>
+    <div class='app-sub'>한국 수출기업의 EU 탄소국경조정제도(CBAM) 비용 추정 · 확정기간 2026–2034 ·
+        자매 도구 <a href='{CCUS_APP_URL}' target='_blank'>CCUS 벤치마크 ↗</a></div>
+    <div class='app-meta'>
+        <span>산정 규칙 IR 2025/2547 · 2620 · 2621</span>
+        <span>기본값 IR 2026/1740 정정 반영</span>
+        <span>EUA {eua_price:.2f} €/t ({eua_date})</span>
+        <span>공지 갱신 {_news_updated}</span>
     </div>
 </div>
 """,
     unsafe_allow_html=True,
 )
-
-# Omnibus 2025 알림 — 컴팩트 한 줄
-st.markdown(
-    """
-<div class='omnibus-banner'>
-    <div class='new-badge'>NEW</div>
-    <div>Omnibus 2025-10-17 시행 · 50t 면제(H₂·전력 제외) · 인증서 2027.2.1 개시 · 분기 holding 50%</div>
-    <a href='https://taxation-customs.ec.europa.eu/carbon-border-adjustment-mechanism/cbam-legislation-and-guidance_en'>자세히 →</a>
-</div>
-""",
-    unsafe_allow_html=True,
-)
-
-# ────────────── 최신 CBAM 공지 미리보기 (헤더 expander) ──────────────
-_news_items, _news_updated, _news_mode = load_cbam_news()
-if _news_items:
-    _latest_3 = _news_items[:3]
-    _latest_label = (
-        f"📰 EU CBAM 최신 공지 — 전체 {len(_news_items)}건 · "
-        f"마지막 갱신 {_news_updated}"
-    )
-    with st.expander(_latest_label, expanded=False):
-        for it in _latest_3:
-            st.markdown(render_news_card(it, compact=True), unsafe_allow_html=True)
-        st.markdown(
-            "<div style='text-align: right; font-size: 0.78rem; "
-            "color: #A8AEB6; margin-top: 8px;'>"
-            "탭 <strong>⑩ 📰 CBAM 뉴스</strong>에서 전체 보기 →"
-            "</div>",
-            unsafe_allow_html=True,
-        )
 
 # ======================================================================
 # 메인 계산 (사이드바 입력 기반) — K-ETS 차감 포함
@@ -2563,15 +2171,15 @@ else:
         f"{analysis_year}년 연간 부담 <span class='bad'>{fmt_eur(result['annual_cost_eur'])}</span> "
         f"(≈ {fmt_money(annual_usd, fx_usd_krw, currency_mode_key)}). "
         f"<span class='warn'>CCS 90%</span> 또는 <span class='warn'>공정 전환(DRI-H₂/EAF)</span> 권장 → "
-        f"탭 <strong>④ 감축 시뮬레이터</strong>에서 회피액 정밀 계산."
+        f"<strong>감축·CCUS</strong> 탭에서 회피액을 계산해 보세요."
     )
 
 st.markdown(
     f"""
 <div class='insight-box {insight_class}'>
     <div style='display: flex; align-items: center; gap: 10px; margin-bottom: 6px;'>
-        <div style='font-weight: 500; font-size: 0.95rem; color: #F0F2F5;'>{insight_header}</div>
-        <div style='margin-left: auto; background: #1a2028; font-size: 0.7rem; padding: 2px 8px; border-radius: 4px;'>{insight_badge}</div>
+        <div style='font-weight: 500; font-size: 0.95rem; color: #111827;'>{insight_header}</div>
+        <div style='margin-left: auto; background: #F1F3F6; font-size: 0.7rem; padding: 2px 8px; border-radius: 4px;'>{insight_badge}</div>
     </div>
     <div>{insight_msg}</div>
 </div>
@@ -2607,9 +2215,9 @@ with col3:
     st.metric(
         "EU 수출가 인상률",
         f"{price_uplift_pct:+.2f}%",
-        delta=f"≈ ${cbam_unit_usd:.1f}/t / ${ref_unit_price} base",
+        delta=f"≈ {cbam_unit_usd:.1f} USD/t ÷ 수출가 {ref_unit_price:,} USD",   # '$'는 수식 기호로 해석돼 쓰지 않음
         delta_color="off",
-        help=f"기준: 사이드바에서 입력한 EU 수출가 ${ref_unit_price}/{sector['product_unit']}",
+        help=f"기준: 사이드바에서 입력한 EU 수출가 {ref_unit_price:,} USD/{sector['product_unit']}",
     )
 
 with col4:
@@ -2627,60 +2235,22 @@ with col4:
         fmt_money(avoided_usd, fx_usd_krw, currency_mode_key),
         delta=f"€{avoided['avoided_annual_eur']/1e6:,.2f}M/yr",
         delta_color="off",
-        help="자매 CCUS 도구로 deep-dive (탭 ⑤ 참조)",
+        help="감축·CCUS 탭에서 기술별 비교",
     )
 
 # ======================================================================
-# KPI 정의 expander
+# 탭 5개 — 결과 / 업종·기업 비교 / SEE 산정 / 감축·CCUS / 자료
 # ======================================================================
-with st.expander("📖 KPI 정의 보기 (클릭)", expanded=False):
-    st.markdown(
-        f"""
-**연간 CBAM 부담** = (SEE × (1+mark-up) − benchmark × CBAM factor) × 인증서 가격 × EU 수출량 − K-ETS 차감
-- 현재 SEE: **{user_SEE:.3f}** {sector['unit']}
-- EU benchmark: **{active_benchmark:.3f}** {sector['unit']} (초과분 {result['gap']:.3f}, {gap_pct:.1f}%)
-- {analysis_year}년 무상할당 공제: **{result['free_allocation']:.3f}** (= benchmark × CBAM factor {cbam_factor(analysis_year, reg_scenario)*100:.1f}%, phase-in {result['phase_in']*100:.1f}%)
-- 인증서 수: **{result['obligation']:.3f}** tCO₂/t
-- 인증서 가격: **€{result['cert_price']:.2f}/tCO₂** ({'2026년분 분기 평균 반영' if analysis_year == 2026 else 'EUA 입력값'}) · 규제 시나리오: {SCENARIOS[reg_scenario]}
-- EU 수출량: **{result['eu_export_t']:,.0f} t/yr**
-
-**단위 제품당 CBAM** = unit cost (€/t) × FX
-**EU 수출가 인상률** = CBAM 단가 / 평균 수출가 × 100%
-**CCS 회피액** = CCS 도입 전후 CBAM 부담 차이 (포집률 η=90%)
-
-📚 출처:
-- {ref_link("EU_REG_2023_956", "EU Regulation 2023/956")} — CBAM 본법
-- {ref_link("EU_IR_2025_2620", "EU IR 2025/2620")} — 무상할당 공제 계산
-- {ref_link("EU_IR_2025_2621", "EU IR 2025/2621")} — Default values + benchmark
-- {ref_link("Climat_be_PhaseIn", "Phase-in factor table")}
-- {ref_link("EUROMETAL_Bench", "Steel benchmark 1.370/0.481/0.072")}
-"""
-    )
-
-# ======================================================================
-# 탭 11개 구성
-# ======================================================================
-tabs = st.tabs(
-    [
-        "① 종합",
-        "② Sector별 분석",
-        "③ 기업영향",
-        "④ 감축 시뮬레이션",
-        "⑤ CCUS",
-        "⑥ 연도별 변화",
-        "⑦ Custom 입력",
-        "⑧ 방법론",
-        "⑨ 출처",
-        "⑩ CBAM 뉴스",
-        "⑪ SEE 산정 (철강)",
-        "📘 설명서",
-    ]
+TAB_RESULT, TAB_COMPARE, TAB_SEE, TAB_ACTION, TAB_DOCS = st.tabs(
+    ["결과", "업종·기업 비교", "SEE 산정 (철강)", "감축·CCUS", "자료"]
 )
+with TAB_DOCS:
+    DOC_METHOD, DOC_REFS, DOC_NEWS, DOC_GUIDE = st.tabs(["방법론", "출처", "CBAM 공지", "설명서"])
 
 
 # ────────────── 탭 ① 종합 영향 ──────────────
-with tabs[0]:
-    st.subheader("① 종합 영향 — 4대 KPI 한눈에")
+with TAB_COMPARE:
+    st.subheader("업종별 비교 — 한국 평균 SEE 기준")
 
     # 4대 KPI 2x2 비교 (모든 sector × user 입력 시나리오)
     rows = []
@@ -2702,21 +2272,21 @@ with tabs[0]:
     df_overview = pd.DataFrame(rows).sort_values("Unit cost (€/t)", ascending=False)
 
     # ────────────── 차트: SEE vs Benchmark ──────────────
-    st.markdown("##### 📊 한국 평균 SEE vs EU Benchmark")
+    st.markdown("##### 한국 평균 SEE vs EU Benchmark")
     fig1 = go.Figure()
     fig1.add_trace(go.Bar(
         y=df_overview["Short"], x=df_overview["SEE (kr)"],
         name="한국 평균 SEE", orientation="h",
-        marker_color="#E57373",
+        marker_color=C_PRIMARY,
     ))
     fig1.add_trace(go.Bar(
         y=df_overview["Short"], x=df_overview["Benchmark"],
         name="EU Benchmark", orientation="h",
-        marker_color="#81C784",
+        marker_color="#A3AEC2",
     ))
     fig1.update_layout(
         title=None,                   # 'undefined' 텍스트 노출 방지
-        barmode="group", template="plotly_dark",
+        barmode="group", template=PLOTLY_TEMPLATE,
         height=440,
         margin=dict(l=10, r=10, t=20, b=70),
         paper_bgcolor=C_BG, plot_bgcolor=C_BG,
@@ -2735,8 +2305,8 @@ with tabs[0]:
     # ────────────── 표: 9개 sector 단위 CBAM cost ──────────────
     st.markdown("<br>", unsafe_allow_html=True)
     st.markdown(
-        f"<h5 style='color:#F0F2F5; margin: 12px 0 8px 0;'>"
-        f"📋 {analysis_year}년 단위 CBAM cost — 9개 sector 상세 비교"
+        f"<h5 style='color:#111827; margin: 12px 0 8px 0;'>"
+        f"{analysis_year}년 단위 CBAM cost — 9개 sector 상세 비교"
         f"</h5>",
         unsafe_allow_html=True,
     )
@@ -2760,8 +2330,9 @@ with tabs[0]:
 
 
 # ────────────── 탭 ② Sector별 분석 ──────────────
-with tabs[1]:
-    st.subheader(f"② Sector별 분석 — {sector['name']}")
+with TAB_COMPARE:
+    st.divider()
+    st.subheader(f"선택 업종 상세 — {sector['name']}")
 
     col_a, col_b, col_c = st.columns([1, 1, 1])
     with col_a:
@@ -2786,18 +2357,18 @@ with tabs[1]:
         sector["kr_avg_SEE"],
         sector["default_SEE"] * 1.30,
     ]
-    colors = [C_GOOD, C_PRIMARY, C_WARN, C_BAD, "#7E57C2"]
+    colors = [C_GOOD, C_PRIMARY, C_WARN, C_BAD, "#6D28D9"]
     fig_gap.add_trace(go.Bar(
         x=categories, y=values, marker_color=colors,
         text=[f"{v:.2f}" for v in values], textposition="outside",
     ))
     fig_gap.add_hline(
-        y=sector["eu_benchmark"], line_dash="dash", line_color="#FFEB3B",
+        y=sector["eu_benchmark"], line_dash="dash", line_color="#B45309",
         annotation_text=f"Free benchmark {sector['eu_benchmark']:.2f}",
     )
     fig_gap.update_layout(
         title=f"{sector['name']} — SEE 스펙트럼",
-        template="plotly_dark", height=380,
+        template=PLOTLY_TEMPLATE, height=380,
         yaxis_title=sector["unit"],
         paper_bgcolor=C_BG, plot_bgcolor=C_BG, showlegend=False,
         margin=dict(l=10, r=10, t=50, b=30),
@@ -2806,7 +2377,7 @@ with tabs[1]:
     st.plotly_chart(fig_gap, width="stretch", config=PLOTLY_CONFIG)
 
     # 출처 link
-    st.markdown("📚 **이 sector 출처:**")
+    st.markdown("**이 sector 출처:**")
     for ref_id in sector.get("refs", []):
         if ref_id in REFS:
             r = REFS[ref_id]
@@ -2814,8 +2385,9 @@ with tabs[1]:
 
 
 # ────────────── 탭 ③ 한국 기업 영향 ──────────────
-with tabs[2]:
-    st.subheader("③ 한국 주요 기업 — CBAM 부담 비교")
+with TAB_COMPARE:
+    st.divider()
+    st.subheader("주요 기업 프리셋 비교")
     st.caption("프리셋 기반 시뮬레이션. 사이드바에서 입력값 조정 가능.")
 
     company_rows = []
@@ -2826,14 +2398,14 @@ with tabs[2]:
         s = LIT[slit]
         settings = pdata["settings"]
         prod_mt = settings.get("annual_production_mt", 1.0)
-        # 🔧 Bug fix #1: electricity sector는 GWh → Mt-MWh 등가로 환산
+        # Bug fix #1: electricity sector는 GWh → Mt-MWh 등가로 환산
         if slit == "electricity":
             prod_mt = prod_mt / 1000.0
         share = settings.get("eu_export_share_pct", 5.0)
         see_use = settings.get("user_SEE", s["kr_avg_SEE"])
         cname = settings.get("company_name", pdata["label"])
 
-        # 🔧 Bug fix #2A v2 (2026-05-18): see_mode 조건 추가 — Verified 모드면 mark-up 0%
+        # Bug fix #2A v2 (2026-05-18): see_mode 조건 추가 — Verified 모드면 mark-up 0%
         # (탭 ⑥/⑦와 동일 로직. 각 preset의 user_SEE는 verified 공시값이므로 mark-up은 사용자가
         # "EU Default 사용"으로 선택했을 때만 sector × year 기준으로 자동 적용)
         company_kets = (
@@ -2871,11 +2443,11 @@ with tabs[2]:
     fig_co = px.bar(
         df_co, x="Company", y="Annual CBAM (€M)",
         text=df_co["Annual CBAM (€M)"].map(lambda x: f"€{x:.1f}M"),
-        color="Sector", color_discrete_sequence=px.colors.qualitative.Set2,
+        color="Sector", color_discrete_sequence=["#1F3A8A", "#3B5BB5", "#64748B", "#93A5D6", "#B45309", "#0E7490", "#7C3AED", "#A3AEC2"],
     )
     fig_co.update_layout(
         title=f"{analysis_year}년 한국 주요 기업 CBAM 부담",
-        template="plotly_dark", height=460,
+        template=PLOTLY_TEMPLATE, height=460,
         paper_bgcolor=C_BG, plot_bgcolor=C_BG,
         xaxis_tickangle=-25,
         margin=dict(l=10, r=10, t=50, b=80),
@@ -2899,29 +2471,29 @@ with tabs[2]:
     pi_now = phase_in(analysis_year, reg_scenario)
     if pi_now < 1.0:
         ratio_msg = (f"> {full_year}년에는 무상할당 공제가 0이 되어 **내재배출 전량**에 부과됩니다 "
-                     "(탭 ⑥에서 연도별 추이 확인).\n")
+                     "(결과 탭에서 연도별 추이 확인).\n")
     else:
         ratio_msg = "> 이미 완전 시행(무상할당 공제 0%)으로 분석 중입니다.\n"
     st.markdown(
         f"""
-> 📌 위 표는 **{analysis_year}년 무상할당 공제 {cbam_factor(analysis_year, reg_scenario)*100:.1f}%** (phase-in {pi_now*100:.1f}%) 적용.
+> 위 표는 **{analysis_year}년 무상할당 공제 {cbam_factor(analysis_year, reg_scenario)*100:.1f}%** (phase-in {pi_now*100:.1f}%) 적용.
 {ratio_msg}> 출처: {ref_link("KOTRA_CBAM")}, {ref_link("KCCI_SGI_22")}, {ref_link("InfluenceMap_KR_Steel")}
 """
     )
 
 
 # ────────────── 탭 ④ 감축 시뮬레이터 ──────────────
-with tabs[3]:
-    st.subheader(f"④ 탄소감축 시뮬레이터 — {company_name}")
+with TAB_ACTION:
+    st.subheader(f"감축 시뮬레이터 — {company_name}")
 
     # 4-A: 역산
-    st.markdown("##### 🎯 4-A. CBAM 부담 0으로 만들려면?")
+    st.markdown("##### 4-A. CBAM 부담 0으로 만들려면?")
 
     req = required_SEE_reduction(user_SEE, active_benchmark, analysis_year,
                                  scenario=reg_scenario)
     if req["already_zero"]:
         st.success(
-            f"✅ 현재 SEE {user_SEE:.3f} ≤ {analysis_year}년 무상할당 공제 {req['target']:.3f} — "
+            f"현재 SEE {user_SEE:.3f} ≤ {analysis_year}년 무상할당 공제 {req['target']:.3f} — "
             f"**CBAM 0** 이미 달성 중입니다. 공제는 매년 줄어 {full_year}년에는 0이 됩니다."
         )
     else:
@@ -2937,7 +2509,7 @@ with tabs[3]:
         )
 
     # 4-B: 감축 수단 비교
-    st.markdown("##### 🔧 4-B. 감축 수단별 효과")
+    st.markdown("##### 4-B. 감축 수단별 효과")
 
     rows = []
     for opt in ABATEMENT_OPTIONS:
@@ -2964,10 +2536,10 @@ with tabs[3]:
     n_total_techs = len(all_techs)
 
     # 데이터 모드 표시 (live vs fallback)
-    mode_badge_color = "#81C784" if ccus_mode == "live" else "#FFB74D"
-    mode_badge_label = "✅ LIVE (자매 도구)" if ccus_mode == "live" else "⚠️ FALLBACK (네트워크 실패)"
+    mode_badge_color = "#15803D" if ccus_mode == "live" else "#B45309"
+    mode_badge_label = "LIVE (자매 도구)" if ccus_mode == "live" else "⚠️ FALLBACK (네트워크 실패)"
     st.markdown(
-        f"##### 💰 4-C. CCS 도입 시 BEP 분석 — 전체 {n_total_techs}개 기술 비교 "
+        f"##### 4-C. CCS 도입 시 BEP 분석 — 전체 {n_total_techs}개 기술 비교 "
         f"<span style='background:{mode_badge_color}22;color:{mode_badge_color};"
         f"font-size:0.7rem;padding:2px 8px;border-radius:4px;font-weight:500;'>"
         f"{mode_badge_label}</span>",
@@ -3014,7 +2586,7 @@ with tabs[3]:
     last_updated = ccus_data.get("last_updated", "n/a")
     st.markdown(
         f"""
-> 💡 **해석**: 자매 CCUS 도구의 **{n_total_techs}개 기술 모두** live fetch (마지막 갱신: `{last_updated}`).
+> **해석**: 자매 CCUS 도구의 **{n_total_techs}개 기술 모두** live fetch (마지막 갱신: `{last_updated}`).
 > ⭐는 본 sector 적합 기술 ({n_recommended}개). 순익 내림차순 정렬 — 가장 위가 가장 경제적.
 > COCA = CAPEX × 0.10 (CRF 근사) + OPEX. 자세한 기술 비교는 [자매 도구 ↗]({CCUS_APP_URL}) 참조.
 > 단, 위 분석은 **단년도 정태 분석** — 가동개시·ramping·할인율은 아래 4-D 참조.
@@ -3022,7 +2594,7 @@ with tabs[3]:
     )
 
     # 4-D: NPV 기반 동태 BEP 분석 (CCS ramping + 할인율)
-    st.markdown("##### 📅 4-D. NPV 기반 동태 BEP 분석 (CCS 가동개시·ramping·할인율 반영)")
+    st.markdown("##### 4-D. NPV 기반 동태 BEP 분석 (CCS 가동개시·ramping·할인율 반영)")
     st.caption(
         "단년도 정태(static) 분석은 'CCS가 분석 연도에 즉시 100% 가동 중'을 가정합니다. "
         "현실은 FID → 건설 → 가동까지 4~6년이 걸리고, 가동 후에도 ramping이 필요합니다. "
@@ -3115,7 +2687,7 @@ with tabs[3]:
     fig_npv.add_vline(x=int(ccs_online_year), line_dash="dot", line_color=C_HIGH,
                       annotation_text=f"가동 {int(ccs_online_year)}", annotation_position="top right")
     fig_npv.update_layout(
-        title=None, template="plotly_dark", height=380,
+        title=None, template=PLOTLY_TEMPLATE, height=380,
         margin=dict(l=10, r=10, t=20, b=40),
         xaxis_title="연도", yaxis_title="누적 €M (할인 미적용)",
         legend=dict(orientation="h", yanchor="bottom", y=-0.25, xanchor="center", x=0.5),
@@ -3125,7 +2697,7 @@ with tabs[3]:
 
     if npv_result["npv_net_eur"] > 0:
         st.success(
-            f"✅ {npv_tdata.get('name', npv_tech)} 도입 권장 — "
+            f"{npv_tdata.get('name', npv_tech)} 도입 권장 — "
             f"NPV 순익 €{npv_result['npv_net_eur']/1e6:+,.1f}M, "
             f"BEP {npv_result['bep_year'] or 'N/A'}년."
         )
@@ -3146,8 +2718,9 @@ with tabs[3]:
 
 
 # ────────────── 탭 ⑤ CCUS 연계 (stub) ──────────────
-with tabs[4]:
-    st.subheader("⑤ CCUS 연계 — 자매 도구")
+with TAB_ACTION:
+    st.divider()
+    st.subheader("CCUS 기술 비교 — 자매 도구 연계")
 
     ccus_data, ccus_mode = load_ccus_metrics()
 
@@ -3173,7 +2746,7 @@ with tabs[4]:
     all_techs = [k for k, v in ccus_data["technologies"].items()
                  if ccus_tech_applies(v, sector["ccus_sector"])]
     n_total_techs_5 = len(all_techs)
-    st.markdown(f"##### 🔌 자매 CCUS 도구의 {n_total_techs_5}개 기술 — 전체 비교 (현재 sector: {sector['name']})")
+    st.markdown(f"##### 자매 CCUS 도구의 {n_total_techs_5}개 기술 — 전체 비교 (현재 sector: {sector['name']})")
 
     fit_techs = set(CCUS_SECTOR_FIT.get(sector["ccus_sector"], []))
 
@@ -3211,21 +2784,21 @@ with tabs[4]:
     st.markdown("---")
     st.markdown(
         f"""
-##### ✅ Phase 2 활성화 완료 (2026-05)
+##### Phase 2 활성화 완료 (2026-05)
 
 | 항목 | 상태 |
 |---|---|
-| 자매 도구 repo의 `data/ccus_metrics.json` (single source of truth) | ✅ |
-| `load_ccus_metrics()` GitHub raw URL fetch | ✅ live |
-| 24h 캐시 (`@st.cache_data ttl=86400`) | ✅ |
-| CBAM 계산기의 sector_fit 매핑 (CBAM-specific) | ✅ 본 도구 유지 |
-| Network 실패 시 fallback dict | ✅ |
-| 자매 도구의 LIT 변경 시 24h 내 자동 반영 | ✅ |
+| 자매 도구 repo의 `data/ccus_metrics.json` (single source of truth) | |
+| `load_ccus_metrics()` GitHub raw URL fetch | live |
+| 24h 캐시 (`@st.cache_data ttl=86400`) | |
+| CBAM 계산기의 sector_fit 매핑 (CBAM-specific) | 본 도구 유지 |
+| Network 실패 시 fallback dict | |
+| 자매 도구의 LIT 변경 시 24h 내 자동 반영 | |
 
 **데이터 모드**: `{ccus_mode}` · **마지막 갱신**: `{ccus_data.get('last_updated', 'n/a')}` ·
 **source**: <a href='{CCUS_JSON_URL}' target='_blank'>raw JSON ↗</a>
 
-##### 📋 Phase 3 로드맵 (향후)
+##### Phase 3 로드맵 (향후)
 
 - [ ] 양 도구의 cross-validation (POSCO·시멘트 retrofit cost)
 - [ ] 한국 sector × CCUS 기술 매트릭스 히트맵
@@ -3235,46 +2808,14 @@ with tabs[4]:
 
 
 # ────────────── 탭 ⑥ 시간 흐름 (2023~2038) ──────────────
-with tabs[5]:
-    st.subheader("⑥ 시간 흐름 — Phase-in 2023~2038")
-
-    # 선택한 시나리오는 막대, 다른 시나리오는 점선으로 비교
-    years = list(range(2023, 2039))
-    other_scenario = "reform_2040" if reg_scenario == "current" else "current"
-    factors = [phase_in(y, reg_scenario) * 100 for y in years]
-    other_factors = [phase_in(y, other_scenario) * 100 for y in years]
-
-    fig_time = go.Figure()
-    fig_time.add_trace(go.Bar(
-        x=years, y=factors, name=f"Phase-in — {SCENARIOS[reg_scenario]}",
-        marker_color=C_BAD, text=[f"{f:.1f}%" for f in factors], textposition="outside",
-    ))
-    fig_time.add_trace(go.Scatter(
-        x=years, y=other_factors, name=f"Phase-in — {SCENARIOS[other_scenario]}",
-        mode="lines+markers", line=dict(color=C_PRIMARY, width=2, dash="dash"),
-    ))
-    fig_time.update_layout(
-        title="CBAM Phase-in (= 100% − 무상할당 공제 비율)",
-        template="plotly_dark", height=460,
-        paper_bgcolor=C_BG, plot_bgcolor=C_BG,
-        yaxis=dict(title="Phase-in (%)", range=[0, 110]),
-        legend=dict(orientation="h", yanchor="bottom", y=-0.18),
-        margin=dict(l=10, r=10, t=50, b=60),
-    )
-    fig_time.add_vrect(x0=2022.5, x1=2025.5, fillcolor=C_TEXT4, opacity=0.15,
-                      annotation_text="전이기간 (보고만)", annotation_position="top left")
-    fig_time.add_vline(x=2026, line_dash="dash", line_color=C_HIGH,
-                      annotation_text="본격 시행 시작")
-    lock_static(fig_time)
-    st.plotly_chart(fig_time, width="stretch", config=PLOTLY_CONFIG)
-
+with TAB_RESULT:
+    st.subheader(f"{company_name} — 연도별 CBAM 부담")
     # 회사별 연도별 부담 trajectory
-    st.markdown(f"##### 📈 {company_name} — 연도별 CBAM 부담 추이")
     fig_traj = go.Figure()
     yrs = list(range(2026, 2039))
     annual_costs_eur = []
     for y in yrs:
-        # 🔧 Bug fix #2B: K-ETS 차감 적용 + 연도별 mark-up 동적 적용 (2028+ 30%)
+        # Bug fix #2B: K-ETS 차감 적용 + 연도별 mark-up 동적 적용 (2028+ 30%)
         y_markup = (
             get_markup(sector["sector_key"], y)
             if see_mode == "EU Default 사용 (mark-up 적용)" else mark_up_pct
@@ -3289,12 +2830,12 @@ with tabs[5]:
         annual_costs_eur.append(r["annual_cost_eur"] / 1e6)
     fig_traj.add_trace(go.Bar(
         x=yrs, y=annual_costs_eur,
-        marker_color=[C_GOOD if y < 2030 else C_WARN if y < 2033 else C_BAD for y in yrs],
+        marker_color=[C_PRIMARY if y < 2030 else "#3B5BB5" if y < 2033 else "#93A5D6" for y in yrs],
         text=[f"€{c:.1f}M" for c in annual_costs_eur], textposition="outside",
     ))
     fig_traj.update_layout(
         title=f"{company_name} — 연간 CBAM 부담 (EUR M)",
-        template="plotly_dark", height=420,
+        template=PLOTLY_TEMPLATE, height=420,
         paper_bgcolor=C_BG, plot_bgcolor=C_BG,
         yaxis_title="€M / 년",
         margin=dict(l=10, r=10, t=50, b=30), showlegend=False,
@@ -3304,18 +2845,51 @@ with tabs[5]:
 
     st.markdown(
         f"""
-> 📌 benchmark 초과분은 **2026년부터 전액** 부과됩니다. 이후 무상할당 공제가 줄어드는 만큼 부담이 늘고, **{full_year}년**에는 공제 0 → 내재배출 전량 부과 (현행법 변곡점은 2030년: 공제 77.5% → 51.5%).
+> benchmark 초과분은 **2026년부터 전액** 부과됩니다. 이후 무상할당 공제가 줄어드는 만큼 부담이 늘고, **{full_year}년**에는 공제 0 → 내재배출 전량 부과 (현행법 변곡점은 2030년: 공제 77.5% → 51.5%).
 > 출처: {ref_link("Climat_be_PhaseIn")}, {ref_link("ICAP_CBAM_2026")}, {ref_link("Coolset_CBAM")}
 """
     )
 
+    st.markdown("##### 무상할당 공제 축소 일정 (Phase-in)")
+
+    # 선택한 시나리오는 막대, 다른 시나리오는 점선으로 비교
+    years = list(range(2023, 2039))
+    other_scenario = "reform_2040" if reg_scenario == "current" else "current"
+    factors = [phase_in(y, reg_scenario) * 100 for y in years]
+    other_factors = [phase_in(y, other_scenario) * 100 for y in years]
+
+    fig_time = go.Figure()
+    fig_time.add_trace(go.Bar(
+        x=years, y=factors, name=f"Phase-in — {SCENARIOS[reg_scenario]}",
+        marker_color=C_PRIMARY, text=[f"{f:.1f}%" for f in factors], textposition="outside",
+    ))
+    fig_time.add_trace(go.Scatter(
+        x=years, y=other_factors, name=f"Phase-in — {SCENARIOS[other_scenario]}",
+        mode="lines+markers", line=dict(color=C_WARN, width=2, dash="dash"),
+    ))
+    fig_time.update_layout(
+        title="CBAM Phase-in (= 100% − 무상할당 공제 비율)",
+        template=PLOTLY_TEMPLATE, height=460,
+        paper_bgcolor=C_BG, plot_bgcolor=C_BG,
+        yaxis=dict(title="Phase-in (%)", range=[0, 110]),
+        legend=dict(orientation="h", yanchor="bottom", y=-0.18),
+        margin=dict(l=10, r=10, t=50, b=60),
+    )
+    fig_time.add_vrect(x0=2022.5, x1=2025.5, fillcolor=C_TEXT4, opacity=0.15,
+                      annotation_text="전이기간 (보고만)", annotation_position="top left")
+    fig_time.add_vline(x=2026, line_dash="dash", line_color=C_HIGH,
+                      annotation_text="본격 시행 시작")
+    lock_static(fig_time)
+    st.plotly_chart(fig_time, width="stretch", config=PLOTLY_CONFIG)
+
 
 # ────────────── 탭 ⑦ Custom 입력 ──────────────
-with tabs[6]:
-    st.subheader("⑦ Custom 입력 — 직접 시나리오 분석")
+with TAB_RESULT:
+    st.divider()
+    st.subheader("연도·EUA 가격 민감도")
     st.caption("사이드바 입력값을 그대로 사용합니다. 추가로 multi-year 비교가 가능합니다.")
 
-    st.markdown("##### 🔧 Multi-year 비교 (현재 sector·SEE 기준)")
+    st.markdown("##### Multi-year 비교 (현재 sector·SEE 기준)")
     custom_years = st.multiselect(
         "비교할 연도 선택", options=list(range(2026, 2039)),
         default=[2026, 2030, 2034],
@@ -3323,7 +2897,7 @@ with tabs[6]:
     if custom_years:
         cust_rows = []
         for y in custom_years:
-            # 🔧 Bug fix #2C: K-ETS 차감 + 연도별 mark-up 동적
+            # Bug fix #2C: K-ETS 차감 + 연도별 mark-up 동적
             y_markup = (
                 get_markup(sector["sector_key"], y)
                 if see_mode == "EU Default 사용 (mark-up 적용)" else mark_up_pct
@@ -3348,7 +2922,7 @@ with tabs[6]:
         st.dataframe(pd.DataFrame(cust_rows), hide_index=True, width="stretch")
 
     st.markdown("---")
-    st.markdown("##### ⚡ EUA 가격 민감도")
+    st.markdown("##### EUA 가격 민감도")
     st.markdown("**EUA 가격 범위 (€/tCO₂)** — 민감도 분석")
     cmin, cmax = st.columns(2)
     with cmin:
@@ -3367,7 +2941,7 @@ with tabs[6]:
     eua_grid = list(range(int(eua_min), int(eua_max) + 1, 10))
     sens_rows = []
     for ep in eua_grid:
-        # 🔧 Bug fix #2D: K-ETS 차감 적용. EUA 변동 시에도 K-ETS는 SEE×K-ETS 가격으로 고정.
+        # Bug fix #2D: K-ETS 차감 적용. EUA 변동 시에도 K-ETS는 SEE×K-ETS 가격으로 고정.
         # (K-ETS 차감은 EUA와 무관하게 한국에서 이미 지불한 금액 기준)
         r = calc_total_cbam(
             annual_production_mt=annual_production_mt,
@@ -3384,7 +2958,7 @@ with tabs[6]:
     )
     fig_sens.update_traces(line_color=C_PRIMARY, marker=dict(size=8))
     fig_sens.update_layout(
-        template="plotly_dark", height=400,
+        template=PLOTLY_TEMPLATE, height=400,
         paper_bgcolor=C_BG, plot_bgcolor=C_BG,
         margin=dict(l=10, r=10, t=50, b=30),
     )
@@ -3393,12 +2967,36 @@ with tabs[6]:
 
 
 # ────────────── 탭 ⑧ 방법론 ──────────────
-with tabs[7]:
-    st.subheader("⑧ 방법론 — 계산식과 가정")
+with DOC_METHOD:
+    st.subheader("방법론 — 계산식과 가정")
+    with st.expander("현재 입력 기준 계산 내역 · KPI 정의", expanded=False):
+        st.markdown(
+            f"""
+**연간 CBAM 부담** = (SEE × (1+mark-up) − benchmark × CBAM factor) × 인증서 가격 × EU 수출량 − K-ETS 차감
+- 현재 SEE: **{user_SEE:.3f}** {sector['unit']}
+- EU benchmark: **{active_benchmark:.3f}** {sector['unit']} (초과분 {result['gap']:.3f}, {gap_pct:.1f}%)
+- {analysis_year}년 무상할당 공제: **{result['free_allocation']:.3f}** (= benchmark × CBAM factor {cbam_factor(analysis_year, reg_scenario)*100:.1f}%, phase-in {result['phase_in']*100:.1f}%)
+- 인증서 수: **{result['obligation']:.3f}** tCO₂/t
+- 인증서 가격: **€{result['cert_price']:.2f}/tCO₂** ({'2026년분 분기 평균 반영' if analysis_year == 2026 else 'EUA 입력값'}) · 규제 시나리오: {SCENARIOS[reg_scenario]}
+- EU 수출량: **{result['eu_export_t']:,.0f} t/yr**
+
+**단위 제품당 CBAM** = unit cost (€/t) × FX
+**EU 수출가 인상률** = CBAM 단가 / 평균 수출가 × 100%
+**CCS 회피액** = CCS 도입 전후 CBAM 부담 차이 (포집률 η=90%)
+
+출처:
+- {ref_link("EU_REG_2023_956", "EU Regulation 2023/956")} — CBAM 본법
+- {ref_link("EU_IR_2025_2620", "EU IR 2025/2620")} — 무상할당 공제 계산
+- {ref_link("EU_IR_2025_2621", "EU IR 2025/2621")} — Default values + benchmark
+- {ref_link("Climat_be_PhaseIn", "Phase-in factor table")}
+- {ref_link("EUROMETAL_Bench", "Steel benchmark 1.370/0.481/0.072")}
+    """
+        )
+
 
     st.markdown(
         f"""
-##### 🧮 핵심 수식
+##### 핵심 수식
 
 ```
 [Step 1] 인증서 수 (제품 1톤당)
@@ -3423,7 +3021,7 @@ with tabs[7]:
 > 근거: {ref_link("EU_IR_2025_2620", "IR 2025/2620")}, {ref_link("EC_CBAM_QA", "집행위 CBAM Q&A 3.7–3.8")}
 > 2040 개편안 수치: {ref_link("EU_COM_2026_616", "COM(2026) 616")} (제안 단계·미확정 — 기본값은 현행법)
 
-##### 📐 핵심 가정
+##### 핵심 가정
 
 | 항목 | 값 | 출처 |
 |---|---|---|
@@ -3443,7 +3041,7 @@ with tabs[7]:
 | 전력 무상할당 공제 | 없음 (benchmark 0) | {ref_link("EU_IR_2025_2620")} |
 | 한국 전력 배출계수 | 0.417 tCO₂/MWh (2023 국가) | {ref_link("KR_GRID_2023")} |
 
-##### ⚠️ 한계와 가정
+##### 한계와 가정
 
 1. **SEE는 verified 우선**: 2024.7 이후 default 사용 시 mark-up. 본 도구는 사용자 입력을 우선.
 2. **Indirect emissions**: 시멘트·비료만 전력 간접배출 포함 (CBAM 규정). 철강·알루미늄·수소는 직접배출만 셉니다.
@@ -3453,13 +3051,13 @@ with tabs[7]:
 6. **K-ETS 차감**: 사이드바에서 선택 적용 (Art.9). 차감액 = SEE × K-ETS 가격 × 차감 비율(기본 30%, 무상할당분 제외 가정)로 단순화 — 실제 인정액은 EU 이행규정·검증 결과에 따름. {ref_link("ME_K_ETS")} 참조.
 7. **CSCF**: 2026~2030은 100%(1.0)로 확정 ({ref_link("EU_DEC_2026_1862")}). 2031년 이후(개편안 시나리오의 15% 잔여 공제 구간)는 달라질 수 있으나 미반영.
 
-##### 🔄 자동 데이터 갱신
+##### 자동 데이터 갱신
 
 - **EUA 가격**: GitHub Actions cron (주 1회 월요일) → `data/eua_price.json` commit. Streamlit `@st.cache_data(ttl=86400)` 사용.
 - **POSCO SEE**: 정적 + `last_verified_date` + 출처 link. POSCO ESG 보고서 갱신 시 (연 1회) 수동 업데이트.
 - **CCUS 데이터**: Phase 2에서 자매 도구 `ccus_metrics.json` raw fetch 예정.
 
-##### 🆕 2025년 CBAM Omnibus 변경사항 (반영됨)
+##### 2025년 CBAM Omnibus 변경사항 (반영됨)
 
 | 항목 | 변경 전 | 변경 후 (Omnibus 2025-10-17) |
 |---|---|---|
@@ -3472,7 +3070,7 @@ with tabs[7]:
 
 출처: {ref_link("EU_OMNIBUS_2025")}, {ref_link("MayerBrown_Omnibus")}, {ref_link("ReedSmith_CBAM")}
 
-##### 🔮 향후 확장 로드맵 (2025-12-17 EU 발표)
+##### 향후 확장 로드맵
 
 - **8 Implementing Acts + 1 Delegated Act** (2025-12-17 채택) — verifier 인증, registry 운영, 인증서 가격 산정 등
 - **Downstream products 확장** (적용 개시안 2028-01-01) — 가공된 철강·알루미늄 제품 (예: 자동차부품, 가전). 2026-10 현재 의회·이사회 3자 협상 중: 10/20 1차는 전력 부분만 합의, 품목 수(집행위 약 180·이사회 약 200·의회 약 457)는 미정, 2차 11/30(잠정). 본 도구는 Phase 1 sector(원자재)만 다룸.
@@ -3484,8 +3082,8 @@ with tabs[7]:
 
 
 # ────────────── 탭 ⑨ 참고문헌 ──────────────
-with tabs[8]:
-    st.subheader("⑨ 참고문헌 — 출처 카탈로그")
+with DOC_REFS:
+    st.subheader("참고문헌")
 
     cat_filter = st.multiselect(
         "카테고리 필터",
@@ -3501,21 +3099,21 @@ with tabs[8]:
             "methodology": "🔬", "market": "💹",
         }.get(r["cat"], "📌")
         url_str = f" — [link]({r['url']})" if r.get("url") else ""
-        date_str = (f"<span style='color:#FFB74D; font-size:0.82em;'>📅 {r['date']}</span>  \n"
+        date_str = (f"<span style='color:#B45309; font-size:0.82em;'>{r['date']}</span>  \n"
                     if r.get("date") else "")
         st.markdown(
             f"**{cat_emoji} `{ref_id}`** _{r['cat']}_  \n"
             f"{date_str}"
             f"{r['cite']}{url_str}  \n"
-            f"<span style='color:#8b95a7; font-size:0.85em;'>📍 사용처: {r['used_for']}</span>",
+            f"<span style='color:#6B7280; font-size:0.85em;'>📍 사용처: {r['used_for']}</span>",
             unsafe_allow_html=True,
         )
         st.markdown("---")
 
 
 # ────────────── 탭 ⑩ EU CBAM 뉴스 ──────────────
-with tabs[9]:
-    st.subheader("⑩ 📰 EU CBAM 최신 공지")
+with DOC_NEWS:
+    st.subheader("EU CBAM 공지")
 
     news_items, news_updated, news_mode = load_cbam_news()
 
@@ -3532,14 +3130,14 @@ with tabs[9]:
         st.markdown(
             f"""
 <div style='display: flex; gap: 14px; align-items: center; margin-bottom: 14px;
-            padding: 10px 14px; background: #11161e; border: 1px solid #1f2733;
-            border-radius: 8px; font-size: 0.84rem; color: #D4D8DD; flex-wrap: wrap;'>
-    <span>📅 마지막 갱신: <strong style='color:#F0F2F5;'>{news_updated}</strong></span>
-    <span style='color: #7A8089;'>·</span>
-    <span>전체 <strong style='color:#F0F2F5;'>{n_total}</strong>건</span>
-    <span style='color: #7A8089;'>·</span>
-    <span>⚠️ 중요도 high <strong style='color:#EF9A9A;'>{n_high}</strong>건</span>
-    <span style='margin-left: auto; background: #1d2b22; color: #81C784;
+            padding: 10px 14px; background: #FFFFFF; border: 1px solid #E2E6EC;
+            border-radius: 8px; font-size: 0.84rem; color: #374151; flex-wrap: wrap;'>
+    <span>마지막 갱신: <strong style='color:#111827;'>{news_updated}</strong></span>
+    <span style='color: #6B7280;'>·</span>
+    <span>전체 <strong style='color:#111827;'>{n_total}</strong>건</span>
+    <span style='color: #6B7280;'>·</span>
+    <span>⚠️ 중요도 high <strong style='color:#B91C1C;'>{n_high}</strong>건</span>
+    <span style='margin-left: auto; background: #ECFDF3; color: #15803D;
                   font-size: 0.7rem; padding: 2px 8px; border-radius: 4px; font-weight: 500;'>
         {news_badge}
     </span>
@@ -3572,7 +3170,7 @@ with tabs[9]:
         if not filtered:
             st.info("선택한 카테고리에 해당하는 공지가 없습니다.")
         else:
-            st.markdown(f"#### 📋 {len(filtered)}건")
+            st.markdown(f"#### {len(filtered)}건")
             for it in filtered:
                 st.markdown(render_news_card(it, compact=False), unsafe_allow_html=True)
 
@@ -3580,7 +3178,7 @@ with tabs[9]:
         st.markdown("---")
         st.markdown(
             """
-##### 📰 수집 방식
+##### 수집 방식
 
 **수동 큐레이션 + 매월 자동 수집**으로 운영합니다:
 
@@ -3596,15 +3194,15 @@ with tabs[9]:
 **한글 번역**: 자동 수집 항목은 영문 단어를 한글로 부분 치환 (100% 자연스럽지 않을 수 있음).
 정확한 의미는 원문 링크 클릭하여 확인.
 
-📝 큐레이션 제안: [GitHub issue](https://github.com/cafeon90-oss/CBAM_calculator/issues)
+큐레이션 제안: [GitHub issue](https://github.com/cafeon90-oss/CBAM_calculator/issues)
 또는 [email](mailto:cafeon90@gmail.com).
 """
         )
 
 
 # ────────────── 탭 ⑪ SEE 산정 (철강) ──────────────
-with tabs[10]:
-    st.subheader("⑪ SEE 산정 (철강) — 공장 자료로 내재배출량 계산")
+with TAB_SEE:
+    st.subheader("SEE 산정 (철강) — 공장 자료로 내재배출량 계산")
     st.caption(
         "EU 산정규칙(IR 2025/2547)의 **물질수지** 방식으로 제철소 전체를 한 공정으로 묶어(bubble) "
         "계산합니다. 철강은 **직접배출만** 셉니다(전력 제외, 소결광 간접배출만 포함). "
@@ -3625,7 +3223,7 @@ with tabs[10]:
         see_al = st.number_input("판매 가능 생산량 AL (t/년)", min_value=1.0, step=1000.0,
                                  format="%.0f", key=f"see_al_{see_route}",
                                  help="판매 가능한 제품만. 공정에 되돌린 양·스크랩·폐기물 제외 (Annex II F).")
-    st.info(f"📝 예시값으로 채워져 있습니다 — {see_ex['note']}")
+    st.info(f"예시값으로 채워져 있습니다 — {see_ex['note']}")
 
     st.markdown("##### 1. 탄소 투입·산출 (연간)")
     st.caption("표준계수가 기본으로 들어갑니다. 실측 탄소함량이 있으면 **계수 = 탄소함량(%) × 0.03664**로 "
@@ -3650,7 +3248,7 @@ with tabs[10]:
                 help="바이오매스 비율 — 그만큼 배출 0 (투입만)"),
         },
     )
-    with st.expander("📋 표준계수 표 (가이던스 No.3 표 4-7·4-9·4-11)"):
+    with st.expander("표준계수 표 (가이던스 No.3 표 4-7·4-9·4-11)"):
         st.dataframe(pd.DataFrame([
             {"물질": ss.material_label(k), "기본 계수 (tCO₂/단위)": v[2], "근거": v[3]}
             for k, v in ss.MATERIALS.items()
@@ -3788,11 +3386,11 @@ with tabs[10]:
     see_contrib = sorted(ss.contributions(see_res), key=lambda x: x[1])
     fig_see = go.Figure(go.Bar(
         x=[v for _, v in see_contrib], y=[n for n, _ in see_contrib], orientation="h",
-        marker_color=[C_BAD if v > 0 else C_GOOD for _, v in see_contrib],
+        marker_color=[C_PRIMARY if v > 0 else C_GOOD for _, v in see_contrib],
         text=[f"{v:+.3f}" for _, v in see_contrib], textposition="outside", cliponaxis=False,
     ))
     fig_see.update_layout(
-        title="제품 1t당 항목별 기여 (tCO₂/t)", template="plotly_dark",
+        title="제품 1t당 항목별 기여 (tCO₂/t)", template=PLOTLY_TEMPLATE,
         height=max(320, 28 * len(see_contrib) + 120),
         paper_bgcolor=C_BG, plot_bgcolor=C_BG, showlegend=False,
         margin=dict(l=10, r=70, t=50, b=30),
@@ -3814,7 +3412,7 @@ with tabs[10]:
                                 for c in ("산정값 (€/t)", "EU 기본값 (€/t)", "차이 (€/t)")})
     st.caption("SEE·공제는 분석 연도 기준으로 계산했습니다 (전구체 mark-up·페로합금 benchmark가 연도별로 다름).")
 
-    with st.expander("🔍 계산 내역"):
+    with st.expander("계산 내역"):
         a = see_res["attr"]
         st.dataframe(pd.DataFrame([
             {"항목": "물질수지 직접배출", "tCO₂/년": see_res["dir_mass_balance"]},
@@ -3835,25 +3433,25 @@ with tabs[10]:
             ]), hide_index=True, width="stretch")
 
     st.button(
-        "✅ 이 값으로 계산기 적용 (사이드바)", key="see_calc_apply", type="primary",
+        "이 값으로 계산기 적용 (사이드바)", key="see_calc_apply", type="primary",
         on_click=apply_see_calc,
         kwargs={"sector_lit": ss.ROUTE_SECTOR[see_route], "see": see_val, "benchmark": see_bm},
         help="사이드바를 'Verified 자체 데이터'로 바꾸고 SEE와 실측 공제 benchmark를 넘깁니다",
     )
     if st.session_state.get("see_calc_applied"):
-        st.caption("🧮 사이드바에 적용됨 — 다른 탭의 결과가 이 SEE·공제 기준으로 계산됩니다. "
+        st.caption("사이드바에 적용됨 — 다른 탭의 결과가 이 SEE·공제 기준으로 계산됩니다. "
                    "사이드바의 '산정기 값 해제'로 되돌릴 수 있습니다.")
 
 
 # ────────────── 탭 ⑫ 📘 사용설명서 ──────────────
-with tabs[11]:
-    st.subheader("📘 사용설명서")
+with DOC_GUIDE:
+    st.subheader("사용설명서")
 
     usage_md, usage_mode = load_usage_md()
     usage_svg, svg_mode = load_usage_svg()
 
     # 디버그: 파일 로딩 상태 명시
-    with st.expander("🔧 파일 로딩 상태 (디버그)", expanded=False):
+    with st.expander("파일 로딩 상태 (디버그)", expanded=False):
         st.write(f"**USAGE.md path**: `{USAGE_MD_LOCAL}`")
         st.write(f"**USAGE.md exists**: {USAGE_MD_LOCAL.exists()}")
         st.write(f"**USAGE.md mode**: `{usage_mode}`")
@@ -3881,7 +3479,7 @@ with tabs[11]:
         # 다이어그램 표시 — st.markdown은 SVG sanitize 차단함
         # 해결: st.iframe으로 iframe 안에 SVG 임베드 (sanitizer 우회)
         if svg_mode == "auto" and usage_svg:
-            st.markdown("##### 📊 작동 메커니즘 다이어그램")
+            st.markdown("##### 작동 메커니즘 다이어그램")
             # SVG viewBox: 1100x720 (비율 1.528:1). 컨테이너 폭에 맞춰
             # 자동 리사이즈하여 비율 유지.
             svg_html = f"""
@@ -3890,13 +3488,13 @@ with tabs[11]:
 <head>
 <style>
   html, body {{
-    margin: 0; padding: 0; background: #0a0d14;
+    margin: 0; padding: 0; background: #F6F7F9;
     width: 100%; overflow: hidden;
   }}
   .svg-wrapper {{
     width: 100%;
-    background: #0a0d14;
-    border: 1px solid #1f2733;
+    background: #F6F7F9;
+    border: 1px solid #E2E6EC;
     border-radius: 8px;
     padding: 4px;
     box-sizing: border-box;
@@ -3926,13 +3524,13 @@ with tabs[11]:
     st.markdown("---")
     st.markdown(
         """
-##### 📚 더 알아보기
+##### 더 알아보기
 
 - 📄 [USAGE.md GitHub에서 보기](https://github.com/cafeon90-oss/CBAM_calculator/blob/main/USAGE.md)
-- 📊 [작동 메커니즘 SVG](https://github.com/cafeon90-oss/CBAM_calculator/blob/main/cbam_mechanism.svg)
+- [작동 메커니즘 SVG](https://github.com/cafeon90-oss/CBAM_calculator/blob/main/cbam_mechanism.svg)
 - 🌫️ [자매 CCUS 도구 라이브 앱](https://ccusbenchmark-rcuf9appppppppykmyeca8nwgk.streamlit.app/)
-- 📖 [EU CBAM 공식](https://taxation-customs.ec.europa.eu/carbon-border-adjustment-mechanism_en)
-- 📝 [작성자 블로그](https://cdrmaster.tistory.com/)
+- [EU CBAM 공식](https://taxation-customs.ec.europa.eu/carbon-border-adjustment-mechanism_en)
+- [작성자 블로그](https://cdrmaster.tistory.com/)
 
 문의·기여: [GitHub issue](https://github.com/cafeon90-oss/CBAM_calculator/issues) · [email](mailto:cafeon90@gmail.com)
 """
@@ -3947,26 +3545,26 @@ st.markdown(
 <div class='footer-card'>
     <div style='display: flex; align-items: center; gap: 12px; margin-bottom: 10px;'>
         <div style='width: 36px; height: 36px; border-radius: 9px;
-                    background: linear-gradient(135deg, #4FC3F7 0%, #7C4DFF 100%);
+                    background: linear-gradient(135deg, #1F3A8A 0%, #1F3A8A 100%);
                     display: flex; align-items: center; justify-content: center;
                     font-size: 18px; flex-shrink: 0;'>🌍</div>
         <div>
-            <div style='font-size: 1.0rem; font-weight: 500; color:#F0F2F5; line-height: 1.2;'>EU CBAM 영향 계산기</div>
-            <div style='font-size: 0.78rem; color:#A8AEB6; margin-top: 2px;'>Built by 송봉관 / Song BK · DAC & CCUS 기술사업화 전문가</div>
+            <div style='font-size: 1.0rem; font-weight: 500; color:#111827; line-height: 1.2;'>EU CBAM 영향 계산기</div>
+            <div style='font-size: 0.78rem; color:#6B7280; margin-top: 2px;'>Built by 송봉관 / Song BK · DAC & CCUS 기술사업화 전문가</div>
         </div>
     </div>
-    <div style='font-size:0.84rem; color:#D4D8DD; margin: 8px 0 12px 0;'>
+    <div style='font-size:0.84rem; color:#374151; margin: 8px 0 12px 0;'>
         자매 도구:
-        <a href='{CCUS_APP_URL}' target='_blank' style='color:#9b8de8; text-decoration:none;'>🌫️ CCUS 벤치마크 ↗</a>
+        <a href='{CCUS_APP_URL}' target='_blank' style='color:#4338CA; text-decoration:none;'>🌫️ CCUS 벤치마크 ↗</a>
     </div>
     <div style='display: flex; flex-wrap: wrap; gap: 14px; font-size:0.84rem; margin-bottom: 12px;'>
-        <a href='https://github.com/cafeon90-oss' style='color:#81C784; text-decoration:none;'>↗ GitHub</a>
-        <a href='https://www.linkedin.com/in/bongkwan-song-95a0213ba/' style='color:#81C784; text-decoration:none;'>↗ LinkedIn</a>
-        <a href='https://cdrmaster.tistory.com/' style='color:#81C784; text-decoration:none;'>↗ Blog</a>
-        <a href='mailto:cafeon90@gmail.com' style='color:#81C784; text-decoration:none;'>↗ Email</a>
+        <a href='https://github.com/cafeon90-oss' style='color:#15803D; text-decoration:none;'>↗ GitHub</a>
+        <a href='https://www.linkedin.com/in/bongkwan-song-95a0213ba/' style='color:#15803D; text-decoration:none;'>↗ LinkedIn</a>
+        <a href='https://cdrmaster.tistory.com/' style='color:#15803D; text-decoration:none;'>↗ Blog</a>
+        <a href='mailto:cafeon90@gmail.com' style='color:#15803D; text-decoration:none;'>↗ Email</a>
     </div>
-    <div style='padding-top: 12px; border-top: 1px solid #1f2733;
-                color:#7A8089; font-size:0.72rem; line-height: 1.6;'>
+    <div style='padding-top: 12px; border-top: 1px solid #E2E6EC;
+                color:#6B7280; font-size:0.72rem; line-height: 1.6;'>
         © 2026 Song BK · MIT License<br>
         Data sources: EU Commission · ICAP · KOTRA · KCCI SGI · IEA · IEAGHG · NETL · World Steel Association
     </div>
