@@ -13,7 +13,7 @@ from streamlit.testing.v1 import AppTest
 REPO = Path(__file__).resolve().parent.parent
 APP = REPO / "app.py"
 TIMEOUT = 180   # 첫 실행은 pandas·plotly import 포함 ~20초
-TAB_COUNT = 11
+TAB_COUNT = 12
 
 
 def _preset_keys():
@@ -117,6 +117,37 @@ def test_reform_scenario_matches_calc(calc):
     expected = calc.calc_unit_cbam(2.127, 1.370, _eua_price(), 2034,
                                    scenario="reform_2040")["unit_cost_eur"]
     assert _unit_kpi(at) == f"€{expected:.2f}/t"
+
+
+def test_see_calc_apply_sets_sidebar_and_benchmark(calc):
+    # 탭 ⑪ 기본 예시(가이던스 5d 고로 예시) → 적용 → 사이드바 Verified·SEE 1.567·실측 공제 1.248
+    at = _new_app()
+    assert any(m.label.startswith("산정 SEE") and m.value == "1.567" for m in at.metric)
+    at.button(key="see_calc_apply").click()
+    _run(at)
+    assert at.radio(key="see_mode_radio").value == "Verified 자체 데이터"
+    applied = at.session_state["see_calc_applied"]
+    assert applied["see"] == pytest.approx(1.567, abs=5e-4)
+    assert at.number_input(key="user_SEE").value == applied["see"]    # 반올림 없이 그대로
+    assert applied["benchmark"] == pytest.approx(1.248, abs=5e-4)
+    expected = calc.calc_unit_cbam(applied["see"], applied["benchmark"], _eua_price(), 2026)["unit_cost_eur"]
+    tab_kpi = next(m.value for m in at.metric if m.label.startswith("산정값 단가"))
+    assert tab_kpi == f"€{expected:.2f}/t"                             # 탭 ⑪ = 사이드바
+    assert _unit_kpi(at) == f"€{expected:.2f}/t"
+    # 해제하면 Column B로 돌아간다
+    at.button(key="see_calc_clear").click()
+    _run(at)
+    expected = calc.calc_unit_cbam(applied["see"], 1.370, _eua_price(), 2026)["unit_cost_eur"]
+    assert _unit_kpi(at) == f"€{expected:.2f}/t"
+
+
+@pytest.mark.parametrize("route", ["D", "E"])
+def test_see_calc_other_routes_render(route):
+    at = _new_app()
+    at.selectbox(key="see_route").set_value(route)
+    _run(at)
+    see = next(m.value for m in at.metric if m.label.startswith("산정 SEE"))
+    assert 0.1 < float(see) < 1.0      # 가상 예시 — 직접배출만이라 1 미만
 
 
 def test_switching_scenario_keeps_selected_year():

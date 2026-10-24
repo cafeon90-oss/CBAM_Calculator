@@ -50,6 +50,7 @@ from html import escape as html_escape
 # 자매 repo의 ccus_metrics.json fetch + helper 함수 모두 이 모듈에서 제공
 # 두 도구가 같은 loader.py 사용 → 자매 도구 갱신 시 한 곳만 수정
 # ───────────────────────────────────────────────────────────────────────
+import see_steel as ss
 from ccus_metrics_loader import (
     load_ccus_metrics as _load_ccus_metrics_raw,
     get_tech_data,
@@ -1265,6 +1266,20 @@ PRESETS = {
 }
 
 
+def apply_see_calc(sector_lit, see, benchmark):
+    """SEE 산정기(탭 ⑪) 결과를 사이드바에 반영 — Verified 모드 + 실측 공제 benchmark."""
+    see = float(min(max(see, 0.0), 20.0))   # 반올림하지 않음 — 탭 ⑪과 사이드바 결과가 같아야 함
+    st.session_state["sector_lit"] = sector_lit
+    st.session_state["see_mode_radio"] = "Verified 자체 데이터"
+    st.session_state["user_SEE"] = see
+    st.session_state["see_calc_applied"] = {"sector_lit": sector_lit, "see": see,
+                                            "benchmark": float(benchmark)}
+
+
+def clear_see_calc():
+    st.session_state.pop("see_calc_applied", None)
+
+
 def apply_preset():
     """프리셋 변경 시 모든 입력값 자동 세팅."""
     key = st.session_state.get("preset_select")
@@ -2173,10 +2188,11 @@ with st.sidebar:
     )
 
     # SEE (사용자 자체 데이터 우선)
+    # key 위젯 기본값은 session_state로만 준다 (SEE 산정기 적용 버튼이 이 값을 바꿈)
+    st.session_state.setdefault("see_mode_radio", "Verified 자체 데이터")
     see_mode = st.radio(
         "📊 SEE 입력 방식",
         ["EU Default 사용 (mark-up 적용)", "한국 평균 사용", "Verified 자체 데이터"],
-        index=2,
         key="see_mode_radio",
         help=("SEE = Specific Embedded Emissions, 단위 제품당 내재 탄소배출량 [tCO₂/t]. "
               "직접배출(Scope 1) 기준, 시멘트·비료만 전력 간접배출(Scope 2) 포함. "
@@ -2205,7 +2221,15 @@ with st.sidebar:
 
     # 무상할당 공제 benchmark — 기본값을 쓰면 기본값 생산경로의 benchmark를 쓴다
     active_benchmark = sector["eu_benchmark"]
-    if see_mode == "EU Default 사용 (mark-up 적용)" and "default_benchmark" in sector:
+    # SEE 산정기(탭 ⑪)를 적용했고 sector·SEE가 그대로면 실측 공제(Column A 연쇄)를 쓴다
+    see_calc = st.session_state.get("see_calc_applied")
+    if (see_calc and see_mode == "Verified 자체 데이터"
+            and sector_lit == see_calc["sector_lit"] and abs(user_SEE - see_calc["see"]) < 1e-9):
+        active_benchmark = see_calc["benchmark"]
+        st.caption(f"🧮 SEE 산정기 값 사용 중 — 실측 공제 benchmark **{active_benchmark:.3f}** "
+                   f"(Column B {sector['eu_benchmark']:.3f} 대신)")
+        st.button("산정기 값 해제", key="see_calc_clear", on_click=clear_see_calc)
+    elif see_mode == "EU Default 사용 (mark-up 적용)" and "default_benchmark" in sector:
         active_benchmark = sector["default_benchmark"]
         st.caption(f"📌 EU benchmark: **{active_benchmark:.3f}** {sector['unit']} "
                    f"(기본값 생산경로 기준 — 공정별 값은 {sector['eu_benchmark']:.3f})")
@@ -2619,6 +2643,7 @@ tabs = st.tabs(
         "⑧ 방법론",
         "⑨ 출처",
         "⑩ CBAM 뉴스",
+        "⑪ SEE 산정 (철강)",
         "📘 설명서",
     ]
 )
@@ -3548,8 +3573,251 @@ with tabs[9]:
         )
 
 
-# ────────────── 탭 ⑪ 📘 사용설명서 ──────────────
+# ────────────── 탭 ⑪ SEE 산정 (철강) ──────────────
 with tabs[10]:
+    st.subheader("⑪ SEE 산정 (철강) — 공장 자료로 내재배출량 계산")
+    st.caption(
+        "EU 산정규칙(IR 2025/2547)의 **물질수지** 방식으로 제철소 전체를 한 공정으로 묶어(bubble) "
+        "계산합니다. 철강은 **직접배출만** 셉니다(전력 제외, 소결광 간접배출만 포함). "
+        "사전 추정용이며 검증보고서를 대체하지 않습니다. 입력값은 이 화면에서만 쓰이고 저장되지 않습니다."
+    )
+
+    sc1, sc2, sc3 = st.columns(3)
+    with sc1:
+        see_route = st.selectbox("생산경로", list(ss.ROUTES), format_func=ss.ROUTES.get,
+                                 key="see_route",
+                                 help="CBAM benchmark 경로. 가이던스상 고철 비중 같은 수치 기준은 없고 사업자가 지정합니다.")
+    with sc2:
+        see_product = st.selectbox("제품", list(ss.PRODUCTS), format_func=ss.PRODUCTS.get,
+                                   key="see_product")
+    see_ex = ss.EXAMPLES[see_route]
+    st.session_state.setdefault(f"see_al_{see_route}", float(see_ex["al"]))
+    with sc3:
+        see_al = st.number_input("판매 가능 생산량 AL (t/년)", min_value=1.0, step=1000.0,
+                                 format="%.0f", key=f"see_al_{see_route}",
+                                 help="판매 가능한 제품만. 공정에 되돌린 양·스크랩·폐기물 제외 (Annex II F).")
+    st.info(f"📝 예시값으로 채워져 있습니다 — {see_ex['note']}")
+
+    st.markdown("##### 1. 탄소 투입·산출 (연간)")
+    st.caption("표준계수가 기본으로 들어갑니다. 실측 탄소함량이 있으면 **계수 = 탄소함량(%) × 0.03664**로 "
+               "바꿔 넣으세요. 산출(제품·슬래그 등)은 자동으로 차감됩니다. 엑셀에서 복사해 붙여넣을 수 있습니다. "
+               "코크스 공장 배출은 경계 밖이고, 코크스로가스(COG)는 아래 '폐가스 수입'에 넣습니다.")
+    see_mat_df = pd.DataFrame([
+        {"물질": ss.material_label(k), "양": float(q),
+         "계수 (tCO₂/단위)": (float("nan") if f is None else float(f)), "바이오 %": float(b)}
+        for k, q, f, b in see_ex["materials"]
+    ])
+    see_mat_edit = st.data_editor(
+        see_mat_df, key=f"see_mb_{see_route}", num_rows="dynamic", hide_index=True,
+        width="stretch",
+        column_config={
+            "물질": st.column_config.SelectboxColumn(options=list(ss.LABEL_TO_KEY), required=True,
+                                                    width="large"),
+            "양": st.column_config.NumberColumn(min_value=0.0, format="localized"),
+            "계수 (tCO₂/단위)": st.column_config.NumberColumn(
+                format="%.5f", help="비워두면 표준계수 (아래 표). 탄소함량 % × 0.03664"),
+            "바이오 %": st.column_config.NumberColumn(
+                min_value=0.0, max_value=100.0, format="%.0f",
+                help="바이오매스 비율 — 그만큼 배출 0 (투입만)"),
+        },
+    )
+    with st.expander("📋 표준계수 표 (가이던스 No.3 표 4-7·4-9·4-11)"):
+        st.dataframe(pd.DataFrame([
+            {"물질": ss.material_label(k), "기본 계수 (tCO₂/단위)": v[2], "근거": v[3]}
+            for k, v in ss.MATERIALS.items()
+        ]), hide_index=True, width="stretch")
+
+    st.markdown("##### 2. 구매 전구체")
+    st.caption("다른 공장에서 산 선철·DRI·슬래브·페로합금 등. 공급사 검증 SEE가 없으면 원산지 기본값 + "
+               f"mark-up({ss.steel_markup(analysis_year):.0f}%, {analysis_year}년)이 자동 적용되고, "
+               "공제는 Column B 값을 씁니다. EU 산은 0. 고철·코크스는 전구체가 아닙니다(내재배출 0).")
+    see_pre_df = pd.DataFrame({
+        "품목": pd.Series(dtype="object"), "원산지": pd.Series(dtype="object"),
+        "양 (t)": pd.Series(dtype="float"), "실측 SEE": pd.Series(dtype="float"),
+        "실측 SEFA": pd.Series(dtype="float"), "탄소 (tCO₂/t)": pd.Series(dtype="float"),
+    })
+    see_pre_edit = st.data_editor(
+        see_pre_df, key=f"see_pre_{see_route}", num_rows="dynamic", hide_index=True,
+        width="stretch",
+        column_config={
+            "품목": st.column_config.SelectboxColumn(
+                options=list(ss.PRECURSOR_LABEL_TO_KEY), required=True, width="medium"),
+            "원산지": st.column_config.SelectboxColumn(options=ss.ORIGINS, default="한국"),
+            "양 (t)": st.column_config.NumberColumn(min_value=0.0, format="localized"),
+            "실측 SEE": st.column_config.NumberColumn(
+                format="%.3f", help="공급사 검증보고서 값 (tCO₂/t). 비우면 기본값 + mark-up"),
+            "실측 SEFA": st.column_config.NumberColumn(
+                format="%.3f", help="공급사가 준 공제값. 비우면 Column B"),
+            "탄소 (tCO₂/t)": st.column_config.NumberColumn(
+                format="%.3f", help="전구체에 든 탄소 (물질수지 투입). 비우면 표준값"),
+        },
+    )
+
+    with st.expander("3. 폐가스·열·자체 발전 보정 (식 53–55)", expanded=see_route == "C"):
+        wc1, wc2, wc3 = st.columns(3)
+        st.session_state.setdefault(f"see_wg_exp_{see_route}", float(see_ex.get("wg_exported_gj", 0.0)))
+        with wc1:
+            see_wg_exp = st.number_input(
+                "폐가스 수출 (GJ/년)", min_value=0.0, step=1000.0, format="%.0f",
+                key=f"see_wg_exp_{see_route}",
+                help="발전소 등 경계 밖으로 보낸 고로·전로가스 에너지(순발열량). × 56.1 × 0.667 차감")
+            see_wg_imp = st.number_input(
+                "폐가스 수입 (GJ/년)", min_value=0.0, step=1000.0, format="%.0f",
+                key=f"see_wg_imp_{see_route}",
+                help="경계 밖에서 들여온 코크스로가스 등. 연소 배출 대신 천연가스 환산(× 56.1)으로 계산")
+        with wc2:
+            see_heat_imp = st.number_input("열 수입 (GJ/년)", min_value=0.0, step=1000.0,
+                                           format="%.0f", key=f"see_heat_imp_{see_route}")
+            see_heat_exp = st.number_input("열 수출 (GJ/년)", min_value=0.0, step=1000.0,
+                                           format="%.0f", key=f"see_heat_exp_{see_route}")
+        with wc3:
+            see_ef_heat = st.number_input(
+                "열 배출계수 (tCO₂/TJ)", min_value=0.0, value=ss.EF_HEAT_DEFAULT, step=1.0,
+                key=f"see_ef_heat_{see_route}",
+                help="모르면 천연가스 보일러 효율 90% 가정 = 56.1 / 0.9")
+            see_el_prod = st.number_input(
+                "공정 안 자체 발전 배출 (tCO₂/년)", min_value=0.0, step=100.0, format="%.0f",
+                key=f"see_el_prod_{see_route}", help="공정 안에서 전기를 만들며 낸 배출 — 차감")
+        see_sinter_mwh, see_grid_ef = 0.0, ss.KR_GRID_EF
+        if see_route == "C":
+            st.session_state.setdefault("see_sinter_mwh", float(see_ex.get("sinter_mwh", 0.0)))
+            st.session_state.setdefault("see_grid_ef", float(see_ex.get("grid_ef", ss.KR_GRID_EF)))
+            gc1, gc2 = st.columns(2)
+            with gc1:
+                see_sinter_mwh = st.number_input(
+                    "소결 공장 전력 (MWh/년)", min_value=0.0, step=1000.0, format="%.0f",
+                    key="see_sinter_mwh", help="소결광(2601 12 00)만 간접배출을 셉니다")
+            with gc2:
+                see_grid_ef = st.number_input(
+                    "전력 배출계수 (tCO₂/MWh)", min_value=0.0, step=0.01, format="%.4f",
+                    key="see_grid_ef",
+                    help=f"한국 기본값 {ss.KR_GRID_EF} (기본값법 Annex II). 자가발전 섞이면 가중평균")
+
+    with st.expander("4. 무상할당 공제(SEFA) 계산용 — 자체 생산 중간재 사용량", expanded=False):
+        st.caption("실측을 쓰면 공제 = 제품 공정 Column A + 자체 중간재(사용량 ÷ AL) × Column A + "
+                   "구매 전구체(양 ÷ AL) × SEFA (IR 2025/2620 Annex 3.3). 자체 생산분만 넣으세요.")
+        see_own = {}
+        own_fields = []
+        if see_product == "7208":
+            own_fields.append(("crude", "자체 조강(슬래브) 사용량 (t/년)"))
+        if see_route == "C":
+            own_fields += [("pig_iron", "자체 선철 사용량 (t/년)"), ("sinter", "자체 소결광 사용량 (t/년)")]
+        if see_route == "D":
+            own_fields.append(("dri", "자체 DRI 사용량 (t/년)"))
+        oc = st.columns(max(1, len(own_fields)))
+        for col, (k, lab) in zip(oc, own_fields):
+            st.session_state.setdefault(f"see_own_{k}_{see_route}", float(see_ex["own"].get(k, 0.0)))
+            with col:
+                see_own[k] = st.number_input(lab, min_value=0.0, step=1000.0, format="%.0f",
+                                             key=f"see_own_{k}_{see_route}")
+
+    see_mat_rows = [
+        {"material": ss.LABEL_TO_KEY.get(r["물질"]), "qty": r["양"],
+         "factor": r["계수 (tCO₂/단위)"], "bio": r["바이오 %"]}
+        for r in see_mat_edit.to_dict("records")
+    ]
+    see_pre_rows = [
+        {"item": ss.PRECURSOR_LABEL_TO_KEY.get(r["품목"]), "origin": r["원산지"],
+         "qty": r["양 (t)"], "see": r["실측 SEE"], "sefa": r["실측 SEFA"],
+         "carbon": r["탄소 (tCO₂/t)"]}
+        for r in see_pre_edit.to_dict("records")
+    ]
+    see_res = ss.calc_bubble(
+        product=see_product, route=see_route, al=see_al, year=analysis_year,
+        materials=see_mat_rows, precursors=see_pre_rows,
+        wg_exported_gj=see_wg_exp, wg_imported_gj=see_wg_imp,
+        heat_imp_gj=see_heat_imp, heat_exp_gj=see_heat_exp, ef_heat=see_ef_heat,
+        em_el_prod=see_el_prod, sinter_mwh=see_sinter_mwh, grid_ef=see_grid_ef, own=see_own,
+    )
+
+    # ── 결과 ──
+    st.markdown("---")
+    st.markdown(f"##### 결과 — {analysis_year}년, EUA €{eua_price:.1f}, K-ETS 차감 전")
+    see_val, see_bm = see_res["see"], see_res["sefa_basis"]
+    kr_def = ss.KR_DEFAULT_PRODUCT[see_product]
+    kr_def_mu = get_markup("steel", analysis_year)
+    kr_def_bm = ss.COLUMN_B_PRODUCT[see_product]["C"]    # 한국 기본값은 경로 (C)
+    see_unit = calc_unit_cbam(see_val, see_bm, eua_price, analysis_year,
+                              mark_up_pct=0.0, scenario=reg_scenario)["unit_cost_eur"]
+    def_unit = calc_unit_cbam(kr_def, kr_def_bm, eua_price, analysis_year,
+                              mark_up_pct=kr_def_mu, scenario=reg_scenario)["unit_cost_eur"]
+    k1, k2, k3, k4 = st.columns(4)
+    k1.metric("산정 SEE (tCO₂/t)", f"{see_val:.3f}",
+              help="직접배출 + 구매 전구체 내재배출 (+ 경로 C 소결 간접배출)")
+    k2.metric("EU 기본값 대비", f"{kr_def * (1 + kr_def_mu / 100):.3f}",
+              delta=f"{(see_val / (kr_def * (1 + kr_def_mu / 100)) - 1) * 100:+.1f}%",
+              delta_color="inverse",
+              help=f"한국 기본값 {kr_def} + mark-up {kr_def_mu:.0f}% (경로 C)")
+    k3.metric("실측 공제 benchmark", f"{see_bm:.3f}",
+              delta=f"Column B {ss.COLUMN_B_PRODUCT[see_product][see_route]:.3f}",
+              delta_color="off",
+              help="CBAM factor·CSCF 곱하기 전. 사이드바에 적용하면 이 값으로 계산")
+    k4.metric(f"산정값 단가 ({analysis_year})", f"€{see_unit:.2f}/t",
+              delta=f"기본값 €{def_unit:.2f}/t 대비 {see_unit - def_unit:+.2f}",
+              delta_color="inverse")
+
+    see_contrib = sorted(ss.contributions(see_res), key=lambda x: x[1])
+    fig_see = go.Figure(go.Bar(
+        x=[v for _, v in see_contrib], y=[n for n, _ in see_contrib], orientation="h",
+        marker_color=[C_BAD if v > 0 else C_GOOD for _, v in see_contrib],
+        text=[f"{v:+.3f}" for _, v in see_contrib], textposition="outside", cliponaxis=False,
+    ))
+    fig_see.update_layout(
+        title="제품 1t당 항목별 기여 (tCO₂/t)", template="plotly_dark",
+        height=max(320, 28 * len(see_contrib) + 120),
+        paper_bgcolor=C_BG, plot_bgcolor=C_BG, showlegend=False,
+        margin=dict(l=10, r=70, t=50, b=30),
+    )
+    lock_static(fig_see)
+    st.plotly_chart(fig_see, width="stretch", config=PLOTLY_CONFIG)
+
+    see_years = []
+    for y in (2026, 2030, 2034):
+        u_calc = calc_unit_cbam(see_val, see_bm, eua_price, y, mark_up_pct=0.0,
+                                scenario=reg_scenario)["unit_cost_eur"]
+        u_def = calc_unit_cbam(kr_def, kr_def_bm, eua_price, y,
+                               mark_up_pct=get_markup("steel", y),
+                               scenario=reg_scenario)["unit_cost_eur"]
+        see_years.append({"연도": y, "산정값 (€/t)": round(u_calc, 2),
+                          "EU 기본값 (€/t)": round(u_def, 2), "차이 (€/t)": round(u_calc - u_def, 2)})
+    st.dataframe(pd.DataFrame(see_years), hide_index=True, width="stretch",
+                 column_config={c: st.column_config.NumberColumn(format="%.2f")
+                                for c in ("산정값 (€/t)", "EU 기본값 (€/t)", "차이 (€/t)")})
+    st.caption("SEE·공제는 분석 연도 기준으로 계산했습니다 (전구체 mark-up·페로합금 benchmark가 연도별로 다름).")
+
+    with st.expander("🔍 계산 내역"):
+        a = see_res["attr"]
+        st.dataframe(pd.DataFrame([
+            {"항목": "물질수지 직접배출", "tCO₂/년": see_res["dir_mass_balance"]},
+            {"항목": "구매 전구체 탄소 (물질수지 투입)", "tCO₂/년": see_res["precursor_carbon"]},
+            {"항목": "폐가스 수출 보정 (−)", "tCO₂/년": a["wg_exp"]},
+            {"항목": "폐가스 수입 보정 (+)", "tCO₂/년": a["wg_imp"]},
+            {"항목": "열 수입 (+) / 수출 (−)", "tCO₂/년": a["heat_imp"] + a["heat_exp"]},
+            {"항목": "자체 발전 차감 (−)", "tCO₂/년": a["el_prod"]},
+            {"항목": "= 귀속배출 AttrEm", "tCO₂/년": a["attr_em"]},
+            {"항목": "구매 전구체 내재배출 Σ M·SEE", "tCO₂/년": see_res["precursor_embedded"]},
+            {"항목": "소결 간접배출", "tCO₂/년": see_res["sinter_indirect"]},
+        ]).style.format({"tCO₂/년": "{:,.0f}"}), hide_index=True, width="stretch")
+        if see_res["precursors"]:
+            st.dataframe(pd.DataFrame([
+                {"품목": pp["label"], "원산지": pp["origin"], "양 (t)": pp["qty"],
+                 "SEE": round(pp["see"], 3), "근거": pp["see_basis"], "SEFA": pp["sefa"]}
+                for pp in see_res["precursors"]
+            ]), hide_index=True, width="stretch")
+
+    st.button(
+        "✅ 이 값으로 계산기 적용 (사이드바)", key="see_calc_apply", type="primary",
+        on_click=apply_see_calc,
+        kwargs={"sector_lit": ss.ROUTE_SECTOR[see_route], "see": see_val, "benchmark": see_bm},
+        help="사이드바를 'Verified 자체 데이터'로 바꾸고 SEE와 실측 공제 benchmark를 넘깁니다",
+    )
+    if st.session_state.get("see_calc_applied"):
+        st.caption("🧮 사이드바에 적용됨 — 다른 탭의 결과가 이 SEE·공제 기준으로 계산됩니다. "
+                   "사이드바의 '산정기 값 해제'로 되돌릴 수 있습니다.")
+
+
+# ────────────── 탭 ⑫ 📘 사용설명서 ──────────────
+with tabs[11]:
     st.subheader("📘 사용설명서")
 
     usage_md, usage_mode = load_usage_md()

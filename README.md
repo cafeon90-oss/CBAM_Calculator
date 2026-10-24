@@ -29,7 +29,7 @@ CBAM cost = (SEE − Free EU benchmark × CBAM factor) × EUA × import volume  
 - **EUA**: EU ETS 탄소배출권 가격 (€/tCO₂)
 - **Free benchmark**: EU 무상할당 벤치마크 (sector·공정별)
 
-### 10개 탭 구성
+### 11개 탭 구성 (+ 설명서)
 
 | # | 탭 | 내용 |
 |---|---|---|
@@ -43,6 +43,7 @@ CBAM cost = (SEE − Free EU benchmark × CBAM factor) × EUA × import volume  
 | ⑧ | 방법론 | 계산식, 가정, 한계 |
 | ⑨ | 참고문헌 | 30+ 출처 카탈로그 (regulation, report, paper, market) |
 | ⑩ | 📰 EU CBAM 뉴스 | EU 위원회 + Eur-Lex의 주요 공지 — 수동 큐레이션 + GitHub Actions 월 1회 자동 수집 |
+| ⑪ | SEE 산정 (철강) | 공장 탄소 투입·산출 자료로 EU 규칙(IR 2025/2547 물질수지)대로 철강 SEE·실측 공제 계산 → 사이드바에 적용 (`see_steel.py`) |
 
 ### 시나리오 프리셋 (9개 + Custom)
 
@@ -154,7 +155,7 @@ CBAM cost = (SEE − Free EU benchmark × CBAM factor) × EUA × import volume  
 - **EUA** — EU ETS allowance price (€/tCO₂)
 - **Free benchmark** — EU free allocation benchmark per sector/process
 
-### 9 Tabs
+### Tabs
 
 | # | Tab | Description |
 |---|---|---|
@@ -167,6 +168,8 @@ CBAM cost = (SEE − Free EU benchmark × CBAM factor) × EUA × import volume  
 | ⑦ | Custom Input | Multi-year compare + EUA sensitivity |
 | ⑧ | Methodology | Formulas, assumptions, limitations |
 | ⑨ | References | 30+ source catalog (regulation/report/paper/market) |
+| ⑩ | CBAM News | Curated + monthly auto-collected EU notices |
+| ⑪ | Steel SEE calculator | Plant carbon mass balance → SEE and actual-data free allocation (IR 2025/2547, 2025/2620) |
 
 ### Auto Data Refresh
 
