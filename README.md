@@ -43,7 +43,7 @@ CBAM cost = (SEE − Free EU benchmark × CBAM factor) × EUA × import volume  
 
 ### 시나리오 프리셋 (9개 + Custom)
 
-1. 🇰🇷 POSCO (BF-BOF, ~75 Mt/yr)
+1. 🇰🇷 POSCO (BF-BOF, ~35 Mt/yr)
 2. 🇰🇷 현대제철 (BF + EAF mix)
 3. 🇰🇷 현대제철 (Pure Scrap-EAF)
 4. 🇰🇷 쌍용·한일시멘트

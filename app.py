@@ -832,11 +832,11 @@ SHORT_NAMES = {
 # ======================================================================
 PRESETS = {
     "kr_posco_BF": {
-        "label": "🇰🇷 POSCO (BF-BOF, ~75 Mt/yr)",
+        "label": "🇰🇷 POSCO (BF-BOF, ~35 Mt/yr)",
         "description": "포스코 광양·포항 BF-BOF · EU 수출 비중 5%",
         "sector_lit": "steel_BF_BOF",
         "settings": {
-            "annual_production_mt": 75.0,
+            "annual_production_mt": 35.0,     # 2024 조강 35.0 Mt (POSCO 2024 ESG Factbook, 국내 사업장)
             "eu_export_share_pct": 5.0,
             "user_SEE": 1.99,              # 2024 ESG Factbook 직접배출 / 조강
             "company_name": "POSCO",
@@ -1828,7 +1828,7 @@ with st.sidebar:
         else:
             prod_unit_label = "Mt/yr (백만톤)"
             prod_unit_caption = "t/yr"
-        st.session_state.setdefault("annual_production_mt", 75.0)
+        st.session_state.setdefault("annual_production_mt", 35.0)
         annual_production_mt = st.number_input(
             f"연 생산량 ({prod_unit_label})",
             min_value=0.001, max_value=500.0,

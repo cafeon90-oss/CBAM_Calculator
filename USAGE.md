@@ -116,7 +116,7 @@ CBAM factor = 1 − Phase-in   (2026 97.5% → 2030 51.5% → 2034 0%)
 
 | # | 프리셋 | Sector | 핵심 수치 |
 |---|---|---|---|
-| 1 | 🇰🇷 POSCO (BF-BOF) | 철강 | 75 Mt/yr, EU 수출 5%, SEE 1.99 |
+| 1 | 🇰🇷 POSCO (BF-BOF) | 철강 | 35 Mt/yr (2024 조강), EU 수출 5%(가정), SEE 1.99 |
 | 2 | 🇰🇷 현대제철 (BF + EAF mix) | 철강 BF | 17 Mt/yr (BF 70%) |
 | 3 | 🇰🇷 현대제철 (Pure Scrap-EAF) | 철강 EAF | 5 Mt/yr, SEE 0.15 (직접배출) |
 | 4 | 🇰🇷 쌍용·한일시멘트 | 시멘트 | 10 Mt/yr clinker |
