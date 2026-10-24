@@ -1,0 +1,10 @@
+{
+ "_comment": "reg_tracker 알림 중 이 계산기에 이미 반영한 것. id는 reg_tracker feed/alerts.json 의 alerts[].id. 반영하면 여기에 추가한다.",
+ "acknowledged": [
+  {
+   "id": "eu:32026R1740",
+   "on": "2026-10-25",
+   "note": "IR 2026/1740(2025/2621 Annex I·IV 정정) 반영 완료. 헤더 '기본값 IR 2026/1740 정정 반영', 업종 refs EU_IR_2026_1740, see_steel.steel_markup() 10/20/30%."
+  }
+ ]
+}

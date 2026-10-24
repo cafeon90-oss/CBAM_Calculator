@@ -20,6 +20,16 @@ def test_eua_price_within_sidebar_input_range():
     date.fromisoformat(data["date"])
 
 
+def test_reg_ack_is_well_formed():
+    # reg_tracker 알림 확인 목록 — 형식이 깨지면 이미 반영한 알림이 다시 화면에 뜬다
+    acks = _load("reg_ack.json")["acknowledged"]
+    for a in acks:
+        assert a.get("id") and a.get("note"), a
+        date.fromisoformat(a["on"])
+    ids = [a["id"] for a in acks]
+    assert len(ids) == len(set(ids)), "중복 id"
+
+
 def test_news_items_are_well_formed():
     items = _load("cbam_news.json")["items"]
     for item in items:

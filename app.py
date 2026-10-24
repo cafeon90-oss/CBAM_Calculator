@@ -51,6 +51,7 @@ from html import escape as html_escape
 # 두 도구가 같은 loader.py 사용 → 자매 도구 갱신 시 한 곳만 수정
 # ───────────────────────────────────────────────────────────────────────
 import see_steel as ss
+import reg_alerts
 from ccus_metrics_loader import (
     load_ccus_metrics as _load_ccus_metrics_raw,
     get_tech_data,
@@ -124,6 +125,21 @@ st.markdown(
     .app-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
     .app-meta span { font-size: 0.74rem; color: var(--text2); background: var(--surface);
                      border: 1px solid var(--border); border-radius: 999px; padding: 2px 10px; }
+    .app-meta .reg-chip a { color: var(--text2); text-decoration: none; }
+    .app-meta .reg-chip.warn { background: #FEF3E2; border-color: #F5D7A8; }
+    .app-meta .reg-chip.warn a { color: var(--warn); font-weight: 700; }
+
+    /* 규정 변경 알림 (reg_tracker) */
+    .reg-box code { font-size: 0.8rem; background: #F1F3F6; padding: 1px 5px; border-radius: 4px; }
+    .reg-item { display: flex; gap: 12px; align-items: flex-start; padding: 10px 0 2px; border-top: 1px solid var(--border); margin-top: 10px; }
+    .reg-item a { color: var(--text); font-weight: 700; text-decoration: none; }
+    .reg-item a:hover { color: var(--primary); text-decoration: underline; }
+    .reg-imp { flex: none; white-space: nowrap; font-size: 0.72rem; font-weight: 800; padding: 2px 9px; margin-top: 2px;
+               border-radius: 999px; background: #F1F3F6; color: var(--text3); }
+    .reg-imp.bad { background: #FDECEC; color: var(--bad); }
+    .reg-imp.warn { background: #FEF3E2; color: var(--warn); }
+    .reg-head { font-size: 0.88rem; color: var(--text2); margin-top: 2px; }
+    .reg-loc { font-size: 0.78rem; color: var(--text3); margin-top: 2px; }
 
     /* 탭 — 밑줄형, 남색 */
     div[data-baseweb="tab-list"] { gap: 6px !important; border-bottom: 1px solid var(--border); overflow-x: auto; flex-wrap: nowrap; }
@@ -2060,6 +2076,17 @@ with st.sidebar:
 # 메인 화면 — 헤더
 # ======================================================================
 _news_items, _news_updated, _news_mode = load_cbam_news()
+_reg_feed = reg_alerts.fetch_feed()
+_reg_ack = reg_alerts.load_ack()
+_reg_pending = reg_alerts.pending_alerts(_reg_feed, _reg_ack)
+if _reg_feed is None:
+    _reg_chip = ""
+elif _reg_pending:
+    _reg_chip = (f"<span class='reg-chip warn'><a href='#reg-alerts'>규정 변경 알림 "
+                 f"{len(_reg_pending)}건</a></span>")
+else:
+    _reg_chip = (f"<span class='reg-chip'><a href='{reg_alerts.REG_TRACKER_URL}' target='_blank'>"
+                 f"규정 추적 최신 · 반영 {reg_alerts.acknowledged_count(_reg_feed, _reg_ack)}건</a></span>")
 st.markdown(
     f"""
 <div class='app-header'>
@@ -2072,11 +2099,42 @@ st.markdown(
         <span>EUA {eua_price:.2f} €/t ({eua_date})</span>
         <span>환율 1€ = {fx_eur_krw:,.0f}원 · {fx_eur_usd:.3f} USD</span>
         <span>공지 갱신 {_news_updated}</span>
+        {_reg_chip}
     </div>
 </div>
 """,
     unsafe_allow_html=True,
 )
+
+# 자매 도구 reg_tracker가 찾은 규정 변경 중 아직 반영하지 않은 것 (data/reg_ack.json 으로 확인 처리)
+if _reg_pending:
+    _imp_label = {"high": ("높음", "bad"), "medium": ("보통", "warn"), "low": ("낮음", "")}
+    _rows = []
+    for _a in _reg_pending:
+        _lbl, _cls = _imp_label.get(_a.get("importance"), ("-", ""))
+        _by_path = {}
+        for t in _a["targets"]:
+            for sym in str(t.get("symbol", "")).split(","):
+                if sym.strip() not in ("", "-"):
+                    _by_path.setdefault(t["path"], []).append(sym.strip())
+        _locs = " · ".join(f"{p} ({', '.join(dict.fromkeys(s))})" for p, s in _by_path.items())
+        _rows.append(
+            f"<div class='reg-item'><span class='reg-imp {_cls}'>{_lbl}</span>"
+            f"<div><a href='{html_escape(_a.get('url', ''))}' target='_blank'>{html_escape(_a.get('title', ''))}</a>"
+            f"<div class='reg-head'>{html_escape(_a.get('headline', ''))}</div>"
+            f"<div class='reg-loc'>영향 위치: {html_escape(_locs)} · 감지 {html_escape(_a.get('detected', ''))}</div>"
+            f"</div></div>"
+        )
+    st.markdown(
+        f"""
+<div class='insight-box warn reg-box' id='reg-alerts'>
+    <strong>규정 변경 알림 {len(_reg_pending)}건</strong> — 이 계산기의 기본값·계수에 영향을 줄 수 있는 개정이 있습니다.
+    반영한 뒤 <code>data/reg_ack.json</code>에 알림 id를 적으면 사라집니다.
+    {''.join(_rows)}
+</div>
+""",
+        unsafe_allow_html=True,
+    )
 
 # ======================================================================
 # 메인 계산 (사이드바 입력 기반) — K-ETS 차감 포함
