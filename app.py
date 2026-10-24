@@ -849,13 +849,26 @@ SHORT_NAMES = {
 PRESETS = {
     "kr_posco_BF": {
         "label": "🇰🇷 POSCO (BF-BOF, ~35 Mt/yr)",
-        "description": "포스코 광양·포항 BF-BOF · EU 수출 비중 5%",
+        "description": ("포스코 광양·포항 BF-BOF · EU 수출 비중 5%는 가정 "
+                        "(실적 발표상 수출의 10~15%가 EU, EU 물량은 미공시)"),
         "sector_lit": "steel_BF_BOF",
         "settings": {
             "annual_production_mt": 35.0,     # 2024 조강 35.0 Mt (POSCO 2024 ESG Factbook, 국내 사업장)
             "eu_export_share_pct": 5.0,
             "user_SEE": 1.99,              # 2024 ESG Factbook 직접배출 / 조강
             "company_name": "POSCO",
+        },
+    },
+    "kr_industry_steel": {
+        "label": "🇰🇷 한국 철강업계 전체 (대EU 수출 324만t)",
+        "description": ("2025 대EU 철강 수출 324만t(무역협회) · SEE 2.00 고로 기준(대한상의 SGI 보고서와 동일) "
+                        "— 업계 전체 규모 비교용, 기업별 SEE 차이는 반영 안 함"),
+        "sector_lit": "steel_BF_BOF",
+        "settings": {
+            "annual_production_mt": 62.2,            # 2025 한국 조강 (세계철강협회)
+            "eu_export_share_pct": 3.24 / 62.2 * 100,   # → EU 수출 324만t
+            "user_SEE": 2.00,
+            "company_name": "한국 철강업계 전체",
         },
     },
     "kr_hyundai_BF": {
@@ -1155,6 +1168,23 @@ REFS = {
                 "2029: 22.5%, 2030: 48.5%, 2031: 61%, 2032: 73.5%, 2033: 86%, 2034: 100%).",
         "url": "https://climat.be/cbam-en/cbam-certificates/gradual-cbam-phase-in",
         "used_for": "연도별 phase-in factor 정확값",
+    },
+    "SGI_CBAM_2024": {
+        "cat": "report",
+        "date": "2024-08-28",
+        "cite": "대한상공회의소 SGI BRIEF vol.22 「CBAM 도입이 철강산업에 미치는 영향과 시사점」 — "
+                "철강 CBAM 비용 2026 851억 → 2034 5,589억원. 가정: SEE 2.00(고로, JRC 2022), "
+                "수출 335만t(2023), EU-ETS 83,480원/t('24.4) 고정, benchmark 미기재(역산 약 1.74).",
+        "url": "https://sgi.korcham.net/File/Sgi/2024%20%EB%8C%80%ED%95%9C%EC%83%81%EC%9D%98%20SGI%20%EB%B8%8C%EB%A6%AC%ED%94%84%20%EC%A0%9C22%ED%98%B8.pdf",
+        "used_for": "업계 전체 프리셋 SEE 2.00, 언론 보도 수치 비교",
+    },
+    "KITA_EU_Steel_2025": {
+        "cat": "market",
+        "date": "2026-08 (2025년 실적)",
+        "cite": "한국무역협회 통계(EBN 2026-08-24 보도) — 2025 철강 수출 2,825만t 중 EU 324만t (11.5%). "
+                "2024년은 393만t, 44.8억 달러.",
+        "url": "https://kr.investing.com/news/stock-market-news/article-2071734",
+        "used_for": "한국 철강업계 대EU 수출 물량",
     },
     "TTI_Korea_CBAM": {
         "cat": "report",
@@ -2457,11 +2487,12 @@ with TAB_COMPARE:
 with TAB_COMPARE:
     st.divider()
     st.subheader("주요 기업 프리셋 비교")
-    st.caption("프리셋 기반 시뮬레이션. 사이드바에서 입력값 조정 가능.")
+    st.caption("프리셋 기반 시뮬레이션. 사이드바에서 입력값 조정 가능. "
+               "'한국 철강업계 전체' 프리셋은 기업 합계라 이 비교에서 뺐습니다.")
 
     company_rows = []
     for pkey, pdata in PRESETS.items():
-        if pkey == "custom":
+        if pkey in ("custom", "kr_industry_steel"):
             continue
         slit = pdata["sector_lit"]
         s = LIT[slit]
