@@ -45,7 +45,14 @@ def _by_label(widgets, prefix):
 
 
 def _unit_kpi(at):
-    return _by_label(at.metric, "단위 제품당 CBAM").delta
+    return _by_label(at.metric, "단위 제품당 CBAM").value
+
+
+def _krw_per_t(at, eur):
+    # 기본 표시 통화 = 원화. 1유로 = (USD/EUR) × (KRW/USD) 원
+    side = at.sidebar
+    fx = _by_label(side.number_input, "환율 (USD/EUR)").value * _by_label(side.number_input, "환율 (KRW/USD)").value
+    return f"{eur * fx:,.0f}원/t"
 
 
 @pytest.fixture(scope="module")
@@ -67,7 +74,7 @@ def test_first_screen_uses_default_preset(app):
 def test_default_kpi_matches_calc(app, calc):
     # 기본 화면 = POSCO 프리셋 · Verified SEE 1.99 · 2026년 · mark-up 0 · K-ETS 미적용
     expected = calc.calc_unit_cbam(1.99, 1.370, _eua_price(), 2026)["unit_cost_eur"]
-    assert _unit_kpi(app) == f"€{expected:.2f}/t"
+    assert _unit_kpi(app) == _krw_per_t(app, expected)
 
 
 def test_eu_default_2034_with_kets_matches_calc(calc):
@@ -92,7 +99,7 @@ def test_eu_default_2034_with_kets_matches_calc(calc):
         default_see, 1.370, _eua_price(), 2034,
         mark_up_pct=calc.get_markup("steel", 2034), k_ets_credit_eur=credit,
     )["unit_cost_eur"]
-    assert _unit_kpi(at) == f"€{expected:.2f}/t"
+    assert _unit_kpi(at) == _krw_per_t(at, expected)
 
 
 def test_eaf_default_uses_default_route_benchmark(calc):
@@ -104,7 +111,7 @@ def test_eaf_default_uses_default_route_benchmark(calc):
     expected = calc.calc_unit_cbam(
         2.118, 1.370, _eua_price(), 2026, mark_up_pct=calc.get_markup("steel", 2026),
     )["unit_cost_eur"]
-    assert _unit_kpi(at) == f"€{expected:.2f}/t"
+    assert _unit_kpi(at) == _krw_per_t(at, expected)
 
 
 def test_reform_scenario_matches_calc(calc):
@@ -116,7 +123,7 @@ def test_reform_scenario_matches_calc(calc):
     assert any("제안" in w.value for w in at.warning)
     expected = calc.calc_unit_cbam(1.99, 1.370, _eua_price(), 2034,
                                    scenario="reform_2040")["unit_cost_eur"]
-    assert _unit_kpi(at) == f"€{expected:.2f}/t"
+    assert _unit_kpi(at) == _krw_per_t(at, expected)
 
 
 def test_see_calc_apply_sets_sidebar_and_benchmark(calc):
@@ -132,13 +139,13 @@ def test_see_calc_apply_sets_sidebar_and_benchmark(calc):
     assert applied["benchmark"] == pytest.approx(1.248, abs=5e-4)
     expected = calc.calc_unit_cbam(applied["see"], applied["benchmark"], _eua_price(), 2026)["unit_cost_eur"]
     tab_kpi = next(m.value for m in at.metric if m.label.startswith("산정값 단가"))
-    assert tab_kpi == f"€{expected:.2f}/t"                             # 탭 ⑪ = 사이드바
-    assert _unit_kpi(at) == f"€{expected:.2f}/t"
+    assert tab_kpi == _krw_per_t(at, expected)                          # SEE 산정 탭 = 사이드바
+    assert _unit_kpi(at) == _krw_per_t(at, expected)
     # 해제하면 Column B로 돌아간다
     at.button(key="see_calc_clear").click()
     _run(at)
     expected = calc.calc_unit_cbam(applied["see"], 1.370, _eua_price(), 2026)["unit_cost_eur"]
-    assert _unit_kpi(at) == f"€{expected:.2f}/t"
+    assert _unit_kpi(at) == _krw_per_t(at, expected)
 
 
 @pytest.mark.parametrize("route", ["D", "E"])
@@ -148,6 +155,22 @@ def test_see_calc_other_routes_render(route):
     _run(at)
     see = next(m.value for m in at.metric if m.label.startswith("산정 SEE"))
     assert 0.1 < float(see) < 1.0      # 가상 예시 — 직접배출만이라 1 미만
+
+
+@pytest.mark.parametrize("cur, fmt", [
+    ("USD", lambda eur, usd_eur, krw_usd: f"${eur * usd_eur:,.2f}/t"),
+    ("EUR", lambda eur, usd_eur, krw_usd: f"€{eur:,.2f}/t"),
+])
+def test_display_currency_converts_eur_correctly(calc, cur, fmt):
+    # 1유로 = (USD/EUR) 달러 — 나누면 안 된다 (2026-10-25 버그)
+    at = _new_app()
+    at.radio(key="display_currency").set_value(cur)
+    _run(at)
+    side = at.sidebar
+    usd_eur = _by_label(side.number_input, "환율 (USD/EUR)").value
+    krw_usd = _by_label(side.number_input, "환율 (KRW/USD)").value
+    eur = calc.calc_unit_cbam(1.99, 1.370, _eua_price(), 2026)["unit_cost_eur"]
+    assert _unit_kpi(at) == fmt(eur, usd_eur, krw_usd)
 
 
 def test_switching_scenario_keeps_selected_year():

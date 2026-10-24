@@ -557,22 +557,6 @@ def fmt_krw_amt(krw: float, sign: bool = False) -> str:
     return f"{s}{unit}"
 
 
-def fmt_money(usd: float, fx: float, mode: str = "Both", per_t: bool = False) -> str:
-    """통화 표시. mode: USD | KRW | Both. per_t=True면 단위 톤당."""
-    krw = usd * fx
-    if per_t:
-        usd_str = f"${usd:+,.1f}/t" if usd < 0 else f"${usd:,.1f}/t"
-        krw_str = f"{krw:+,.0f} 원/t" if usd < 0 else f"{krw:,.0f} 원/t"
-    else:
-        usd_str = f"${usd/1e6:+,.2f}M" if usd < 0 else f"${usd/1e6:,.2f}M"
-        krw_str = fmt_krw_amt(krw, sign=usd < 0)
-    if mode == "USD":
-        return usd_str
-    if mode == "KRW":
-        return krw_str
-    return f"{usd_str} ({krw_str})"
-
-
 def fmt_eur(eur: float, per_t: bool = False) -> str:
     if per_t:
         return f"€{eur:,.1f}/t"
@@ -2007,20 +1991,18 @@ with st.sidebar:
             st.caption(f"자동 mark-up: **{mark_up_pct:.0f}%** "
                        f"({sector['sector_key']}, {analysis_year}년 기준 — IR 2025/2621)")
 
-        # 통화 표시
-        currency_mode = st.radio(
+        # 표시 통화 — 계산은 EUR(CBAM 인증서 통화)로 하고 화면 금액만 바꾼다
+        CURRENCIES = {"KRW": "원화", "USD": "달러", "EUR": "유로"}
+        st.session_state.setdefault("display_currency", "KRW")
+        CUR = st.radio(
             "표시 통화",
-            ["Both (USD+KRW)", "USD만", "KRW만"],
-            index=0,
+            list(CURRENCIES),
+            format_func=CURRENCIES.get,
             horizontal=True,
-            key="currency_mode_radio",
+            key="display_currency",
+            help="모든 금액(KPI·표·차트)을 이 통화로 표시. EUA·인증서 가격처럼 원래 유로로 정해지는 "
+                 "가격은 유로 그대로 둡니다. 환율은 위 입력값.",
         )
-        if "USD만" in currency_mode:
-            currency_mode_key = "USD"
-        elif "KRW만" in currency_mode:
-            currency_mode_key = "KRW"
-        else:
-            currency_mode_key = "Both"
 
     with st.expander("3. K-ETS 차감 · 수출가", expanded=False):
         # ─── K-ETS 차감 (한국 할당대상업체) ─────────────────────
@@ -2088,6 +2070,7 @@ st.markdown(
         <span>산정 규칙 IR 2025/2547 · 2620 · 2621</span>
         <span>기본값 IR 2026/1740 정정 반영</span>
         <span>EUA {eua_price:.2f} €/t ({eua_date})</span>
+        <span>환율 1€ = {fx_eur_krw:,.0f}원 · {fx_eur_usd:.3f} USD</span>
         <span>공지 갱신 {_news_updated}</span>
     </div>
 </div>
@@ -2110,9 +2093,41 @@ result = calc_total_cbam(
 )
 
 # 통화 변환 helper
-annual_usd = result["annual_cost_eur"] / fx_eur_usd
-annual_krw = result["annual_cost_eur"] * (fx_eur_krw)
-unit_usd = result["unit_cost_eur"] / fx_eur_usd
+# ── 표시 통화 환산 — 환율 입력: fx_eur_usd = 1유로당 달러, fx_usd_krw = 1달러당 원 ──
+CUR_RATE = {"KRW": fx_eur_krw, "USD": fx_eur_usd, "EUR": 1.0}[CUR]
+MONEY_UNIT = {"KRW": "억원", "USD": "$M", "EUR": "€M"}[CUR]     # 총액 차트·표 단위
+PER_T_UNIT = {"KRW": "원/t", "USD": "$/t", "EUR": "€/t"}[CUR]
+
+
+def money(eur: float, per_t: bool = False, sign: bool = False) -> str:
+    """유로 금액 → 선택 통화 문자열."""
+    v = eur * CUR_RATE
+    if CUR == "KRW":
+        if per_t:
+            return f"{v:+,.0f}원/t" if sign else f"{v:,.0f}원/t"
+        return fmt_krw_amt(v, sign=sign)
+    sym = "$" if CUR == "USD" else "€"
+    num = (f"{v:+,.2f}" if sign else f"{v:,.2f}") if per_t else (
+        f"{v / 1e9:+,.2f}B" if sign and abs(v) >= 1e9 else f"{v / 1e9:,.2f}B" if abs(v) >= 1e9
+        else f"{v / 1e6:+,.2f}M" if sign else f"{v / 1e6:,.2f}M")
+    if num.startswith(("+", "-")):
+        return f"{num[0]}{sym}{num[1:]}" + ("/t" if per_t else "")
+    return f"{sym}{num}" + ("/t" if per_t else "")
+
+
+def money_md(eur: float, per_t: bool = False, sign: bool = False) -> str:
+    """마크다운용 — '$' 두 개가 수식으로 해석되지 않게 이스케이프."""
+    return money(eur, per_t, sign).replace("$", "\\$")
+
+
+def money_axis(eur_total: float) -> float:
+    """총액 → 차트 숫자 (억원 / $M / €M)."""
+    v = eur_total * CUR_RATE
+    return v / 1e8 if CUR == "KRW" else v / 1e6
+
+
+def money_per_t(eur: float) -> float:
+    return eur * CUR_RATE
 
 # ======================================================================
 # 자동 인사이트 박스
@@ -2146,8 +2161,8 @@ elif result["gap"] == 0:
         f"SEE <strong>{user_SEE:.3f}</strong> ≤ benchmark "
         f"<strong>{active_benchmark:.3f}</strong>이지만 {analysis_year}년 무상할당 공제가 "
         f"{cbam_factor(analysis_year, reg_scenario)*100:.1f}%로 줄어 연간 부담 "
-        f"<span class='warn'>{fmt_eur(result['annual_cost_eur'])}</span> "
-        f"(≈ {fmt_money(annual_usd, fx_usd_krw, currency_mode_key)}) 발생."
+        f"<span class='warn'>{money_md(result['annual_cost_eur'])}</span>"
+        f" 발생."
     )
 elif gap_pct < 20:
     insight_class = "warn"
@@ -2156,8 +2171,8 @@ elif gap_pct < 20:
     insight_msg = (
         f"SEE <strong>{user_SEE:.3f}</strong> vs benchmark "
         f"<strong>{active_benchmark:.3f}</strong>. "
-        f"{analysis_year}년 연간 부담 <span class='warn'>{fmt_eur(result['annual_cost_eur'])}</span> "
-        f"(≈ {fmt_money(annual_usd, fx_usd_krw, currency_mode_key)}). "
+        f"{analysis_year}년 연간 부담 <span class='warn'>{money_md(result['annual_cost_eur'])}</span>"
+        f". "
         f"benchmark 초과분은 전액 부과되므로 <span class='warn'>에너지 효율 개선</span> · "
         f"<span class='warn'>부분 CCS</span>로 초과분부터 줄이는 게 효과적."
     )
@@ -2168,8 +2183,8 @@ else:
     insight_msg = (
         f"SEE <strong>{user_SEE:.3f}</strong> vs benchmark "
         f"<strong>{active_benchmark:.3f}</strong>. "
-        f"{analysis_year}년 연간 부담 <span class='bad'>{fmt_eur(result['annual_cost_eur'])}</span> "
-        f"(≈ {fmt_money(annual_usd, fx_usd_krw, currency_mode_key)}). "
+        f"{analysis_year}년 연간 부담 <span class='bad'>{money_md(result['annual_cost_eur'])}</span>"
+        f". "
         f"<span class='warn'>CCS 90%</span> 또는 <span class='warn'>공정 전환(DRI-H₂/EAF)</span> 권장 → "
         f"<strong>감축·CCUS</strong> 탭에서 회피액을 계산해 보세요."
     )
@@ -2195,22 +2210,22 @@ col1, col2, col3, col4 = st.columns(4)
 with col1:
     st.metric(
         f"연간 CBAM ({analysis_year})",
-        fmt_money(annual_usd, fx_usd_krw, currency_mode_key),
-        delta=f"€{result['annual_cost_eur']/1e6:,.2f}M",
+        money(result["annual_cost_eur"]),
+        delta=f"인증서 {result['obligation'] * result['eu_export_t']:,.0f} tCO₂",
         delta_color="off",
     )
 
 with col2:
     st.metric(
         "단위 제품당 CBAM",
-        fmt_money(unit_usd, fx_usd_krw, currency_mode_key, per_t=True),
-        delta=f"€{result['unit_cost_eur']:.2f}/t",
+        money(result["unit_cost_eur"], per_t=True),
+        delta=f"인증서 {result['obligation']:.3f} tCO₂/t",
         delta_color="off",
     )
 
 with col3:
     # EU 수출가 인상률 — 사이드바에서 받은 사용자 입력 ref_unit_price 사용
-    cbam_unit_usd = result["unit_cost_eur"] / fx_eur_usd
+    cbam_unit_usd = result["unit_cost_eur"] * fx_eur_usd   # 1유로 = fx_eur_usd 달러
     price_uplift_pct = (cbam_unit_usd / max(ref_unit_price, 1)) * 100.0
     st.metric(
         "EU 수출가 인상률",
@@ -2229,11 +2244,10 @@ with col4:
         mark_up_pct=mark_up_pct,
         k_ets_credit_eur=k_ets_credit_eur, scenario=reg_scenario,
     )
-    avoided_usd = avoided["avoided_annual_eur"] / fx_eur_usd
     st.metric(
         "CCS 90% 회피 가능",
-        fmt_money(avoided_usd, fx_usd_krw, currency_mode_key),
-        delta=f"€{avoided['avoided_annual_eur']/1e6:,.2f}M/yr",
+        money(avoided["avoided_annual_eur"]),
+        delta="포집률 90% 가정 · 연간",
         delta_color="off",
         help="감축·CCUS 탭에서 기술별 비교",
     )
@@ -2266,7 +2280,6 @@ with TAB_COMPARE:
             "Benchmark": v["eu_benchmark"],
             "Gap": unit_calc["gap"],
             "Unit cost (€/t)": unit_calc["unit_cost_eur"],
-            "Unit cost (USD/t)": unit_calc["unit_cost_eur"] / fx_eur_usd,
             "color": v["color"],
         })
     df_overview = pd.DataFrame(rows).sort_values("Unit cost (€/t)", ascending=False)
@@ -2312,15 +2325,13 @@ with TAB_COMPARE:
     )
     df_show = df_overview[[
         "Sector", "SEE (kr)", "Benchmark", "Gap",
-        "Unit cost (€/t)", "Unit cost (USD/t)"
+        "Unit cost (€/t)"
     ]].copy()
     df_show["SEE (kr)"] = df_show["SEE (kr)"].map(lambda x: f"{x:.3f}")
     df_show["Benchmark"] = df_show["Benchmark"].map(lambda x: f"{x:.3f}")
     df_show["Gap"] = df_show["Gap"].map(lambda x: f"{x:.3f}")
-    df_show["Unit cost (€/t)"] = df_show["Unit cost (€/t)"].map(lambda x: f"€{x:.2f}")
-    df_show["Unit cost (USD/t)"] = df_show["Unit cost (USD/t)"].map(lambda x: f"${x:.2f}")
-    df_show.columns = ["Sector", "한국 SEE", "EU benchmark", "Gap",
-                        f"단가 €/t ({analysis_year})", f"단가 $/t ({analysis_year})"]
+    df_show["Unit cost (€/t)"] = df_show["Unit cost (€/t)"].map(lambda x: money(x, per_t=True))
+    df_show.columns = ["Sector", "한국 SEE", "EU benchmark", "Gap", f"단가 {PER_T_UNIT} ({analysis_year})"]
     st.dataframe(df_show, hide_index=True, width="stretch")
     st.caption(
         f"↑ {analysis_year}년 무상할당 공제 = benchmark × {cbam_factor(analysis_year, reg_scenario)*100:.1f}% · "
@@ -2432,21 +2443,21 @@ with TAB_COMPARE:
             "EU export (%)": share,
             "SEE": see_use,
             "Benchmark": s["eu_benchmark"],
-            "Annual CBAM (€M)": r["annual_cost_eur"] / 1e6,
-            "Annual CBAM (USD M)": r["annual_cost_eur"] / fx_eur_usd / 1e6,
-            "Annual CBAM (억원)": r["annual_cost_eur"] * fx_eur_krw / 1e8,
+            "_annual_eur": r["annual_cost_eur"],
+            "연간 CBAM": money_axis(r["annual_cost_eur"]),
         })
 
-    df_co = pd.DataFrame(company_rows).sort_values("Annual CBAM (€M)", ascending=False)
+    df_co = pd.DataFrame(company_rows).sort_values("_annual_eur", ascending=False)
 
     # Bar chart
     fig_co = px.bar(
-        df_co, x="Company", y="Annual CBAM (€M)",
-        text=df_co["Annual CBAM (€M)"].map(lambda x: f"€{x:.1f}M"),
+        df_co, x="Company", y="연간 CBAM",
+        text=df_co["_annual_eur"].map(money),
         color="Sector", color_discrete_sequence=["#1F3A8A", "#3B5BB5", "#64748B", "#93A5D6", "#B45309", "#0E7490", "#7C3AED", "#A3AEC2"],
     )
     fig_co.update_layout(
-        title=f"{analysis_year}년 한국 주요 기업 CBAM 부담",
+        title=f"{analysis_year}년 한국 주요 기업 CBAM 부담 ({MONEY_UNIT})",
+        yaxis_title=f"연간 CBAM ({MONEY_UNIT})",
         template=PLOTLY_TEMPLATE, height=460,
         paper_bgcolor=C_BG, plot_bgcolor=C_BG,
         xaxis_tickangle=-25,
@@ -2462,9 +2473,8 @@ with TAB_COMPARE:
     df_co_show["EU export (%)"] = df_co_show["EU export (%)"].map(lambda x: f"{x:.1f}%")
     df_co_show["SEE"] = df_co_show["SEE"].map(lambda x: f"{x:.3f}")
     df_co_show["Benchmark"] = df_co_show["Benchmark"].map(lambda x: f"{x:.3f}")
-    df_co_show["Annual CBAM (€M)"] = df_co_show["Annual CBAM (€M)"].map(lambda x: f"€{x:.2f}M")
-    df_co_show["Annual CBAM (USD M)"] = df_co_show["Annual CBAM (USD M)"].map(lambda x: f"${x:.2f}M")
-    df_co_show["Annual CBAM (억원)"] = df_co_show["Annual CBAM (억원)"].map(lambda x: f"{x:,.1f}억원")
+    df_co_show["연간 CBAM"] = df_co_show["_annual_eur"].map(money)
+    df_co_show = df_co_show.drop(columns=["_annual_eur"])
     st.dataframe(df_co_show, hide_index=True, width="stretch")
 
     # 2034년 안내 — 무상할당 공제가 0이 되면 내재배출 전량에 부과
@@ -2563,8 +2573,8 @@ with TAB_ACTION:
         # COCA helper로 자동 계산 (CAPEX 분할상각 + OPEX)
         coca_usd_per_t = get_tech_coca(ccus_data, tk)
         ccs_cost_usd = coca_usd_per_t * avoided["captured_co2_t"]
-        avoided_usd = avoided["avoided_annual_eur"] / fx_eur_usd
-        net_usd = avoided_usd - ccs_cost_usd
+        ccs_cost_eur = ccs_cost_usd / fx_eur_usd               # 달러 → 유로 (1유로 = fx_eur_usd 달러)
+        net_eur = avoided["avoided_annual_eur"] - ccs_cost_eur
         bep_rows.append({
             "추천": "⭐" if is_recommended else "",
             "CCUS 기술": tdata.get("name", tk),
@@ -2572,10 +2582,10 @@ with TAB_ACTION:
             "Capture η": f"{cap_rate*100:.0f}%",
             "COCA (USD/t)": f"${coca_usd_per_t:.0f}",
             "포집 CO₂ (t/yr)": f"{avoided['captured_co2_t']:,.0f}",
-            "CCS 비용 ($M/yr)": f"${ccs_cost_usd/1e6:,.2f}",
-            "CBAM 회피 ($M/yr)": f"${avoided_usd/1e6:,.2f}",
-            "_net": net_usd,
-            "순익 ($M/yr)": f"${net_usd/1e6:+,.2f}",
+            "CCS 비용 (연)": money(ccs_cost_eur),
+            "CBAM 회피 (연)": money(avoided["avoided_annual_eur"]),
+            "_net": net_eur,
+            "순익 (연)": money(net_eur, sign=True),
             "TRL": tdata.get("TRL", "-"),
         })
     df_bep = pd.DataFrame(bep_rows)
@@ -2652,23 +2662,23 @@ with TAB_ACTION:
     npv_k1, npv_k2, npv_k3, npv_k4 = st.columns(4)
     with npv_k1:
         st.metric("CCS CAPEX (총)",
-                  fmt_money(npv_result["capex_total_eur"] / fx_eur_usd, fx_usd_krw, currency_mode_key))
+                  money(npv_result["capex_total_eur"]))
     with npv_k2:
         st.metric("NPV 회피액 (수명누적)",
-                  fmt_money(npv_result["npv_avoided_eur"] / fx_eur_usd, fx_usd_krw, currency_mode_key))
+                  money(npv_result["npv_avoided_eur"]))
     with npv_k3:
         st.metric("NPV 비용 (CAPEX+OPEX)",
-                  fmt_money(npv_result["npv_cost_eur"] / fx_eur_usd, fx_usd_krw, currency_mode_key))
+                  money(npv_result["npv_cost_eur"]))
     with npv_k4:
         net_color = "normal" if npv_result["npv_net_eur"] > 0 else "inverse"
-        st.metric("NPV 순익", fmt_money(npv_result["npv_net_eur"] / fx_eur_usd, fx_usd_krw, currency_mode_key),
+        st.metric("NPV 순익", money(npv_result["npv_net_eur"], sign=True),
                   delta=f"BEP {npv_result['bep_year'] or 'N/A'}",
                   delta_color="off")
 
     # 연도별 trajectory 차트
     df_npv = pd.DataFrame(npv_result["yearly"])
-    df_npv["avoided_M_eur"] = df_npv["avoided_eur"] / 1e6
-    df_npv["cost_M_eur"] = df_npv["cost_eur"] / 1e6
+    df_npv["avoided_M_eur"] = df_npv["avoided_eur"].map(money_axis)   # 선택 통화 (억원 / $M / €M)
+    df_npv["cost_M_eur"] = df_npv["cost_eur"].map(money_axis)
     df_npv["cum_avoided_M"] = df_npv["avoided_M_eur"].cumsum()
     df_npv["cum_cost_M"] = df_npv["cost_M_eur"].cumsum()
     df_npv["cum_net_M"] = df_npv["cum_avoided_M"] - df_npv["cum_cost_M"]
@@ -2689,7 +2699,7 @@ with TAB_ACTION:
     fig_npv.update_layout(
         title=None, template=PLOTLY_TEMPLATE, height=380,
         margin=dict(l=10, r=10, t=20, b=40),
-        xaxis_title="연도", yaxis_title="누적 €M (할인 미적용)",
+        xaxis_title="연도", yaxis_title=f"누적 {MONEY_UNIT} (할인 미적용)",
         legend=dict(orientation="h", yanchor="bottom", y=-0.25, xanchor="center", x=0.5),
     )
     lock_static(fig_npv)
@@ -2698,13 +2708,13 @@ with TAB_ACTION:
     if npv_result["npv_net_eur"] > 0:
         st.success(
             f"{npv_tdata.get('name', npv_tech)} 도입 권장 — "
-            f"NPV 순익 €{npv_result['npv_net_eur']/1e6:+,.1f}M, "
+            f"NPV 순익 {money_md(npv_result['npv_net_eur'], sign=True)}, "
             f"BEP {npv_result['bep_year'] or 'N/A'}년."
         )
     else:
         st.warning(
             f"⚠️ {npv_tdata.get('name', npv_tech)} 도입 시 NPV 적자 "
-            f"€{npv_result['npv_net_eur']/1e6:,.1f}M. "
+            f"{money_md(npv_result['npv_net_eur'])}. "
             f"다른 기술 선택 또는 EUA 가격·할인율 가정 점검 필요."
         )
 
@@ -2827,17 +2837,17 @@ with TAB_RESULT:
             eua_price_eur=eua_price, year=y, mark_up_pct=y_markup,
             k_ets_credit_eur=k_ets_credit_eur, scenario=reg_scenario,
         )
-        annual_costs_eur.append(r["annual_cost_eur"] / 1e6)
+        annual_costs_eur.append(r["annual_cost_eur"])
     fig_traj.add_trace(go.Bar(
-        x=yrs, y=annual_costs_eur,
+        x=yrs, y=[money_axis(c) for c in annual_costs_eur],
         marker_color=[C_PRIMARY if y < 2030 else "#3B5BB5" if y < 2033 else "#93A5D6" for y in yrs],
-        text=[f"€{c:.1f}M" for c in annual_costs_eur], textposition="outside",
+        text=[money(c) for c in annual_costs_eur], textposition="outside",
     ))
     fig_traj.update_layout(
-        title=f"{company_name} — 연간 CBAM 부담 (EUR M)",
+        title=f"{company_name} — 연간 CBAM 부담 ({MONEY_UNIT})",
         template=PLOTLY_TEMPLATE, height=420,
         paper_bgcolor=C_BG, plot_bgcolor=C_BG,
-        yaxis_title="€M / 년",
+        yaxis_title=f"{MONEY_UNIT} / 년",
         margin=dict(l=10, r=10, t=50, b=30), showlegend=False,
     )
     lock_static(fig_traj)
@@ -2914,10 +2924,8 @@ with TAB_RESULT:
                 "Phase-in": f"{phase_in(y, reg_scenario)*100:.1f}%",
                 "무상할당 공제": f"{cbam_factor(y, reg_scenario)*100:.1f}%",
                 "인증서 가격": f"€{r['cert_price']:.2f}",
-                "Unit cost (€/t)": f"€{r['unit_cost_eur']:.2f}",
-                "Annual (€M)": f"€{r['annual_cost_eur']/1e6:.2f}M",
-                "Annual (USD M)": f"${r['annual_cost_eur']/fx_eur_usd/1e6:.2f}M",
-                "Annual (억원)": f"{r['annual_cost_eur']*fx_eur_krw/1e8:.1f}억원",
+                "톤당 부담": money(r["unit_cost_eur"], per_t=True),
+                "연간 부담": money(r["annual_cost_eur"]),
             })
         st.dataframe(pd.DataFrame(cust_rows), hide_index=True, width="stretch")
 
@@ -2950,10 +2958,10 @@ with TAB_RESULT:
             eua_price_eur=ep, year=analysis_year, mark_up_pct=mark_up_pct,
             k_ets_credit_eur=k_ets_credit_eur, scenario=reg_scenario,
         )
-        sens_rows.append({"EUA (€/t)": ep, "Annual (€M)": r["annual_cost_eur"] / 1e6})
+        sens_rows.append({"EUA (€/t)": ep, f"연간 부담 ({MONEY_UNIT})": money_axis(r["annual_cost_eur"])})
     df_sens = pd.DataFrame(sens_rows)
     fig_sens = px.line(
-        df_sens, x="EUA (€/t)", y="Annual (€M)", markers=True,
+        df_sens, x="EUA (€/t)", y=f"연간 부담 ({MONEY_UNIT})", markers=True,
         title=f"{company_name} — EUA 가격에 따른 연간 CBAM 부담 ({analysis_year})",
     )
     fig_sens.update_traces(line_color=C_PRIMARY, marker=dict(size=8))
@@ -3379,8 +3387,8 @@ with TAB_SEE:
               delta=f"Column B {ss.COLUMN_B_PRODUCT[see_product][see_route]:.3f}",
               delta_color="off",
               help="CBAM factor·CSCF 곱하기 전. 사이드바에 적용하면 이 값으로 계산")
-    k4.metric(f"산정값 단가 ({analysis_year})", f"€{see_unit:.2f}/t",
-              delta=f"기본값 €{def_unit:.2f}/t 대비 {see_unit - def_unit:+.2f}",
+    k4.metric(f"산정값 단가 ({analysis_year})", money(see_unit, per_t=True),
+              delta=f"기본값 {money(def_unit, per_t=True)} 대비 {money(see_unit - def_unit, per_t=True, sign=True)}",
               delta_color="inverse")
 
     see_contrib = sorted(ss.contributions(see_res), key=lambda x: x[1])
@@ -3405,11 +3413,13 @@ with TAB_SEE:
         u_def = calc_unit_cbam(kr_def, kr_def_bm, eua_price, y,
                                mark_up_pct=get_markup("steel", y),
                                scenario=reg_scenario)["unit_cost_eur"]
-        see_years.append({"연도": y, "산정값 (€/t)": round(u_calc, 2),
-                          "EU 기본값 (€/t)": round(u_def, 2), "차이 (€/t)": round(u_calc - u_def, 2)})
+        see_years.append({"연도": y, f"산정값 ({PER_T_UNIT})": money_per_t(u_calc),
+                          f"EU 기본값 ({PER_T_UNIT})": money_per_t(u_def),
+                          f"차이 ({PER_T_UNIT})": money_per_t(u_calc - u_def)})
     st.dataframe(pd.DataFrame(see_years), hide_index=True, width="stretch",
-                 column_config={c: st.column_config.NumberColumn(format="%.2f")
-                                for c in ("산정값 (€/t)", "EU 기본값 (€/t)", "차이 (€/t)")})
+                 column_config={c: st.column_config.NumberColumn(format="localized" if CUR == "KRW" else "%.2f")
+                                for c in (f"산정값 ({PER_T_UNIT})", f"EU 기본값 ({PER_T_UNIT})",
+                                          f"차이 ({PER_T_UNIT})")})
     st.caption("SEE·공제는 분석 연도 기준으로 계산했습니다 (전구체 mark-up·페로합금 benchmark가 연도별로 다름).")
 
     with st.expander("계산 내역"):
