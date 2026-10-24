@@ -37,7 +37,7 @@ CBAM cost = (SEE − Free EU benchmark × CBAM factor) × EUA × import volume  
 | ② | Sector별 분석 | 선택 sector deep-dive (default vs 한국 vs benchmark) |
 | ③ | 한국 기업 영향 | 9개 프리셋 기업 비교 (POSCO, 현대제철 BF/EAF, 시멘트 등) |
 | ④ | 감축 시뮬레이터 | "CBAM=0 만들려면 얼마 감축?" 역산 + 9개 CCUS BEP 분석 |
-| ⑤ | CCUS 연계 | 자매 도구(CCUS Benchmark) 9개 기술 비교 — Phase 2에서 live fetch |
+| ⑤ | CCUS 연계 | 자매 도구(CCUS Benchmark) 기술 비교 (업종에 맞는 기술만) — Phase 2에서 live fetch |
 | ⑥ | 시간 흐름 | 2023~2034 phase-in 시각화 + 회사별 trajectory |
 | ⑦ | Custom 입력 | Multi-year 비교 + EUA 가격 민감도 |
 | ⑧ | 방법론 | 계산식, 가정, 한계 |
@@ -62,7 +62,7 @@ CBAM cost = (SEE − Free EU benchmark × CBAM factor) × EUA × import volume  
 - **EUA 가격** *(주 1회)*: GitHub Actions가 매주 월요일 09:00 KST에 Sandbag/TradingEconomics에서 fetch → `data/eua_price.json` commit. Streamlit `@st.cache_data(ttl=86400)`.
 - **EU CBAM 뉴스** *(수동 큐레이션 + 월 1회 자동 수집)*: 주요 공지는 직접 선별해 등록하고, GitHub Actions가 매월 1일 09:00 KST에 새 공지 수집을 시도(`scripts/fetch_cbam_news.py`) → 카테고리 자동 분류 + 한글 제목 자동 생성 → `data/cbam_news.json` commit. 수동 항목은 삭제하지 않고 자동 수집 항목만 12개월 보존. 수집이 전부 실패하면 Actions 실행이 실패로 표시됨.
 - **POSCO SEE**: 정적값 + 출처 link + 사용자 슬라이더 override (POSCO ESG 보고서는 연 1회 갱신).
-- **CCUS COCA**: Phase 2에서 자매 도구 `data/ccus_metrics.json` 연결 예정 (현재는 9개 기술 stub mirror).
+- **CCUS COCA**: Phase 2에서 자매 도구 `data/ccus_metrics.json` 연결 예정 (현재는 기술 데이터 stub mirror).
 
 ### 설치 및 실행
 

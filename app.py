@@ -632,12 +632,28 @@ CCUS_SECTOR_FIT = {
     # 비료 NH₃ (고농도 부생 CO₂)
     "fertilizer_NH3": ["MEA_baseline", "K2CO3_KIERSOL", "Cansolv_DC103"],
     # 수소 SMR (PSA off-gas 고농도)
-    "hydrogen_SMR":   ["MEA_baseline", "Cansolv_DC103", "Biphasic_DMX",
+    "hydrogen_SMR":   ["VPSA_Syngas", "MEA_baseline", "Cansolv_DC103", "Biphasic_DMX",
                         "K2CO3_KIERSOL", "MHI_KS21"],
     # 발전 (CO₂ 12~15%, 표준)
     "power":          ["MHI_KS21", "Cansolv_DC103", "Aker_S26",
                         "CAP_B12C", "CaL", "MEA_baseline"],
 }
+
+# CBAM 업종 → CCUS 벤치마크의 배출원 업종 키. CCUS JSON에 applicable_sectors가 있는 기술
+# (예: VPSA_Syngas = 고압 합성가스 전용, "h2_smr")은 맞는 업종에서만 비교에 넣는다.
+CBAM_TO_CCUS_SOURCE = {
+    "steel_BF_BOF": "steel_bf", "steel_EAF": None, "cement": "cement",
+    "aluminum": None, "fertilizer_NH3": "h2_smr", "hydrogen_SMR": "h2_smr",
+    "power": "power_subc",
+}
+
+
+def ccus_tech_applies(tdata: dict, ccus_sector: str) -> bool:
+    """CCUS 기술이 이 CBAM 업종에 적용 가능한지 (applicable_sectors가 없으면 전 업종)."""
+    allowed = tdata.get("applicable_sectors")
+    if not allowed:
+        return True
+    return CBAM_TO_CCUS_SOURCE.get(ccus_sector) in allowed
 
 
 # ─────────────────────────────────────────────
@@ -1966,7 +1982,7 @@ ABATEMENT_OPTIONS = [
                         "hydrogen_gray", "electricity", "aluminum_primary"],
         "reduction_pct": 90.0,
         "trl": 9,
-        "note": "Post-combustion amine 표준. 자매 CCUS 도구의 9개 기술 비교 가능.",
+        "note": "Post-combustion amine 표준. 자매 CCUS 도구의 기술 비교 가능.",
     },
     {
         "key": "ccs_95",
@@ -2888,9 +2904,10 @@ with tabs[3]:
 
     # 4-C: CCS BEP — 자매 CCUS 도구의 모든 기술 평가 (Phase 2 live fetch)
     ccus_data, ccus_mode = load_ccus_metrics()
-    n_total_techs = len(ccus_data.get("technologies", {}))
     fit_techs = set(CCUS_SECTOR_FIT.get(sector["ccus_sector"], []))
-    all_techs = list(ccus_data["technologies"].keys())
+    all_techs = [k for k, v in ccus_data["technologies"].items()
+                 if ccus_tech_applies(v, sector["ccus_sector"])]
+    n_total_techs = len(all_techs)
 
     # 데이터 모드 표시 (live vs fallback)
     mode_badge_color = "#81C784" if ccus_mode == "live" else "#FFB74D"
@@ -3099,11 +3116,12 @@ with tabs[4]:
         unsafe_allow_html=True,
     )
 
-    n_total_techs_5 = len(ccus_data.get("technologies", {}))
+    all_techs = [k for k, v in ccus_data["technologies"].items()
+                 if ccus_tech_applies(v, sector["ccus_sector"])]
+    n_total_techs_5 = len(all_techs)
     st.markdown(f"##### 🔌 자매 CCUS 도구의 {n_total_techs_5}개 기술 — 전체 비교 (현재 sector: {sector['name']})")
 
     fit_techs = set(CCUS_SECTOR_FIT.get(sector["ccus_sector"], []))
-    all_techs = list(ccus_data["technologies"].keys())
 
     rec_rows = []
     for tk in all_techs:

@@ -28,6 +28,8 @@ CALC_NAMES = (
     "required_SEE_reduction",
     "ccs_avoided_cbam",
     "ccs_npv_analysis",
+    "CBAM_TO_CCUS_SOURCE",
+    "ccus_tech_applies",
 )
 
 

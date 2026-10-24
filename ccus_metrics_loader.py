@@ -4,7 +4,7 @@ ccus_metrics_loader.py
 
 자매 도구 (CBAM 계산기)에서 사용할 fetch 함수.
 CCUS Benchmark의 GitHub raw URL에서 ccus_metrics.json을 읽어와
-CBAM 도구에서 동일한 9개 기술 데이터를 사용할 수 있게 함.
+CBAM 도구에서 동일한 CCUS 기술 데이터를 사용할 수 있게 함.
 
 Single Source of Truth 패턴:
   - CCUS Benchmark repo: data/ccus_metrics.json (master)
