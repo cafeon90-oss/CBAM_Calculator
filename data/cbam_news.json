@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "last_updated": "2026-10-01",
+  "last_updated": "2026-10-25",
   "last_fetched": "2026-10-01T03:05:59Z",
   "source": "manual_curation",
   "automation": "partial",
@@ -21,6 +21,30 @@
     }
   ],
   "items": [
+    {
+      "id": "kr-motie-cbam-downstream-briefing-2026-10-23",
+      "date": "2026-10-23",
+      "category": "notice",
+      "importance": "medium",
+      "important": true,
+      "title_ko": "산업통상부, EU CBAM 하류재 대상 업계 설명회 개최",
+      "title_en": "Korea MOTIE briefing for exporters of CBAM downstream goods",
+      "summary_ko": "2028-01 시행을 목표로 한 철강·알루미늄 하류제품(자동차부품·가전 등) 확대에 대비한 국내 설명회. 확대는 아직 EU 입법 협상 중이며 최종 품목은 미확정.",
+      "url": "https://www.etoday.co.kr/news/view/2639318",
+      "source": "이투데이"
+    },
+    {
+      "id": "cbam-downstream-trilogue-1-2026-10-20",
+      "date": "2026-10-20",
+      "category": "negotiation",
+      "importance": "high",
+      "important": true,
+      "title_ko": "CBAM 하류제품 확대 1차 3자 협상 — 전력 부분만 합의, 품목 목록은 미정",
+      "title_en": "First trilogue on CBAM downstream extension: power-market element agreed, other issues postponed",
+      "summary_ko": "의회·이사회 협상단이 전력 관련 사항만 합의하고 나머지는 다음 협상으로 넘김. 품목 수는 집행위 약 180·이사회 약 200·의회 약 457개로 차이가 큼. 2차 협상 11/30(잠정), 연내 합의 목표, 적용 개시안 2028-01-01.",
+      "url": "https://www.contexte.com/eu/news/energy/cbam-extension-trilogue-negotiators-agree-on-power-market-bump-other-issues-to-next-negotiation-round_282318",
+      "source": "Contexte"
+    },
     {
       "id": "cbam-de-minimis-threshold-assessment-2026-09-30",
       "date": "2026-09-30",
