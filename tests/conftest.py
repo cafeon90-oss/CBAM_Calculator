@@ -6,6 +6,7 @@ PHASE_IN_FACTORS·phase_in 외의 전역에 의존하지 않으므로, AST로 �
 NameError로 드러나므로 그때 CALC_NAMES에 추가하면 된다.
 """
 import ast
+import sys
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -52,6 +53,9 @@ def calc(app_tree):
     picked = [n for n in app_tree.body if _top_level_name(n) in CALC_NAMES]
     missing = set(CALC_NAMES) - {_top_level_name(n) for n in picked}
     assert not missing, f"app.py에서 찾지 못한 정의: {sorted(missing)}"
-    ns = {}
+    # 상수 일부(CSCF·인증서 가격)는 data/reference_values.json에서 읽으므로 rv를 넣어 둔다
+    sys.path.insert(0, str(APP_PATH.parent))
+    from reference_values import rv
+    ns = {"rv": rv}
     exec(compile(ast.Module(body=picked, type_ignores=[]), str(APP_PATH), "exec"), ns)
     return SimpleNamespace(**{name: ns[name] for name in CALC_NAMES})

@@ -1,0 +1,702 @@
+{
+ "schema_version": 1,
+ "note": "앱의 모든 기본 숫자와 출처. status: original(원문 확인) / secondary(2차 자료) / derived(계산·추정) / assumption(가정) / unverified(미확인). source는 app.py REFS 키.",
+ "values": {
+  "sector.steel_BF_BOF.default_SEE": {
+   "value": 2.118,
+   "unit": "tCO₂/t",
+   "status": "original",
+   "source": "EU_IR_2026_1740",
+   "as_of": "2026-08",
+   "note": "한국 7208 열연 기본값, 경로 (C)"
+  },
+  "sector.steel_BF_BOF.eu_benchmark": {
+   "value": 1.37,
+   "unit": "tCO₂/t",
+   "status": "original",
+   "source": "EC_CBAM_BENCHMARKS",
+   "as_of": "2026-02",
+   "note": "7208 Column B 경로 (C)"
+  },
+  "sector.steel_BF_BOF.kr_avg_SEE": {
+   "value": 1.99,
+   "unit": "tCO₂/t",
+   "status": "derived",
+   "source": "POSCO_Climate_2025",
+   "as_of": "2025-06",
+   "note": "POSCO 2024 Scope 1 69.67Mt ÷ 조강 35.05Mt. 코크스로·자가발전 포함이라 CBAM 경계 기준 상한"
+  },
+  "sector.steel_BF_BOF.kr_eu_export_usd_2021": {
+   "value": 4300000000.0,
+   "unit": "USD",
+   "status": "secondary",
+   "source": "KOTRA_CBAM",
+   "as_of": "2021",
+   "note": "철강 대EU 수출액"
+  },
+  "sector.steel_DRI_EAF.default_SEE": {
+   "value": 2.118,
+   "unit": "tCO₂/t",
+   "status": "original",
+   "source": "EU_IR_2026_1740",
+   "as_of": "2026-08",
+   "note": "한국 7208 기본값은 경로 (C) 하나뿐"
+  },
+  "sector.steel_DRI_EAF.default_benchmark": {
+   "value": 1.37,
+   "unit": "tCO₂/t",
+   "status": "original",
+   "source": "EC_CBAM_BENCHMARKS",
+   "as_of": "2026-02",
+   "note": "기본값 경로 (C)의 benchmark"
+  },
+  "sector.steel_DRI_EAF.eu_benchmark": {
+   "value": 0.481,
+   "unit": "tCO₂/t",
+   "status": "original",
+   "source": "EC_CBAM_BENCHMARKS",
+   "as_of": "2026-02",
+   "note": "7208 경로 (D)"
+  },
+  "sector.steel_DRI_EAF.kr_avg_SEE": {
+   "value": 1.0,
+   "unit": "tCO₂/t",
+   "status": "secondary",
+   "source": "IEA_Steel_Roadmap_2020",
+   "as_of": "2020-10",
+   "note": "천연가스 DRI-EAF 직접배출 (국내 DRI 공장 없음 — 해외 대표값)"
+  },
+  "sector.steel_DRI_EAF.kr_eu_export_usd_2021": {
+   "value": 0,
+   "unit": "USD",
+   "status": "assumption",
+   "source": null,
+   "as_of": "",
+   "note": "국내 DRI 생산 없음"
+  },
+  "sector.steel_scrap_EAF.default_SEE": {
+   "value": 2.118,
+   "unit": "tCO₂/t",
+   "status": "original",
+   "source": "EU_IR_2026_1740",
+   "as_of": "2026-08",
+   "note": "한국 7208 기본값 (경로 C)"
+  },
+  "sector.steel_scrap_EAF.default_benchmark": {
+   "value": 1.37,
+   "unit": "tCO₂/t",
+   "status": "original",
+   "source": "EC_CBAM_BENCHMARKS",
+   "as_of": "2026-02",
+   "note": "기본값 경로 (C)의 benchmark"
+  },
+  "sector.steel_scrap_EAF.eu_benchmark": {
+   "value": 0.072,
+   "unit": "tCO₂/t",
+   "status": "original",
+   "source": "EC_CBAM_BENCHMARKS",
+   "as_of": "2026-02",
+   "note": "7208 경로 (E)"
+  },
+  "sector.steel_scrap_EAF.kr_avg_SEE": {
+   "value": 0.15,
+   "unit": "tCO₂/t",
+   "status": "derived",
+   "source": "IEA_Steel_Roadmap_2020",
+   "as_of": "2020-10",
+   "note": "조강 직접 0.04~0.1(IEA) + 열연 가열로 ~0.08. 현대제철 공정별 공시 없음"
+  },
+  "sector.steel_scrap_EAF.kr_eu_export_usd_2021": {
+   "value": 0,
+   "unit": "USD",
+   "status": "unverified",
+   "source": null,
+   "as_of": "",
+   "note": "전기로 강재 대EU 수출액 따로 집계 안 함"
+  },
+  "sector.cement_clinker.default_SEE": {
+   "value": 0.92,
+   "unit": "tCO₂/t",
+   "status": "original",
+   "source": "EU_IR_2026_1740",
+   "as_of": "2026-08",
+   "note": "한국 회색 clinker, 직접 0.88 + 간접 0.03"
+  },
+  "sector.cement_clinker.eu_benchmark": {
+   "value": 0.666,
+   "unit": "tCO₂/t",
+   "status": "original",
+   "source": "EC_CBAM_BENCHMARKS",
+   "as_of": "2026-02",
+   "note": "2523 10 00 경로 (A)"
+  },
+  "sector.cement_clinker.kr_avg_SEE": {
+   "value": 0.81,
+   "unit": "tCO₂/t",
+   "status": "derived",
+   "source": "AsiaCement_2024",
+   "as_of": "2024-06",
+   "note": "아시아 0.79·한라 0.83 (2023, Scope 1+2/클링커), 6개사 평균 0.821 — 분쇄 전력 제외해 약간 낮춤"
+  },
+  "sector.cement_clinker.kr_eu_export_usd_2021": {
+   "value": 1000000.0,
+   "unit": "USD",
+   "status": "secondary",
+   "source": "KOTRA_CBAM",
+   "as_of": "2021",
+   "note": ""
+  },
+  "sector.aluminum_primary.default_SEE": {
+   "value": 0.36,
+   "unit": "tCO₂/t",
+   "status": "original",
+   "source": "EU_IR_2026_1740",
+   "as_of": "2026-08",
+   "note": "한국 7601 기본값, 경로 (L) 재생"
+  },
+  "sector.aluminum_primary.default_benchmark": {
+   "value": 0.091,
+   "unit": "tCO₂/t",
+   "status": "original",
+   "source": "EC_CBAM_BENCHMARKS",
+   "as_of": "2026-02",
+   "note": "7601 경로 (L)"
+  },
+  "sector.aluminum_primary.eu_benchmark": {
+   "value": 1.423,
+   "unit": "tCO₂/t",
+   "status": "original",
+   "source": "EC_CBAM_BENCHMARKS",
+   "as_of": "2026-02",
+   "note": "7601 경로 (K) primary"
+  },
+  "sector.aluminum_primary.kr_avg_SEE": {
+   "value": 3.0,
+   "unit": "tCO₂/t",
+   "status": "assumption",
+   "source": "EU_IR_2026_1740",
+   "as_of": "2026-08",
+   "note": "중국 7601 기본값(원문 값)을 수입 primary ingot 대표로 쓴 것 — 한국 평균이라는 근거는 없음"
+  },
+  "sector.aluminum_primary.kr_eu_export_usd_2021": {
+   "value": 500000000.0,
+   "unit": "USD",
+   "status": "secondary",
+   "source": "KOTRA_CBAM",
+   "as_of": "2021",
+   "note": ""
+  },
+  "sector.fertilizer_NH3.default_SEE": {
+   "value": 3.13,
+   "unit": "tCO₂/t",
+   "status": "original",
+   "source": "EU_IR_2026_1740",
+   "as_of": "2026-08",
+   "note": "한국 값 '-' → 기타국가 (직접 2.97 + 간접 0.15)"
+  },
+  "sector.fertilizer_NH3.eu_benchmark": {
+   "value": 1.522,
+   "unit": "tCO₂/t",
+   "status": "original",
+   "source": "EC_CBAM_BENCHMARKS",
+   "as_of": "2026-02",
+   "note": "2814 10 00"
+  },
+  "sector.fertilizer_NH3.kr_avg_SEE": {
+   "value": 2.0,
+   "unit": "tCO₂/t",
+   "status": "secondary",
+   "source": "IEA_Ammonia_2021",
+   "as_of": "2021-10",
+   "note": "가스 SMR 직접 1.8 + 전력. 한국은 암모니아 국내 생산 없음"
+  },
+  "sector.fertilizer_NH3.kr_eu_export_usd_2021": {
+   "value": 5000000.0,
+   "unit": "USD",
+   "status": "secondary",
+   "source": "KOTRA_CBAM",
+   "as_of": "2021",
+   "note": ""
+  },
+  "sector.hydrogen_gray.default_SEE": {
+   "value": 14.03,
+   "unit": "tCO₂/t",
+   "status": "original",
+   "source": "EU_IR_2026_1740",
+   "as_of": "2026-08",
+   "note": "한국 2804 10 00 (직접배출)"
+  },
+  "sector.hydrogen_gray.eu_benchmark": {
+   "value": 5.089,
+   "unit": "tCO₂/t",
+   "status": "original",
+   "source": "EC_CBAM_BENCHMARKS",
+   "as_of": "2026-02",
+   "note": "2804 10 00"
+  },
+  "sector.hydrogen_gray.kr_avg_SEE": {
+   "value": 9.0,
+   "unit": "tCO₂/t",
+   "status": "derived",
+   "source": "IEA_H2_Definitions_2023",
+   "as_of": "2023",
+   "note": "전과정 10~14에서 상류·중류 1~5를 뺀 생산 공정 배출"
+  },
+  "sector.hydrogen_gray.kr_eu_export_usd_2021": {
+   "value": 0,
+   "unit": "USD",
+   "status": "assumption",
+   "source": null,
+   "as_of": "",
+   "note": "수소 대EU 수출 없음"
+  },
+  "sector.hydrogen_blue.default_SEE": {
+   "value": 14.03,
+   "unit": "tCO₂/t",
+   "status": "original",
+   "source": "EU_IR_2026_1740",
+   "as_of": "2026-08",
+   "note": "기본값은 생산방식 구분 없음"
+  },
+  "sector.hydrogen_blue.eu_benchmark": {
+   "value": 5.089,
+   "unit": "tCO₂/t",
+   "status": "original",
+   "source": "EC_CBAM_BENCHMARKS",
+   "as_of": "2026-02",
+   "note": "회색수소와 같은 benchmark"
+  },
+  "sector.hydrogen_blue.kr_avg_SEE": {
+   "value": 1.0,
+   "unit": "tCO₂/t",
+   "status": "derived",
+   "source": "IEA_H2_Definitions_2023",
+   "as_of": "2023",
+   "note": "포집률 90% × 약 9 + 미포집 연소가스"
+  },
+  "sector.hydrogen_blue.kr_eu_export_usd_2021": {
+   "value": 0,
+   "unit": "USD",
+   "status": "assumption",
+   "source": null,
+   "as_of": "",
+   "note": "수소 대EU 수출 없음"
+  },
+  "sector.electricity.default_SEE": {
+   "value": 0.443,
+   "unit": "tCO₂/MWh",
+   "status": "unverified",
+   "source": null,
+   "as_of": "",
+   "note": "출처 불명 — 전력 수입 기본값 표(Annex III)에 한국이 없는 것으로 보임, 원문 미확인"
+  },
+  "sector.electricity.eu_benchmark": {
+   "value": 0.0,
+   "unit": "tCO₂/MWh",
+   "status": "original",
+   "source": "EU_IR_2025_2620",
+   "as_of": "2025-12",
+   "note": "전력은 무상할당 공제 없음"
+  },
+  "sector.electricity.kr_avg_SEE": {
+   "value": 0.417,
+   "unit": "tCO₂/MWh",
+   "status": "secondary",
+   "source": "KR_GRID_2023",
+   "as_of": "2025-12",
+   "note": "국가 전력 배출계수 2023 (0.4173)"
+  },
+  "sector.electricity.kr_eu_export_usd_2021": {
+   "value": 0,
+   "unit": "USD",
+   "status": "assumption",
+   "source": null,
+   "as_of": "",
+   "note": "한국-EU 계통 연결 없음"
+  },
+  "preset.kr_posco_BF.annual_production_mt": {
+   "value": 35.0,
+   "unit": "Mt",
+   "status": "original",
+   "source": "POSCO_Climate_2025",
+   "as_of": "2025-06",
+   "note": "2024 조강 35,048천t"
+  },
+  "preset.kr_posco_BF.eu_export_share_pct": {
+   "value": 5.0,
+   "unit": "%",
+   "status": "assumption",
+   "source": "POSCO_IR_2026Q2",
+   "as_of": "2026-07",
+   "note": "EU 물량 미공시. 실적 발표상 수출의 10~15%가 EU (수출 비중 약 46% → 생산의 4.6~6.9%)"
+  },
+  "preset.kr_posco_BF.user_SEE": {
+   "value": 1.99,
+   "unit": "tCO₂/t",
+   "status": "derived",
+   "source": "POSCO_Climate_2025",
+   "as_of": "2025-06",
+   "note": "Scope 1 ÷ 조강, CBAM 경계 기준 상한"
+  },
+  "preset.kr_industry_steel.annual_production_mt": {
+   "value": 62.2,
+   "unit": "Mt",
+   "status": "original",
+   "source": "WSA_2026",
+   "as_of": "2026-06",
+   "note": "2025 한국 조강"
+  },
+  "preset.kr_industry_steel.eu_export_share_pct": {
+   "value": 5.209003215434084,
+   "unit": "%",
+   "status": "derived",
+   "source": "KITA_EU_Steel_2025",
+   "as_of": "2026-08",
+   "note": "2025 대EU 철강 수출 324만t ÷ 조강 62.2Mt"
+  },
+  "preset.kr_industry_steel.user_SEE": {
+   "value": 2.0,
+   "unit": "tCO₂/t",
+   "status": "secondary",
+   "source": "SGI_CBAM_2024",
+   "as_of": "2024-08",
+   "note": "고로 기준 문헌값 (JRC 2022), SGI 보고서와 동일"
+  },
+  "preset.kr_hyundai_BF.annual_production_mt": {
+   "value": 16.799999999999997,
+   "unit": "Mt",
+   "status": "unverified",
+   "source": "Hyundai_DART_2024",
+   "as_of": "",
+   "note": "24Mt × 고로 70% 가정 — 실제 2024 조강 18.09Mt, 고로 비중 약 65~69% → 약 12Mt (점검 필요)"
+  },
+  "preset.kr_hyundai_BF.eu_export_share_pct": {
+   "value": 7.0,
+   "unit": "%",
+   "status": "assumption",
+   "source": null,
+   "as_of": "",
+   "note": "근거 없음 — EU 수출 물량 미공시"
+  },
+  "preset.kr_hyundai_BF.user_SEE": {
+   "value": 2.05,
+   "unit": "tCO₂/t",
+   "status": "derived",
+   "source": "Hyundai_Steel_2024",
+   "as_of": "2024",
+   "note": "2023 Scope 1을 공정별로 나눠 역산한 고로 2.07~2.10 (2차 자료 기반)"
+  },
+  "preset.kr_hyundai_EAF.annual_production_mt": {
+   "value": 5.0,
+   "unit": "Mt",
+   "status": "unverified",
+   "source": "Hyundai_DART_2024",
+   "as_of": "",
+   "note": "근거 불명 — 2024 전기로 약 5.6Mt 추정(자료마다 다름)"
+  },
+  "preset.kr_hyundai_EAF.eu_export_share_pct": {
+   "value": 10.0,
+   "unit": "%",
+   "status": "assumption",
+   "source": null,
+   "as_of": "",
+   "note": "근거 없음"
+  },
+  "preset.kr_hyundai_EAF.user_SEE": {
+   "value": 0.15,
+   "unit": "tCO₂/t",
+   "status": "derived",
+   "source": "IEA_Steel_Roadmap_2020",
+   "as_of": "2020-10",
+   "note": "업종 한국 평균과 같은 직접배출 추정"
+  },
+  "preset.kr_cement.annual_production_mt": {
+   "value": 10.0,
+   "unit": "Mt",
+   "status": "unverified",
+   "source": null,
+   "as_of": "",
+   "note": "두 회사 클링커 생산량 근거 불명"
+  },
+  "preset.kr_cement.eu_export_share_pct": {
+   "value": 0.05,
+   "unit": "%",
+   "status": "assumption",
+   "source": null,
+   "as_of": "",
+   "note": "EU 수출 거의 없음을 나타낸 값"
+  },
+  "preset.kr_cement.user_SEE": {
+   "value": 0.81,
+   "unit": "tCO₂/t",
+   "status": "derived",
+   "source": "AsiaCement_2024",
+   "as_of": "2024-06",
+   "note": "업계 평균"
+  },
+  "preset.kr_novelis.annual_production_mt": {
+   "value": 1.5,
+   "unit": "Mt",
+   "status": "unverified",
+   "source": "Novelis_Korea",
+   "as_of": "",
+   "note": "근거 불명 (회사 생산능력 미확인)"
+  },
+  "preset.kr_novelis.eu_export_share_pct": {
+   "value": 15.0,
+   "unit": "%",
+   "status": "assumption",
+   "source": null,
+   "as_of": "",
+   "note": "근거 없음"
+  },
+  "preset.kr_novelis.user_SEE": {
+   "value": 1.42,
+   "unit": "tCO₂/t",
+   "status": "assumption",
+   "source": "EU_IR_2026_1740",
+   "as_of": "2026-08",
+   "note": "primary 3.0 × 0.4 + 재생 0.36 × 0.6 — 재활용 비중 60%는 가정"
+  },
+  "preset.kr_hanwha.annual_production_mt": {
+   "value": 0.2,
+   "unit": "Mt",
+   "status": "assumption",
+   "source": null,
+   "as_of": "",
+   "note": "참고용 가상 공장 규모 (국내 생산 없음)"
+  },
+  "preset.kr_hanwha.eu_export_share_pct": {
+   "value": 5.0,
+   "unit": "%",
+   "status": "assumption",
+   "source": null,
+   "as_of": "",
+   "note": "참고용"
+  },
+  "preset.kr_hanwha.user_SEE": {
+   "value": 2.0,
+   "unit": "tCO₂/t",
+   "status": "secondary",
+   "source": "IEA_Ammonia_2021",
+   "as_of": "2021-10",
+   "note": "가스 SMR 참고값"
+  },
+  "preset.kr_sk_h2_gray.annual_production_mt": {
+   "value": 0.1,
+   "unit": "Mt",
+   "status": "assumption",
+   "source": null,
+   "as_of": "",
+   "note": "참고용 규모"
+  },
+  "preset.kr_sk_h2_gray.eu_export_share_pct": {
+   "value": 5.0,
+   "unit": "%",
+   "status": "assumption",
+   "source": null,
+   "as_of": "",
+   "note": "참고용"
+  },
+  "preset.kr_sk_h2_gray.user_SEE": {
+   "value": 9.0,
+   "unit": "tCO₂/t",
+   "status": "derived",
+   "source": "IEA_H2_Definitions_2023",
+   "as_of": "2023",
+   "note": "업종 한국 평균과 같음"
+  },
+  "preset.kr_sk_h2_blue.annual_production_mt": {
+   "value": 0.1,
+   "unit": "Mt",
+   "status": "assumption",
+   "source": null,
+   "as_of": "",
+   "note": "참고용 규모"
+  },
+  "preset.kr_sk_h2_blue.eu_export_share_pct": {
+   "value": 5.0,
+   "unit": "%",
+   "status": "assumption",
+   "source": null,
+   "as_of": "",
+   "note": "참고용"
+  },
+  "preset.kr_sk_h2_blue.user_SEE": {
+   "value": 1.0,
+   "unit": "tCO₂/t",
+   "status": "derived",
+   "source": "IEA_H2_Definitions_2023",
+   "as_of": "2023",
+   "note": "포집률 90% 가정"
+  },
+  "preset.se_h2gs.annual_production_mt": {
+   "value": 5.0,
+   "unit": "Mt",
+   "status": "unverified",
+   "source": null,
+   "as_of": "",
+   "note": "계획 규모로 보이나 출처 미확인"
+  },
+  "preset.se_h2gs.eu_export_share_pct": {
+   "value": 100.0,
+   "unit": "%",
+   "status": "assumption",
+   "source": null,
+   "as_of": "",
+   "note": "EU 역내 생산자 — CBAM 0 비교용"
+  },
+  "preset.se_h2gs.user_SEE": {
+   "value": 0.4,
+   "unit": "tCO₂/t",
+   "status": "unverified",
+   "source": null,
+   "as_of": "",
+   "note": "출처 미확인 — 수소 DRI 직접배출은 0.1 수준일 가능성"
+  },
+  "param.cert_price_2026.Q1": {
+   "value": 75.36,
+   "unit": "€/tCO₂",
+   "status": "original",
+   "source": "EC_CBAM_PRICE",
+   "as_of": "2026-04-07",
+   "note": ""
+  },
+  "param.cert_price_2026.Q2": {
+   "value": 75.28,
+   "unit": "€/tCO₂",
+   "status": "original",
+   "source": "EC_CBAM_PRICE",
+   "as_of": "2026-07-06",
+   "note": ""
+  },
+  "param.cert_price_2026.Q3": {
+   "value": 82.32,
+   "unit": "€/tCO₂",
+   "status": "original",
+   "source": "EC_CBAM_PRICE",
+   "as_of": "2026-10-05",
+   "note": ""
+  },
+  "param.cscf": {
+   "value": 1.0,
+   "unit": "-",
+   "status": "original",
+   "source": "EU_DEC_2026_1862",
+   "as_of": "2026-07-23",
+   "note": "2026~2030 100%"
+  },
+  "param.eua_fallback": {
+   "value": 80.0,
+   "unit": "€/tCO₂",
+   "status": "assumption",
+   "source": null,
+   "as_of": "",
+   "note": "EUA 자동 수집 파일이 없을 때만 쓰는 값"
+  },
+  "param.fx_usd_per_eur": {
+   "value": 1.138,
+   "unit": "USD/€",
+   "status": "unverified",
+   "source": null,
+   "as_of": "2026-09-24",
+   "note": "9/24 시장 환율로 넣었으나 출처 기록 없음 — 최신 환율로 갱신 필요"
+  },
+  "param.fx_krw_per_usd": {
+   "value": 1370,
+   "unit": "원/USD",
+   "status": "unverified",
+   "source": null,
+   "as_of": "2026-09-24",
+   "note": "9/24 시장 환율로 넣었으나 출처 기록 없음 — 최신 환율로 갱신 필요"
+  },
+  "param.kets_price_krw": {
+   "value": 30000,
+   "unit": "원/tCO₂",
+   "status": "secondary",
+   "source": "ME_K_ETS",
+   "as_of": "2026-10",
+   "note": "KAU26 10/2 종가 29,600원 근처"
+  },
+  "param.kets_credit_share_pct": {
+   "value": 30,
+   "unit": "%",
+   "status": "derived",
+   "source": "TTI_Korea_CBAM",
+   "as_of": "2026",
+   "note": "K-ETS 무상할당 약 69%를 뺀 실제 지불분 가정 (Art.9 시행규정 미채택)"
+  },
+  "param.export_price_usd.steel_BF_BOF": {
+   "value": 700,
+   "unit": "USD/t",
+   "status": "assumption",
+   "source": null,
+   "as_of": "",
+   "note": "수출가 인상률 KPI 분모용 대략값 — 회사 실제 수출가로 바꿔 쓰세요"
+  },
+  "param.export_price_usd.steel_DRI_EAF": {
+   "value": 800,
+   "unit": "USD/t",
+   "status": "assumption",
+   "source": null,
+   "as_of": "",
+   "note": "수출가 인상률 KPI 분모용 대략값 — 회사 실제 수출가로 바꿔 쓰세요"
+  },
+  "param.export_price_usd.steel_scrap_EAF": {
+   "value": 650,
+   "unit": "USD/t",
+   "status": "assumption",
+   "source": null,
+   "as_of": "",
+   "note": "수출가 인상률 KPI 분모용 대략값 — 회사 실제 수출가로 바꿔 쓰세요"
+  },
+  "param.export_price_usd.cement_clinker": {
+   "value": 100,
+   "unit": "USD/t",
+   "status": "assumption",
+   "source": null,
+   "as_of": "",
+   "note": "수출가 인상률 KPI 분모용 대략값 — 회사 실제 수출가로 바꿔 쓰세요"
+  },
+  "param.export_price_usd.aluminum_primary": {
+   "value": 2400,
+   "unit": "USD/t",
+   "status": "assumption",
+   "source": null,
+   "as_of": "",
+   "note": "수출가 인상률 KPI 분모용 대략값 — 회사 실제 수출가로 바꿔 쓰세요"
+  },
+  "param.export_price_usd.fertilizer_NH3": {
+   "value": 500,
+   "unit": "USD/t",
+   "status": "assumption",
+   "source": null,
+   "as_of": "",
+   "note": "수출가 인상률 KPI 분모용 대략값 — 회사 실제 수출가로 바꿔 쓰세요"
+  },
+  "param.export_price_usd.hydrogen_gray": {
+   "value": 2500,
+   "unit": "USD/t",
+   "status": "assumption",
+   "source": null,
+   "as_of": "",
+   "note": "수출가 인상률 KPI 분모용 대략값 — 회사 실제 수출가로 바꿔 쓰세요"
+  },
+  "param.export_price_usd.hydrogen_blue": {
+   "value": 4000,
+   "unit": "USD/t",
+   "status": "assumption",
+   "source": null,
+   "as_of": "",
+   "note": "수출가 인상률 KPI 분모용 대략값 — 회사 실제 수출가로 바꿔 쓰세요"
+  },
+  "param.export_price_usd.electricity": {
+   "value": 100,
+   "unit": "USD/t",
+   "status": "assumption",
+   "source": null,
+   "as_of": "",
+   "note": "수출가 인상률 KPI 분모용 대략값 — 회사 실제 수출가로 바꿔 쓰세요"
+  }
+ }
+}

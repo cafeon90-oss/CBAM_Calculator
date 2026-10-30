@@ -51,6 +51,7 @@ from html import escape as html_escape
 # 두 도구가 같은 loader.py 사용 → 자매 도구 갱신 시 한 곳만 수정
 # ───────────────────────────────────────────────────────────────────────
 import see_steel as ss
+from reference_values import rv, meta as rv_meta, STATUS as RV_STATUS, VALUES as RV_VALUES, status_label
 import reg_alerts
 from ccus_metrics_loader import (
     load_ccus_metrics as _load_ccus_metrics_raw,
@@ -447,10 +448,10 @@ def load_eua_price():
     try:
         if EUA_JSON_LOCAL.exists():
             data = json.loads(EUA_JSON_LOCAL.read_text(encoding="utf-8"))
-            return float(data.get("price_eur_per_tco2", 80.0)), data.get("date", "n/a"), "auto"
+            return float(data.get("price_eur_per_tco2", rv("param.eua_fallback"))), data.get("date", "n/a"), "auto"
     except Exception:
         pass
-    return 80.0, "fallback", "fallback"
+    return rv("param.eua_fallback"), "fallback", "fallback"
 
 
 @st.cache_data(ttl=3600)   # 1시간 캐시 (월 1회 갱신이지만 새로고침 시 빠르게 보이게)
@@ -636,11 +637,11 @@ def cbam_factor(year: int, scenario: str = "current") -> float:
 
 # 교차부문 보정계수 (Cross-Sectoral Correction Factor) — 무상할당 공제에 곱해진다.
 # 2026~2030은 100% = 1.0으로 확정 (집행위 이행결정 (EU) 2026/1862, 2026-07-23).
-CSCF = 1.0
+CSCF = rv("param.cscf")
 
 # 2026년분 CBAM 인증서 가격 = 분기별 EUA 경매 평균가 (집행위 발표, €/tCO₂).
 # 미발표 분기는 사이드바 EUA 입력값을 쓴다. Q4는 2027-01-04 발표 예정 → 발표되면 추가.
-CBAM_CERT_PRICE_2026 = {"Q1": 75.36, "Q2": 75.28, "Q3": 82.32}
+CBAM_CERT_PRICE_2026 = {q: rv(f"param.cert_price_2026.{q}") for q in ("Q1", "Q2", "Q3")}  # 분기 발표 시 JSON에 추가
 
 
 def certificate_price(year: int, eua_price_eur: float) -> float:
@@ -672,15 +673,15 @@ LIT = {
         "sector_key": "steel",
         "process": "BF-BOF",
         "product": "Hot-rolled coil",
-        "default_SEE": 2.118,         # 한국 7208 (HRC) 기본값, 경로 (C)
+        "default_SEE": rv("sector.steel_BF_BOF.default_SEE"),         # 한국 7208 (HRC) 기본값, 경로 (C)
         # POSCO 2024 ESG Factbook: 직접배출(Scope 1) 69.67 Mt ÷ 조강 35.0 Mt = 1.99 (공시 원단위 2.03은 Scope 1+2).
         # Scope 1에 코크스로·자가발전이 들어 있어 CBAM 경계 기준으로는 상한값
-        "kr_avg_SEE": 1.99,
-        "eu_benchmark": 1.370,        # 7208 경로 (C) BF-BOF
+        "kr_avg_SEE": rv("sector.steel_BF_BOF.kr_avg_SEE"),
+        "eu_benchmark": rv("sector.steel_BF_BOF.eu_benchmark"),        # 7208 경로 (C) BF-BOF
         "unit": "tCO₂/t crude steel",
         "product_unit": "ton",
         "ccus_sector": "steel_BF_BOF",
-        "kr_eu_export_usd_2021": 4.3e9,  # ~$4.3B
+        "kr_eu_export_usd_2021": rv("sector.steel_BF_BOF.kr_eu_export_usd_2021"),  # ~$4.3B
         "color": "#1F3A8A",
         "refs": ["EU_IR_2026_1740", "EC_CBAM_BENCHMARKS", "EU_IR_2025_2621", "EU_REG_2023_956", "EUROMETAL_Bench", "POSCO_Climate_2025", "WSA_2024"],
     },
@@ -690,14 +691,14 @@ LIT = {
         "sector_key": "steel",
         "process": "DRI-EAF",
         "product": "Steel (DRI)",
-        "default_SEE": 2.118,          # 한국 7208 기본값은 경로 (C) 하나뿐 — 공정 무관
-        "default_benchmark": 1.370,    # 기본값 경로 (C)의 benchmark
-        "kr_avg_SEE": 1.0,             # IEA 철강 로드맵: 천연가스 DRI-EAF 직접배출 1.0 (전력 포함 1.4). 국내 DRI 없음
-        "eu_benchmark": 0.481,         # 7208 경로 (D) DRI-EAF
+        "default_SEE": rv("sector.steel_DRI_EAF.default_SEE"),          # 한국 7208 기본값은 경로 (C) 하나뿐 — 공정 무관
+        "default_benchmark": rv("sector.steel_DRI_EAF.default_benchmark"),    # 기본값 경로 (C)의 benchmark
+        "kr_avg_SEE": rv("sector.steel_DRI_EAF.kr_avg_SEE"),             # IEA 철강 로드맵: 천연가스 DRI-EAF 직접배출 1.0 (전력 포함 1.4). 국내 DRI 없음
+        "eu_benchmark": rv("sector.steel_DRI_EAF.eu_benchmark"),         # 7208 경로 (D) DRI-EAF
         "unit": "tCO₂/t crude steel",
         "product_unit": "ton",
         "ccus_sector": "steel_BF_BOF",
-        "kr_eu_export_usd_2021": 0,
+        "kr_eu_export_usd_2021": rv("sector.steel_DRI_EAF.kr_eu_export_usd_2021"),
         "color": "#2563EB",
         "refs": ["EU_IR_2026_1740", "EC_CBAM_BENCHMARKS", "EUROMETAL_Bench", "EU_REG_2023_956", "IEA_Steel_Roadmap_2020", "WSA_2024"],
     },
@@ -707,15 +708,15 @@ LIT = {
         "sector_key": "steel",
         "process": "Scrap-EAF",
         "product": "Steel (EAF)",
-        "default_SEE": 2.118,          # 한국 7208 기본값 (경로 (C))
-        "default_benchmark": 1.370,    # 기본값 경로 (C)의 benchmark
+        "default_SEE": rv("sector.steel_scrap_EAF.default_SEE"),          # 한국 7208 기본값 (경로 (C))
+        "default_benchmark": rv("sector.steel_scrap_EAF.default_benchmark"),    # 기본값 경로 (C)의 benchmark
         # 직접배출만: 전기로 조강 0.04~0.1 (IEA) + 열연 가열로 ~0.08. 이전 0.40은 전력 배출이 대부분
-        "kr_avg_SEE": 0.15,
-        "eu_benchmark": 0.072,         # 7208 경로 (E) scrap-EAF
+        "kr_avg_SEE": rv("sector.steel_scrap_EAF.kr_avg_SEE"),
+        "eu_benchmark": rv("sector.steel_scrap_EAF.eu_benchmark"),         # 7208 경로 (E) scrap-EAF
         "unit": "tCO₂/t crude steel",
         "product_unit": "ton",
         "ccus_sector": "steel_EAF",
-        "kr_eu_export_usd_2021": 0,
+        "kr_eu_export_usd_2021": rv("sector.steel_scrap_EAF.kr_eu_export_usd_2021"),
         "color": "#60A5FA",
         "refs": ["EU_IR_2026_1740", "EC_CBAM_BENCHMARKS", "EUROMETAL_Bench", "EU_REG_2023_956", "IEA_Steel_Roadmap_2020", "Hyundai_Steel_2024"],
     },
@@ -726,15 +727,15 @@ LIT = {
         "sector_key": "cement",
         "process": "Dry kiln",
         "product": "Clinker",
-        "default_SEE": 0.92,           # 한국 2523 10 00 90 회색 clinker, 직접 0.88 + 간접 0.03
+        "default_SEE": rv("sector.cement_clinker.default_SEE"),           # 한국 2523 10 00 90 회색 clinker, 직접 0.88 + 간접 0.03
         # 아시아시멘트 0.79·한라시멘트 0.83 (2023, Scope 1+2 / 클링커), 6개사 평균 0.821 —
         # 시멘트 분쇄 전력은 CBAM 클링커 범위 밖이라 약간 낮춤
-        "kr_avg_SEE": 0.81,
-        "eu_benchmark": 0.666,         # 2523 10 00 경로 (A) 회색 clinker
+        "kr_avg_SEE": rv("sector.cement_clinker.kr_avg_SEE"),
+        "eu_benchmark": rv("sector.cement_clinker.eu_benchmark"),         # 2523 10 00 경로 (A) 회색 clinker
         "unit": "tCO₂/t clinker",
         "product_unit": "ton",
         "ccus_sector": "cement",
-        "kr_eu_export_usd_2021": 1e6,
+        "kr_eu_export_usd_2021": rv("sector.cement_clinker.kr_eu_export_usd_2021"),
         "color": "#78716C",
         "refs": ["EU_IR_2026_1740", "EC_CBAM_BENCHMARKS", "EU_IR_2025_2621", "AsiaCement_2024", "Norcem_Brevik_2024", "IEAGHG_Cement"],
     },
@@ -748,14 +749,14 @@ LIT = {
         # CBAM은 알루미늄의 직접배출만 센다 (전력 간접배출 제외) — IAI 14.8 같은
         # 전력 포함 전 과정 값과 다르다.
         # 한국은 primary smelter가 없어 한국 7601 기본값은 경로 (L) 재생(2차) 알루미늄 값이다.
-        "default_SEE": 0.36,           # 한국 7601 기본값, 경로 (L)
-        "default_benchmark": 0.091,    # 7601 경로 (L) benchmark
-        "kr_avg_SEE": 3.0,             # 수입 primary ingot 대표값 = 중국 7601 기본값 (경로 (K))
-        "eu_benchmark": 1.423,         # 7601 경로 (K) primary
+        "default_SEE": rv("sector.aluminum_primary.default_SEE"),           # 한국 7601 기본값, 경로 (L)
+        "default_benchmark": rv("sector.aluminum_primary.default_benchmark"),    # 7601 경로 (L) benchmark
+        "kr_avg_SEE": rv("sector.aluminum_primary.kr_avg_SEE"),             # 수입 primary ingot 대표값 = 중국 7601 기본값 (경로 (K))
+        "eu_benchmark": rv("sector.aluminum_primary.eu_benchmark"),         # 7601 경로 (K) primary
         "unit": "tCO₂/t Al",
         "product_unit": "ton",
         "ccus_sector": "aluminum",
-        "kr_eu_export_usd_2021": 5e8,
+        "kr_eu_export_usd_2021": rv("sector.aluminum_primary.kr_eu_export_usd_2021"),
         "color": "#64748B",
         "refs": ["EU_IR_2026_1740", "EC_CBAM_BENCHMARKS", "EU_IR_2025_2621", "IAI_Aluminum_2024", "Novelis_Korea"],
     },
@@ -766,13 +767,13 @@ LIT = {
         "sector_key": "fertilizer",
         "process": "Haber-Bosch (SMR)",
         "product": "Ammonia",
-        "default_SEE": 3.13,           # 2814 10 00 — 한국 값 없음 → 기타국가 (직접 2.97 + 간접 0.15)
-        "kr_avg_SEE": 2.0,
-        "eu_benchmark": 1.522,
+        "default_SEE": rv("sector.fertilizer_NH3.default_SEE"),           # 2814 10 00 — 한국 값 없음 → 기타국가 (직접 2.97 + 간접 0.15)
+        "kr_avg_SEE": rv("sector.fertilizer_NH3.kr_avg_SEE"),
+        "eu_benchmark": rv("sector.fertilizer_NH3.eu_benchmark"),
         "unit": "tCO₂/t NH₃",
         "product_unit": "ton",
         "ccus_sector": "fertilizer_NH3",
-        "kr_eu_export_usd_2021": 5e6,
+        "kr_eu_export_usd_2021": rv("sector.fertilizer_NH3.kr_eu_export_usd_2021"),
         "color": "#7C3AED",
         "refs": ["EU_IR_2026_1740", "EC_CBAM_BENCHMARKS", "EU_IR_2025_2621", "IEA_Ammonia_2021", "IFA_Fertilizer"],
     },
@@ -785,13 +786,13 @@ LIT = {
         "product": "H₂",
         # IEA: 천연가스 SMR 전과정 10~14 kgCO₂e/kgH₂ 중 상류·중류(메탄 등) 1~5.
         # CBAM은 생산 공정 배출(공정 CO₂ + 연소)만 세므로 상류를 뺀 ~9
-        "default_SEE": 14.03,          # 한국 2804 10 00 기본값 (직접배출)
-        "kr_avg_SEE": 9.0,
-        "eu_benchmark": 5.089,
+        "default_SEE": rv("sector.hydrogen_gray.default_SEE"),          # 한국 2804 10 00 기본값 (직접배출)
+        "kr_avg_SEE": rv("sector.hydrogen_gray.kr_avg_SEE"),
+        "eu_benchmark": rv("sector.hydrogen_gray.eu_benchmark"),
         "unit": "tCO₂/t H₂",
         "product_unit": "ton",
         "ccus_sector": "hydrogen_SMR",
-        "kr_eu_export_usd_2021": 0,
+        "kr_eu_export_usd_2021": rv("sector.hydrogen_gray.kr_eu_export_usd_2021"),
         "color": "#B45309",
         "refs": ["EU_IR_2026_1740", "EC_CBAM_BENCHMARKS", "EU_IR_2025_2621", "IEA_H2_Definitions_2023", "IEA_Hydrogen_2024", "SK_ES_H2"],
     },
@@ -801,13 +802,13 @@ LIT = {
         "sector_key": "hydrogen",
         "process": "SMR + CCS (90%)",
         "product": "H₂",
-        "default_SEE": 14.03,          # 기본값은 생산방식 구분 없음 — Blue도 검증값을 내야 이득
-        "kr_avg_SEE": 1.0,
-        "eu_benchmark": 5.089,          # Gray와 같은 benchmark
+        "default_SEE": rv("sector.hydrogen_blue.default_SEE"),          # 기본값은 생산방식 구분 없음 — Blue도 검증값을 내야 이득
+        "kr_avg_SEE": rv("sector.hydrogen_blue.kr_avg_SEE"),
+        "eu_benchmark": rv("sector.hydrogen_blue.eu_benchmark"),          # Gray와 같은 benchmark
         "unit": "tCO₂/t H₂",
         "product_unit": "ton",
         "ccus_sector": "hydrogen_SMR",
-        "kr_eu_export_usd_2021": 0,
+        "kr_eu_export_usd_2021": rv("sector.hydrogen_blue.kr_eu_export_usd_2021"),
         "color": "#0E7490",
         "refs": ["EU_IR_2026_1740", "EC_CBAM_BENCHMARKS", "EU_IR_2025_2621", "IEA_Hydrogen_2024", "Northern_Lights_2024"],
     },
@@ -818,13 +819,13 @@ LIT = {
         "sector_key": "electricity",
         "process": "Mixed grid",
         "product": "Electricity",
-        "default_SEE": 0.443,           # 한국 grid (kgCO₂/kWh = tCO₂/MWh)
-        "kr_avg_SEE": 0.417,            # 국가 전력 배출계수 2023 (0.4173, 2025-12 확정)
-        "eu_benchmark": 0.0,             # 전력은 무상할당 공제 없음 (IR 2025/2620)
+        "default_SEE": rv("sector.electricity.default_SEE"),           # 한국 grid (kgCO₂/kWh = tCO₂/MWh)
+        "kr_avg_SEE": rv("sector.electricity.kr_avg_SEE"),            # 국가 전력 배출계수 2023 (0.4173, 2025-12 확정)
+        "eu_benchmark": rv("sector.electricity.eu_benchmark"),             # 전력은 무상할당 공제 없음 (IR 2025/2620)
         "unit": "tCO₂/MWh",
         "product_unit": "MWh",
         "ccus_sector": "power",
-        "kr_eu_export_usd_2021": 0,
+        "kr_eu_export_usd_2021": rv("sector.electricity.kr_eu_export_usd_2021"),
         "color": "#CA8A04",
         "refs": ["EU_IR_2025_2620", "EU_IR_2025_2621", "KR_GRID_2023", "IEA_Elec_Maps_2024"],
     },
@@ -853,9 +854,9 @@ PRESETS = {
                         "(실적 발표상 수출의 10~15%가 EU, EU 물량은 미공시)"),
         "sector_lit": "steel_BF_BOF",
         "settings": {
-            "annual_production_mt": 35.0,     # 2024 조강 35.0 Mt (POSCO 2024 ESG Factbook, 국내 사업장)
-            "eu_export_share_pct": 5.0,
-            "user_SEE": 1.99,              # 2024 ESG Factbook 직접배출 / 조강
+            "annual_production_mt": rv("preset.kr_posco_BF.annual_production_mt"),     # 2024 조강 35.0 Mt (POSCO 2024 ESG Factbook, 국내 사업장)
+            "eu_export_share_pct": rv("preset.kr_posco_BF.eu_export_share_pct"),
+            "user_SEE": rv("preset.kr_posco_BF.user_SEE"),              # 2024 ESG Factbook 직접배출 / 조강
             "company_name": "POSCO",
         },
     },
@@ -865,9 +866,9 @@ PRESETS = {
                         "— 업계 전체 규모 비교용, 기업별 SEE 차이는 반영 안 함"),
         "sector_lit": "steel_BF_BOF",
         "settings": {
-            "annual_production_mt": 62.2,            # 2025 한국 조강 (세계철강협회)
-            "eu_export_share_pct": 3.24 / 62.2 * 100,   # → EU 수출 324만t
-            "user_SEE": 2.00,
+            "annual_production_mt": rv("preset.kr_industry_steel.annual_production_mt"),            # 2025 한국 조강 (세계철강협회)
+            "eu_export_share_pct": rv("preset.kr_industry_steel.eu_export_share_pct"),   # → EU 수출 324만t
+            "user_SEE": rv("preset.kr_industry_steel.user_SEE"),
             "company_name": "한국 철강업계 전체",
         },
     },
@@ -876,9 +877,9 @@ PRESETS = {
         "description": "현대제철 당진 BF + 인천·포항 EAF 혼합 (BF 70% 가정)",
         "sector_lit": "steel_BF_BOF",
         "settings": {
-            "annual_production_mt": 24.0 * 0.7,
-            "eu_export_share_pct": 7.0,
-            "user_SEE": 2.05,
+            "annual_production_mt": rv("preset.kr_hyundai_BF.annual_production_mt"),
+            "eu_export_share_pct": rv("preset.kr_hyundai_BF.eu_export_share_pct"),
+            "user_SEE": rv("preset.kr_hyundai_BF.user_SEE"),
             "company_name": "현대제철 (BF)",
         },
     },
@@ -887,9 +888,9 @@ PRESETS = {
         "description": "현대제철 EAF 라인 — 친환경 강재 EU 수출",
         "sector_lit": "steel_scrap_EAF",
         "settings": {
-            "annual_production_mt": 5.0,
-            "eu_export_share_pct": 10.0,
-            "user_SEE": 0.15,              # 직접배출 기준 (전력 제외) — 공정별 공시 없음, IEA 범위
+            "annual_production_mt": rv("preset.kr_hyundai_EAF.annual_production_mt"),
+            "eu_export_share_pct": rv("preset.kr_hyundai_EAF.eu_export_share_pct"),
+            "user_SEE": rv("preset.kr_hyundai_EAF.user_SEE"),              # 직접배출 기준 (전력 제외) — 공정별 공시 없음, IEA 범위
             "company_name": "현대제철 (EAF)",
         },
     },
@@ -898,9 +899,9 @@ PRESETS = {
         "description": "한국 주요 시멘트 — EU 수출 비중 매우 낮음",
         "sector_lit": "cement_clinker",
         "settings": {
-            "annual_production_mt": 10.0,
-            "eu_export_share_pct": 0.05,
-            "user_SEE": 0.81,              # 업계 평균 (클링커, 직접 + 클링커 공정 전력)
+            "annual_production_mt": rv("preset.kr_cement.annual_production_mt"),
+            "eu_export_share_pct": rv("preset.kr_cement.eu_export_share_pct"),
+            "user_SEE": rv("preset.kr_cement.user_SEE"),              # 업계 평균 (클링커, 직접 + 클링커 공정 전력)
             "company_name": "쌍용·한일시멘트",
         },
     },
@@ -909,12 +910,12 @@ PRESETS = {
         "description": "재활용 기반 알루미늄 (재활용 비중 60%+) · EU 수출",
         "sector_lit": "aluminum_primary",
         "settings": {
-            "annual_production_mt": 1.5,
-            "eu_export_share_pct": 15.0,
+            "annual_production_mt": rv("preset.kr_novelis.annual_production_mt"),
+            "eu_export_share_pct": rv("preset.kr_novelis.eu_export_share_pct"),
             # CBAM 직접배출 기준 (전력 간접배출 제외). 재활용 60%+ 비중 →
             # primary 3.0 (중국 기본값) × 0.4 + 재생 0.36 (한국 기본값) × 0.6 ≈ 1.42
             # 추정치 — 실제 verified 값 입력 권장
-            "user_SEE": 1.42,
+            "user_SEE": rv("preset.kr_novelis.user_SEE"),
             "company_name": "노벨리스 코리아",
         },
     },
@@ -923,9 +924,9 @@ PRESETS = {
         "description": "한국은 암모니아를 생산하지 않음(수입 의존) — 가스 SMR 공장 참고값 (IEA 직접 1.8 + 전력)",
         "sector_lit": "fertilizer_NH3",
         "settings": {
-            "annual_production_mt": 0.2,
-            "eu_export_share_pct": 5.0,
-            "user_SEE": 2.0,
+            "annual_production_mt": rv("preset.kr_hanwha.annual_production_mt"),
+            "eu_export_share_pct": rv("preset.kr_hanwha.eu_export_share_pct"),
+            "user_SEE": rv("preset.kr_hanwha.user_SEE"),
             "company_name": "가스 SMR 암모니아 (참고)",
         },
     },
@@ -934,9 +935,9 @@ PRESETS = {
         "description": "SMR 수소 — CCS 없음. 향후 EU 수출 잠재력",
         "sector_lit": "hydrogen_gray",
         "settings": {
-            "annual_production_mt": 0.1,
-            "eu_export_share_pct": 5.0,
-            "user_SEE": 9.0,               # 생산 공정 배출만 (상류 메탄 제외)
+            "annual_production_mt": rv("preset.kr_sk_h2_gray.annual_production_mt"),
+            "eu_export_share_pct": rv("preset.kr_sk_h2_gray.eu_export_share_pct"),
+            "user_SEE": rv("preset.kr_sk_h2_gray.user_SEE"),               # 생산 공정 배출만 (상류 메탄 제외)
             "company_name": "SK E&S (Gray)",
         },
     },
@@ -945,9 +946,9 @@ PRESETS = {
         "description": "SMR + CCS 90% — Gray H₂ 대비 CBAM 부담 대부분 회피",
         "sector_lit": "hydrogen_blue",
         "settings": {
-            "annual_production_mt": 0.1,
-            "eu_export_share_pct": 5.0,
-            "user_SEE": 1.0,
+            "annual_production_mt": rv("preset.kr_sk_h2_blue.annual_production_mt"),
+            "eu_export_share_pct": rv("preset.kr_sk_h2_blue.eu_export_share_pct"),
+            "user_SEE": rv("preset.kr_sk_h2_blue.user_SEE"),
             "company_name": "SK E&S + CCS (Blue)",
         },
     },
@@ -956,9 +957,9 @@ PRESETS = {
         "description": "스웨덴 H2GS — Green H₂ DRI-EAF · 한국 기업 비교 기준 (EU 수출 100% 가정 = CBAM 회피)",
         "sector_lit": "steel_DRI_EAF",
         "settings": {
-            "annual_production_mt": 5.0,
-            "eu_export_share_pct": 100.0,    # EU 내 생산자 — CBAM 0
-            "user_SEE": 0.40,
+            "annual_production_mt": rv("preset.se_h2gs.annual_production_mt"),
+            "eu_export_share_pct": rv("preset.se_h2gs.eu_export_share_pct"),    # EU 내 생산자 — CBAM 0
+            "user_SEE": rv("preset.se_h2gs.user_SEE"),
             "company_name": "H2 Green Steel (SE)",
         },
     },
@@ -1185,6 +1186,28 @@ REFS = {
                 "2024년은 393만t, 44.8억 달러.",
         "url": "https://kr.investing.com/news/stock-market-news/article-2071734",
         "used_for": "한국 철강업계 대EU 수출 물량",
+    },
+    "POSCO_IR_2026Q2": {
+        "cat": "report",
+        "date": "2026-07-30 (2026 2분기 실적 발표)",
+        "cite": "POSCO Holdings 2026 2분기 실적 발표 — POSCO 수출 중 EU 비중 약 10~15%.",
+        "url": "https://finance.yahoo.com/markets/stocks/articles/posco-holdings-inc-pkx-q2-130017668.html",
+        "used_for": "POSCO 프리셋 EU 수출 비중 (가정의 범위 근거)",
+    },
+    "WSA_2026": {
+        "cat": "market",
+        "date": "2026 (World Steel in Figures 2026)",
+        "cite": "World Steel Association — 2025 crude steel production: South Korea 62.2 Mt "
+                "(2024 63.6 Mt).",
+        "url": "https://worldsteel.org/media/press-releases/2026/december-2025-crude-steel-production-2025-global-crude-steel-production/",
+        "used_for": "한국 조강 생산량",
+    },
+    "Hyundai_DART_2024": {
+        "cat": "report",
+        "date": "2026-04 (DART 인용 보도)",
+        "cite": "현대제철 사업보고서 인용 보도 — 2024 조강 18.09Mt (2023 18.95Mt, 2025 17.68Mt).",
+        "url": "https://www.ceoscoredaily.com/page/view/2026041410404981190",
+        "used_for": "현대제철 프리셋 생산량 점검",
     },
     "TTI_Korea_CBAM": {
         "cat": "report",
@@ -1843,6 +1866,12 @@ with st.sidebar:
             help="한국 주요 기업 시나리오를 자동 채움. 선택 후 개별 입력 미세조정 가능.",
         )
         st.caption(f"_{PRESETS[preset_choice]['description']}_")
+        if preset_choice != "custom":
+            _pid = f"preset.{preset_choice}"
+            st.caption("값 근거 — " + " · ".join(
+                f"{lab}: **{status_label(f'{_pid}.{fld}')}**"
+                for lab, fld in (("생산량", "annual_production_mt"), ("EU 비중", "eu_export_share_pct"),
+                                 ("SEE", "user_SEE"))) + " (자료 > 출처의 근거표 참조)")
 
         # 도메인 입력
 
@@ -1874,7 +1903,7 @@ with st.sidebar:
         else:
             prod_unit_label = "Mt/yr (백만톤)"
             prod_unit_caption = "t/yr"
-        st.session_state.setdefault("annual_production_mt", 35.0)
+        st.session_state.setdefault("annual_production_mt", rv("preset.kr_posco_BF.annual_production_mt"))
         annual_production_mt = st.number_input(
             f"연 생산량 ({prod_unit_label})",
             min_value=0.001, max_value=500.0,
@@ -1897,7 +1926,7 @@ with st.sidebar:
             st.caption(f"≈ {annual_production_mt * 1e6:,.0f} {prod_unit_caption}")
 
         # EU 수출 비중
-        st.session_state.setdefault("eu_export_share_pct", 5.0)
+        st.session_state.setdefault("eu_export_share_pct", rv("preset.kr_posco_BF.eu_export_share_pct"))
         eu_export_share_pct = st.number_input(
             "EU 수출 비중 (%)",
             min_value=0.0, max_value=100.0,
@@ -1926,7 +1955,9 @@ with st.sidebar:
         elif see_mode == "한국 평균 사용":
             user_SEE = sector["kr_avg_SEE"]
             mark_up_pct = 0.0
-            st.caption(f"한국 평균 {user_SEE:.3f} {sector['unit']} (출처 link 참조)")
+            _m = rv_meta(f"sector.{sector_lit}.kr_avg_SEE")
+            st.caption(f"한국 평균 {user_SEE:.3f} {sector['unit']} — "
+                       f"**{status_label(f'sector.{sector_lit}.kr_avg_SEE')}**: {_m['note']}")
         else:
             st.session_state.setdefault("user_SEE", float(sector["kr_avg_SEE"]))
             user_SEE = st.number_input(
@@ -1978,7 +2009,7 @@ with st.sidebar:
         if eua_mode == "auto":
             st.caption(f"자동 fetch (`{eua_date}`)")
         elif eua_mode == "fallback":
-            st.caption("⚠️ JSON 미존재 — 기본값 €80 사용 중")
+            st.caption(f"⚠️ JSON 미존재 — 기본값 €{rv('param.eua_fallback'):.0f} 사용 중")
         else:
             st.caption(f"GitHub Actions 주1회 갱신 예정 (`data/eua_price.json`)")
         _published = " · ".join(f"{q} €{p:.2f}" for q, p in CBAM_CERT_PRICE_2026.items())
@@ -1989,14 +2020,16 @@ with st.sidebar:
         fx_eur_usd = st.number_input(
             "환율 (USD/EUR)",
             min_value=0.8, max_value=1.5,
-            value=1.138, step=0.01, format="%.3f",
-            help="2026-09-24 시장 환율 기준 (≈ 1.138). 본인 회계 환율로 수정 가능.",
+            value=rv("param.fx_usd_per_eur"), step=0.01, format="%.3f",
+            help=(f"{rv_meta('param.fx_usd_per_eur')['as_of']} 시장 환율 기준 (1유로 = "
+                  f"{rv('param.fx_usd_per_eur')} 달러). 본인 회계 환율로 수정 가능."),
         )
         fx_usd_krw = st.number_input(
             "환율 (KRW/USD)",
             min_value=800, max_value=2000,
-            value=1370, step=10,
-            help="2026-09-24 시장 환율 기준 (≈ 1,370). 본인 헤지/회계 환율로 수정 가능.",
+            value=int(rv("param.fx_krw_per_usd")), step=10,
+            help=(f"{rv_meta('param.fx_krw_per_usd')['as_of']} 시장 환율 기준 (1달러 = "
+                  f"{rv('param.fx_krw_per_usd'):,}원). 본인 헤지/회계 환율로 수정 가능."),
         )
         fx_eur_krw = fx_eur_usd * fx_usd_krw   # 파생값
 
@@ -2063,12 +2096,12 @@ with st.sidebar:
             kets_price_krw = st.number_input(
                 "K-ETS 가격 (₩/tCO₂)",
                 min_value=1000, max_value=50000,
-                value=30000, step=500,
+                value=int(rv("param.kets_price_krw")), step=500,
                 help="K-ETS 시장 가격(KAU26). 2026-10 기준 약 ₩30,000 (10/2 종가 ₩29,600, 1년 전 ₩8,000대).",
             )
             kets_credit_share = st.slider(
                 "Verified 차감 비율 (%)",
-                min_value=0, max_value=100, value=30, step=5,
+                min_value=0, max_value=100, value=int(rv("param.kets_credit_share_pct")), step=5,
                 help=("K-ETS 가격 중 차감이 인정되는 비율. Art.9는 '실제 지불한' 탄소가격만 "
                       "차감하므로 무상할당분은 빠진다. 기본 30% ≈ 철강 무상할당(~69%)을 뺀 몫 "
                       "(TTI Korea 2026 추정: 차감액 €2.92/tCO₂, EU 가격의 3.4%). "
@@ -2081,18 +2114,13 @@ with st.sidebar:
             st.caption(f"차감액: **€{k_ets_credit_eur:.2f}/t product**")
         else:
             k_ets_credit_eur = 0.0
-            kets_price_krw = 30000
+            kets_price_krw = rv("param.kets_price_krw")
             kets_credit_share = 0
 
 
         # ─── EU 수출 평균가 (인상률 KPI 계산용) ───────────────────
         st.markdown("**EU 수출 평균가**")
-        DEFAULT_REF_PRICES = {
-            "steel_BF_BOF": 700, "steel_DRI_EAF": 800, "steel_scrap_EAF": 650,
-            "cement_clinker": 100, "aluminum_primary": 2400,
-            "fertilizer_NH3": 500, "hydrogen_gray": 2500, "hydrogen_blue": 4000,
-            "electricity": 100,
-        }
+        DEFAULT_REF_PRICES = {k: rv(f"param.export_price_usd.{k}") for k in LIT}
         ref_unit_price = st.number_input(
             f"평균 수출가 (USD/{sector['product_unit']})",
             min_value=10, max_value=10000,
@@ -3180,6 +3208,38 @@ with DOC_METHOD:
 
 # ────────────── 탭 ⑨ 참고문헌 ──────────────
 with DOC_REFS:
+    st.subheader("기본값 근거표")
+    st.caption("앱에 들어 있는 기본 숫자마다 출처와 확인 수준을 적었습니다. "
+               "'가정'·'미확인' 값은 회사 실제 값으로 바꿔 쓰거나 점검이 필요한 값입니다. "
+               "원본: `data/reference_values.json`")
+    _rv_counts = {k: sum(1 for v in RV_VALUES.values() if v["status"] == k) for k in RV_STATUS}
+    _rv_cols = st.columns(len(RV_STATUS))
+    for _col, (_k, (_lab, _desc)) in zip(_rv_cols, RV_STATUS.items()):
+        _col.metric(_lab, f"{_rv_counts[_k]}개", help=_desc)
+    _rv_pick = st.multiselect("확인 수준", options=list(RV_STATUS), default=list(RV_STATUS),
+                              format_func=lambda k: RV_STATUS[k][0], key="rv_status_filter")
+    _GROUP = {"sector": "업종", "preset": "프리셋", "param": "파라미터"}
+    _rv_rows = []
+    for _id, _v in RV_VALUES.items():
+        if _v["status"] not in _rv_pick:
+            continue
+        _parts = _id.split(".")
+        _src = REFS.get(_v["source"] or "", {})
+        _rv_rows.append({
+            "구분": _GROUP.get(_parts[0], _parts[0]),
+            "항목": " · ".join(_parts[1:]),
+            "값": _v["value"],
+            "단위": _v["unit"],
+            "확인 수준": RV_STATUS[_v["status"]][0],
+            "출처": (_src.get("cite", "")[:60] + "…") if _src else "—",
+            "출처 링크": _src.get("url", ""),
+            "기준일": _v["as_of"] or "—",
+            "메모": _v["note"],
+        })
+    st.dataframe(pd.DataFrame(_rv_rows), hide_index=True, width="stretch",
+                 column_config={"출처 링크": st.column_config.LinkColumn(display_text="열기"),
+                                "값": st.column_config.NumberColumn(format="%.4g")})
+    st.divider()
     st.subheader("참고문헌")
 
     cat_filter = st.multiselect(
