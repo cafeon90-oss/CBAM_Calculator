@@ -80,3 +80,15 @@ def test_known_verified_values():
     assert refv.rv("sector.steel_BF_BOF.eu_benchmark") == 1.370
     assert refv.rv("sector.steel_BF_BOF.default_SEE") == 2.118
     assert refv.meta("preset.kr_posco_BF.eu_export_share_pct")["status"] == "assumption"
+    # 2026-10-31 원자료 확인 (ECB 환율, IR 2025/2621 Annex III, 현대제철·한일시멘트 2025 보고서)
+    assert refv.rv("param.fx_usd_per_eur") == 1.1172
+    assert refv.rv("sector.electricity.default_SEE") == 0.612
+    assert refv.rv("preset.kr_hyundai_BF.annual_production_mt") == 12.449
+    assert refv.rv("preset.kr_hyundai_EAF.annual_production_mt") == 5.645
+    assert refv.rv("preset.kr_cement.annual_production_mt") == 8.156
+
+
+def test_no_unverified_values_left():
+    # 미확인 값은 원자료를 찾아 확인 수준을 매기거나 '가정'으로 돌린다
+    left = [k for k, v in refv.VALUES.items() if v["status"] == "unverified"]
+    assert not left, left

@@ -109,10 +109,10 @@
   "sector.steel_scrap_EAF.kr_eu_export_usd_2021": {
    "value": 0,
    "unit": "USD",
-   "status": "unverified",
+   "status": "assumption",
    "source": null,
    "as_of": "",
-   "note": "전기로 강재 대EU 수출액 따로 집계 안 함"
+   "note": "전기로 강재 대EU 수출액은 따로 집계되지 않아 0으로 둔 자리값 (계산에 쓰이지 않음)"
   },
   "sector.cement_clinker.default_SEE": {
    "value": 0.92,
@@ -283,12 +283,12 @@
    "note": "수소 대EU 수출 없음"
   },
   "sector.electricity.default_SEE": {
-   "value": 0.443,
+   "value": 0.612,
    "unit": "tCO₂/MWh",
-   "status": "unverified",
-   "source": null,
-   "as_of": "",
-   "note": "출처 불명 — 전력 수입 기본값 표(Annex III)에 한국이 없는 것으로 보임, 원문 미확인"
+   "status": "original",
+   "source": "EU_IR_2025_2621",
+   "as_of": "2025-12",
+   "note": "전력 수입 기본값 Annex III에 한국이 없어 EU 값 0.612 적용 (EUR-Lex 원문 2026-10-31 확인)"
   },
   "sector.electricity.eu_benchmark": {
    "value": 0.0,
@@ -363,12 +363,12 @@
    "note": "고로 기준 문헌값 (JRC 2022), SGI 보고서와 동일"
   },
   "preset.kr_hyundai_BF.annual_production_mt": {
-   "value": 16.799999999999997,
+   "value": 12.449,
    "unit": "Mt",
-   "status": "unverified",
-   "source": "Hyundai_DART_2024",
-   "as_of": "",
-   "note": "24Mt × 고로 70% 가정 — 실제 2024 조강 18.09Mt, 고로 비중 약 65~69% → 약 12Mt (점검 필요)"
+   "status": "original",
+   "source": "Hyundai_SR_2025",
+   "as_of": "2024",
+   "note": "2024 고로(BF-BOF) 조강 12,449천t — 전기로 5,645천t과 합하면 DART 조강 18.09Mt와 일치"
   },
   "preset.kr_hyundai_BF.eu_export_share_pct": {
    "value": 7.0,
@@ -387,12 +387,12 @@
    "note": "2023 Scope 1을 공정별로 나눠 역산한 고로 2.07~2.10 (2차 자료 기반)"
   },
   "preset.kr_hyundai_EAF.annual_production_mt": {
-   "value": 5.0,
+   "value": 5.645,
    "unit": "Mt",
-   "status": "unverified",
-   "source": "Hyundai_DART_2024",
-   "as_of": "",
-   "note": "근거 불명 — 2024 전기로 약 5.6Mt 추정(자료마다 다름)"
+   "status": "original",
+   "source": "Hyundai_SR_2025",
+   "as_of": "2024",
+   "note": "2024 전기로 조강 5,645천t (공정별 배출 공시가 없어 SEE는 IEA 범위 사용)"
   },
   "preset.kr_hyundai_EAF.eu_export_share_pct": {
    "value": 10.0,
@@ -411,12 +411,12 @@
    "note": "업종 한국 평균과 같은 직접배출 추정"
   },
   "preset.kr_cement.annual_production_mt": {
-   "value": 10.0,
+   "value": 8.156,
    "unit": "Mt",
-   "status": "unverified",
-   "source": null,
-   "as_of": "",
-   "note": "두 회사 클링커 생산량 근거 불명"
+   "status": "original",
+   "source": "Hanil_SR_2025",
+   "as_of": "2024",
+   "note": "한일시멘트+한일현대시멘트 2024 클링커 생산량 8,156천t. 쌍용C&E는 원문 미확보(배출량 역산 약 11~12.5Mt)라 제외"
   },
   "preset.kr_cement.eu_export_share_pct": {
    "value": 0.05,
@@ -435,12 +435,12 @@
    "note": "업계 평균"
   },
   "preset.kr_novelis.annual_production_mt": {
-   "value": 1.5,
+   "value": 1.0,
    "unit": "Mt",
-   "status": "unverified",
+   "status": "secondary",
    "source": "Novelis_Korea",
-   "as_of": "",
-   "note": "근거 불명 (회사 생산능력 미확인)"
+   "as_of": "2014",
+   "note": "영주·울산 압연 능력 약 100만t (2014 회사 발표, 이후 증설 공시 없음). 주력 제품은 압연판(CN 7606)이라 7601 업종 계산은 근사"
   },
   "preset.kr_novelis.eu_export_share_pct": {
    "value": 15.0,
@@ -456,7 +456,7 @@
    "status": "assumption",
    "source": "EU_IR_2026_1740",
    "as_of": "2026-08",
-   "note": "primary 3.0 × 0.4 + 재생 0.36 × 0.6 — 재활용 비중 60%는 가정"
+   "note": "primary 3.0 × 0.4 + 재생 0.36 × 0.6 — 노벨리스 전사 재활용 비중 61%(FY2026 10-K)를 한국에 그대로 적용한 가정"
   },
   "preset.kr_hanwha.annual_production_mt": {
    "value": 0.2,
@@ -531,12 +531,12 @@
    "note": "포집률 90% 가정"
   },
   "preset.se_h2gs.annual_production_mt": {
-   "value": 5.0,
+   "value": 2.5,
    "unit": "Mt",
-   "status": "unverified",
-   "source": null,
-   "as_of": "",
-   "note": "계획 규모로 보이나 출처 미확인"
+   "status": "secondary",
+   "source": "Stegra_2026",
+   "as_of": "2026",
+   "note": "보덴 1단계 연 250만t, 가동 2027년 초로 지연 (자금 추가 조달 중)"
   },
   "preset.se_h2gs.eu_export_share_pct": {
    "value": 100.0,
@@ -547,12 +547,12 @@
    "note": "EU 역내 생산자 — CBAM 0 비교용"
   },
   "preset.se_h2gs.user_SEE": {
-   "value": 0.4,
+   "value": 0.15,
    "unit": "tCO₂/t",
-   "status": "unverified",
-   "source": null,
-   "as_of": "",
-   "note": "출처 미확인 — 수소 DRI 직접배출은 0.1 수준일 가능성"
+   "status": "secondary",
+   "source": "Stegra_2026",
+   "as_of": "2026",
+   "note": "회사 발표 '강재 1t당 200kg 미만'(Scope 2 포함) 중 직접배출 몫을 0.15로 잡음 — 회사 주장, 가동 전"
   },
   "param.cert_price_2026.Q1": {
    "value": 75.36,
@@ -595,20 +595,20 @@
    "note": "EUA 자동 수집 파일이 없을 때만 쓰는 값"
   },
   "param.fx_usd_per_eur": {
-   "value": 1.138,
+   "value": 1.1172,
    "unit": "USD/€",
-   "status": "unverified",
-   "source": null,
-   "as_of": "2026-09-24",
-   "note": "9/24 시장 환율로 넣었으나 출처 기록 없음 — 최신 환율로 갱신 필요"
+   "status": "original",
+   "source": "ECB_FX_2026_10_30",
+   "as_of": "2026-10-30",
+   "note": "유럽중앙은행 기준환율 (1€ = 1.1172 USD)"
   },
   "param.fx_krw_per_usd": {
-   "value": 1370,
+   "value": 1335,
    "unit": "원/USD",
-   "status": "unverified",
-   "source": null,
-   "as_of": "2026-09-24",
-   "note": "9/24 시장 환율로 넣었으나 출처 기록 없음 — 최신 환율로 갱신 필요"
+   "status": "derived",
+   "source": "ECB_FX_2026_10_30",
+   "as_of": "2026-10-30",
+   "note": "ECB 원/€ 1,491.76 ÷ USD/€ 1.1172 = 1,335.3 (서울 외환시장 종가 1,334.3과 일치)"
   },
   "param.kets_price_krw": {
    "value": 30000,

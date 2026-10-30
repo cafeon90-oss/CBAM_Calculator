@@ -44,14 +44,14 @@ CBAM cost = (SEE − Free EU benchmark × CBAM factor) × EUA × import volume  
 ### 시나리오 프리셋 (9개 + Custom)
 
 1. 🇰🇷 POSCO (BF-BOF, ~35 Mt/yr)
-2. 🇰🇷 현대제철 (BF + EAF mix)
-3. 🇰🇷 현대제철 (Pure Scrap-EAF)
-4. 🇰🇷 쌍용·한일시멘트
+2. 🇰🇷 현대제철 (고로)
+3. 🇰🇷 현대제철 (전기로)
+4. 🇰🇷 한일시멘트
 5. 🇰🇷 노벨리스 코리아 (Aluminum)
-6. 🇰🇷 한화솔루션 (NH₃·비료)
+6. 🌐 천연가스 SMR 암모니아 (참고)
 7. 🇰🇷 SK E&S (Gray H₂)
 8. 🇰🇷 SK E&S + CCS (Blue H₂) — *CCS 효과 데모*
-9. 🌍 EU 베스트 (DRI-H₂ 철강) — 참조용
+9. 🇸🇪 Stegra (구 H2 Green Steel, DRI-H₂) — 참조용
 10. ✏️ Custom (사용자 직접 입력)
 
 ### 자동 데이터 갱신

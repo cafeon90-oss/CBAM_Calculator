@@ -819,7 +819,7 @@ LIT = {
         "sector_key": "electricity",
         "process": "Mixed grid",
         "product": "Electricity",
-        "default_SEE": rv("sector.electricity.default_SEE"),           # 한국 grid (kgCO₂/kWh = tCO₂/MWh)
+        "default_SEE": rv("sector.electricity.default_SEE"),           # Annex III에 한국 없음 → EU 값 0.612
         "kr_avg_SEE": rv("sector.electricity.kr_avg_SEE"),            # 국가 전력 배출계수 2023 (0.4173, 2025-12 확정)
         "eu_benchmark": rv("sector.electricity.eu_benchmark"),             # 전력은 무상할당 공제 없음 (IR 2025/2620)
         "unit": "tCO₂/MWh",
@@ -873,8 +873,8 @@ PRESETS = {
         },
     },
     "kr_hyundai_BF": {
-        "label": "🇰🇷 현대제철 (BF + EAF mix, ~24 Mt/yr)",
-        "description": "현대제철 당진 BF + 인천·포항 EAF 혼합 (BF 70% 가정)",
+        "label": "🇰🇷 현대제철 (고로, ~12.4 Mt/yr)",
+        "description": "현대제철 당진 고로 조강 12.45Mt (2024) — 전기로는 별도 프리셋",
         "sector_lit": "steel_BF_BOF",
         "settings": {
             "annual_production_mt": rv("preset.kr_hyundai_BF.annual_production_mt"),
@@ -884,7 +884,7 @@ PRESETS = {
         },
     },
     "kr_hyundai_EAF": {
-        "label": "🇰🇷 현대제철 (Pure Scrap-EAF, ~5 Mt/yr)",
+        "label": "🇰🇷 현대제철 (전기로, ~5.6 Mt/yr)",
         "description": "현대제철 EAF 라인 — 친환경 강재 EU 수출",
         "sector_lit": "steel_scrap_EAF",
         "settings": {
@@ -895,19 +895,19 @@ PRESETS = {
         },
     },
     "kr_cement": {
-        "label": "🇰🇷 쌍용·한일시멘트 (~10 Mt/yr clinker)",
-        "description": "한국 주요 시멘트 — EU 수출 비중 매우 낮음",
+        "label": "🇰🇷 한일시멘트 (~8.2 Mt/yr clinker)",
+        "description": "한일시멘트(한일현대 포함) 클링커 8.16Mt (2024) — EU 수출 비중 매우 낮음",
         "sector_lit": "cement_clinker",
         "settings": {
             "annual_production_mt": rv("preset.kr_cement.annual_production_mt"),
             "eu_export_share_pct": rv("preset.kr_cement.eu_export_share_pct"),
             "user_SEE": rv("preset.kr_cement.user_SEE"),              # 업계 평균 (클링커, 직접 + 클링커 공정 전력)
-            "company_name": "쌍용·한일시멘트",
+            "company_name": "한일시멘트",
         },
     },
     "kr_novelis": {
-        "label": "🇰🇷 노벨리스 코리아 (Al, ~1.5 Mt/yr)",
-        "description": "재활용 기반 알루미늄 (재활용 비중 60%+) · EU 수출",
+        "label": "🇰🇷 노벨리스 코리아 (Al, ~1.0 Mt/yr)",
+        "description": "알루미늄 압연 (영주·울산 약 100만t) · 재활용 비중 60% 가정 · EU 수출",
         "sector_lit": "aluminum_primary",
         "settings": {
             "annual_production_mt": rv("preset.kr_novelis.annual_production_mt"),
@@ -953,14 +953,14 @@ PRESETS = {
         },
     },
     "se_h2gs": {
-        "label": "🇸🇪 H2 Green Steel (DRI-H₂ 글로벌 베스트)",
-        "description": "스웨덴 H2GS — Green H₂ DRI-EAF · 한국 기업 비교 기준 (EU 수출 100% 가정 = CBAM 회피)",
+        "label": "🇸🇪 Stegra (구 H2 Green Steel, DRI-H₂)",
+        "description": "스웨덴 Stegra 보덴 1단계 250만t (2027년 초 가동 예정) — Green H₂ DRI-EAF · 한국 기업 비교 기준 (EU 역내 생산 = CBAM 없음)",
         "sector_lit": "steel_DRI_EAF",
         "settings": {
             "annual_production_mt": rv("preset.se_h2gs.annual_production_mt"),
             "eu_export_share_pct": rv("preset.se_h2gs.eu_export_share_pct"),    # EU 내 생산자 — CBAM 0
             "user_SEE": rv("preset.se_h2gs.user_SEE"),
-            "company_name": "H2 Green Steel (SE)",
+            "company_name": "Stegra (SE)",
         },
     },
     "custom": {
@@ -1106,10 +1106,11 @@ REFS = {
         "cat": "regulation",
         "date": "2025 · part of definitive phase package",
         "cite": "Commission Implementing Regulation (EU) 2025/2621 — country-specific default "
-                "values (Annex I) and electricity emission factors (Annex II) for CBAM definitive "
+                "values (Annex I), electricity emission factors (Annex II: Korea 0.475) and "
+                "imported-electricity defaults (Annex III: Korea not listed → EU 0.612) for CBAM definitive "
                 "phase. Mark-up: 10% (2026) → 20% (2027) → 30% (2028+) for steel/cement/"
                 "aluminium/hydrogen; 1% for fertilisers; none for electricity.",
-        "url": "https://taxation-customs.ec.europa.eu/carbon-border-adjustment-mechanism/cbam-legislation-and-guidance_en",
+        "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=OJ:L_202502621",
         "used_for": "Default SEE 값 + 전력 EF (2026~ 본격 시행)",
     },
     "EU_IR_2026_1740": {
@@ -1288,10 +1289,41 @@ REFS = {
     },
     "Novelis_Korea": {
         "cat": "report",
-        "date": "2024 (annual)",
-        "cite": "Novelis Korea — Sustainability Report 2024. Recycled aluminum content + CO₂ disclosure.",
-        "url": "https://www.novelis.com/",
-        "used_for": "노벨리스 한국 SEE 추정",
+        "date": "2014 (회사 발표) · FY2026 10-K",
+        "cite": "Novelis — 영주·울산 압연 능력 약 100만t (2014 보도자료). "
+                "FY2026 10-K: 전사 재활용 투입 비중 61%.",
+        "url": "https://investors.novelis.com/news-events/press-releases/detail/1341",
+        "used_for": "노벨리스 코리아 프리셋 생산량 · 재활용 비중 가정",
+    },
+    "Hyundai_SR_2025": {
+        "cat": "report",
+        "date": "2025 (2024 실적)",
+        "cite": "현대제철 2025 지속가능경영보고서 p.114 — 2024 조강: 고로 12,449천t, 전기로 5,645천t.",
+        "url": "https://k-esg.org/common/fdown?pfiId=4149",
+        "used_for": "현대제철 고로·전기로 프리셋 생산량",
+    },
+    "Hanil_SR_2025": {
+        "cat": "report",
+        "date": "2025 (2024 실적)",
+        "cite": "한일시멘트 2025 지속가능경영보고서 p.122 — 2024 클링커 생산량 8,156천t (한일현대 포함).",
+        "url": "https://www.hanilcement.com/static/download/Hanil_2025_Sustainability_Report.pdf",
+        "used_for": "시멘트 프리셋 생산량",
+    },
+    "Stegra_2026": {
+        "cat": "report",
+        "date": "2026 (회사 발표·보도)",
+        "cite": "Stegra(구 H2 Green Steel) — 보덴 1단계 연 250만t, 가동 2027년 초로 지연(GMK Center); "
+                "강재 1t당 200kg CO₂ 미만(회사 발표); EU Innovation Fund 지원(CINEA).",
+        "url": "https://stegra.com/en/news-and-stories/is-the-steel-really-green",
+        "used_for": "Stegra 프리셋 생산량·SEE",
+    },
+    "ECB_FX_2026_10_30": {
+        "cat": "market",
+        "date": "2026-10-30",
+        "cite": "European Central Bank euro foreign exchange reference rates — 2026-10-30: "
+                "USD 1.1172, KRW 1,491.76 per EUR.",
+        "url": "https://www.ecb.europa.eu/stats/policy_and_exchange_rates/euro_reference_exchange_rates/html/eurofxref-graph-usd.en.html",
+        "used_for": "표시 통화 환율 기본값",
     },
     "Hyundai_Steel_2024": {
         "cat": "report",
@@ -1800,7 +1832,7 @@ ABATEMENT_OPTIONS = [
         "applies_to": ["steel_BF_BOF"],
         "reduction_pct": 95.0,
         "trl": 6,
-        "note": "Green H₂(전해, RE 기반) 기반 DRI. H2 Green Steel 모델. 그린수소 가용성·가격 의존.",
+        "note": "Green H₂(전해, RE 기반) 기반 DRI. Stegra(구 H2 Green Steel) 모델. 그린수소 가용성·가격 의존.",
     },
     {
         "key": "eaf_full",
