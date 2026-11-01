@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0",
   "last_updated": "2026-10-25",
-  "last_fetched": "2026-10-01T03:05:59Z",
+  "last_fetched": "2026-11-01T03:14:30Z",
   "source": "manual_curation",
   "automation": "partial",
   "retention_months": 12,
@@ -315,7 +315,7 @@
   "fetch_log": [
     [
       "taxud_rss",
-      10
+      9
     ],
     [
       "press_corner_rss",
