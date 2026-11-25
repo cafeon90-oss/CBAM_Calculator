@@ -135,6 +135,10 @@ def test_novelis_preset_is_rolled_sheet(calc):
     at.selectbox(key="preset_select").select("kr_novelis")
     _run(at)
     assert at.selectbox(key="product_cn").value == "7606"
+    # Verified SEE 1.42는 재생 60% 기준 → 공제도 primary 40% + 재생 60% 가중 benchmark
+    mix = 0.4 * 1.485 + 0.6 * 0.148
+    expected = calc.calc_unit_cbam(1.42, mix, _eua_price(), 2026)["unit_cost_eur"]
+    assert _unit_kpi(at) == _krw_per_t(at, expected)
     at.radio(key="see_mode_radio").set_value("EU Default 사용 (mark-up 적용)")
     _run(at)
     expected = calc.calc_unit_cbam(1.950, 0.148, _eua_price(), 2026,

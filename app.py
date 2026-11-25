@@ -950,8 +950,13 @@ PRODUCTS = {
 }
 
 
-def product_sector(sector_lit, cn=None):
-    """업종 값에 제품(CN)별 기본값·benchmark를 덮어쓴 사본. 제품 구분이 없는 업종은 그대로."""
+def product_sector(sector_lit, cn=None, recycled_pct=0.0):
+    """업종 값에 제품(CN)별 기본값·benchmark를 덮어쓴 사본. 제품 구분이 없는 업종은 그대로.
+
+    알루미늄은 재생(2차) 원료 비율 r만큼 실측 공제 benchmark를 섞는다:
+    (1−r)·경로 (K) + r·경로 (L). IR 2025/2620 식 4 — 복합재의 공제는 전구체(괴)별 공제의 질량 가중 합.
+    기본값을 쓰면 기본값 경로 (L) benchmark를 그대로 쓴다 (default_benchmark).
+    """
     base = LIT[sector_lit]
     prods = PRODUCTS.get(base["sector_key"])
     if not prods:
@@ -964,6 +969,11 @@ def product_sector(sector_lit, cn=None):
     out["name"] = f"{base['name']} · {p['short']}"
     out["default_SEE"] = p["default_SEE"]
     out["eu_benchmark"] = p["bm"][base["bm_route"]]
+    r = min(max(float(recycled_pct or 0.0), 0.0), 100.0) / 100.0
+    if base["bm_route"] == "K" and r > 0:
+        out["eu_benchmark"] = (1 - r) * p["bm"]["K"] + r * p["bm"]["L"]
+        out["bm_mix_note"] = (f"primary (K) {p['bm']['K']:.3f} × {1 - r:.0%} + "
+                              f"재생 (L) {p['bm']['L']:.3f} × {r:.0%}")
     if p["default_route"] != base["bm_route"]:
         out["default_benchmark"] = p["bm"][p["default_route"]]
     else:
@@ -1047,7 +1057,7 @@ PRESETS = {
     },
     "kr_novelis": {
         "label": "🇰🇷 노벨리스 코리아 (Al, ~1.0 Mt/yr)",
-        "description": "알루미늄 압연 (영주·울산 약 100만t) · 재활용 비중 60% 가정 · EU 수출",
+        "description": "알루미늄 압연판 7606 (영주·울산 약 100만t) · 재생 원료 60% 가정 · EU 수출",
         "sector_lit": "aluminum_primary",
         "product": "7606",   # 주력 제품 = 압연판
         "settings": {
@@ -1057,6 +1067,7 @@ PRESETS = {
             # primary 3.0 (중국 기본값) × 0.4 + 재생 0.36 (한국 기본값) × 0.6 ≈ 1.42
             # 추정치 — 실제 verified 값 입력 권장
             "user_SEE": rv("preset.kr_novelis.user_SEE"),
+            "al_recycled_pct": rv("preset.kr_novelis.recycled_share_pct"),
             "company_name": "노벨리스 코리아",
         },
     },
@@ -2118,7 +2129,18 @@ with st.sidebar:
                       "냉연·도금재는 열연보다 benchmark가 크고, 알루미늄 판·박은 한국 기본값이 괴보다 훨씬 크다. "
                       "Verified SEE는 고른 제품 1톤 기준으로 넣을 것."),
             )
-        sector = product_sector(sector_lit, product_cn)
+        recycled_pct = 0.0
+        if LIT[sector_lit].get("bm_route") == "K":
+            st.session_state.setdefault("al_recycled_pct", 0.0)
+            recycled_pct = st.number_input(
+                "재생(2차) 원료 비율 (%)",
+                min_value=0.0, max_value=100.0, step=5.0, format="%.0f",
+                key="al_recycled_pct",
+                help=("투입 알루미늄 중 스크랩 재용해(2차) 괴의 비율. 실측(Verified) SEE를 쓸 때 무상할당 공제 "
+                      "benchmark를 primary (K)와 재생 (L) 값의 가중평균으로 계산 (IR 2025/2620 식 4). "
+                      "SEE도 같은 원료 구성 기준이어야 한다. 기본값 모드에는 영향 없음."),
+            )
+        sector = product_sector(sector_lit, product_cn, recycled_pct)
 
         # 회사명 (자동·직접 입력) — key 위젯은 session_state로만 값을 준다 (value= 동시 지정 시 경고)
         st.session_state.setdefault("company_name", "Custom Company")
@@ -2215,6 +2237,9 @@ with st.sidebar:
             active_benchmark = sector["default_benchmark"]
             st.caption(f"EU benchmark: **{active_benchmark:.3f}** {sector['unit']} "
                        f"(기본값 생산경로 기준 — 공정별 값은 {sector['eu_benchmark']:.3f})")
+        elif "bm_mix_note" in sector:
+            st.caption(f"EU benchmark: **{active_benchmark:.3f}** {sector['unit']} "
+                       f"({sector['bm_mix_note']})")
         else:
             st.caption(f"EU benchmark: **{active_benchmark:.3f}** {sector['unit']}")
 
@@ -2755,7 +2780,7 @@ with TAB_COMPARE:
         if pkey in ("custom", "kr_industry_steel"):
             continue
         slit = pdata["sector_lit"]
-        s = product_sector(slit, pdata.get("product"))
+        s = product_sector(slit, pdata.get("product"), pdata["settings"].get("al_recycled_pct", 0.0))
         settings = pdata["settings"]
         prod_mt = settings.get("annual_production_mt", 1.0)
         # Bug fix #1: electricity sector는 GWh → Mt-MWh 등가로 환산

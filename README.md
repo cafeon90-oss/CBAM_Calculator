@@ -47,7 +47,7 @@ CBAM cost = (SEE − Free EU benchmark × CBAM factor) × EUA × import volume  
 2. 🇰🇷 현대제철 (고로)
 3. 🇰🇷 현대제철 (전기로)
 4. 🇰🇷 한일시멘트
-5. 🇰🇷 노벨리스 코리아 (Aluminum)
+5. 🇰🇷 노벨리스 코리아 (알루미늄 판 7606, 재생 원료 60%)
 6. 🌐 천연가스 SMR 암모니아 (참고)
 7. 🇰🇷 SK E&S (Gray H₂)
 8. 🇰🇷 SK E&S + CCS (Blue H₂) — *CCS 효과 데모*

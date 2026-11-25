@@ -865,6 +865,14 @@
    "source": "EU_IR_2026_1740",
    "as_of": "2026-07",
    "note": "한국 박 7607 기본값 (직접배출), 경로 (L) — 7601 괴(0.36)보다 훨씬 큼"
+  },
+  "preset.kr_novelis.recycled_share_pct": {
+   "value": 60,
+   "unit": "%",
+   "status": "assumption",
+   "source": "Novelis_Korea",
+   "as_of": "2026",
+   "note": "FY2026 10-K 전사 재활용 투입 61%를 한국 공장에 그대로 적용한 가정 — 한국 공장 실제 비율로 바꿔 쓸 것"
   }
  }
 }
