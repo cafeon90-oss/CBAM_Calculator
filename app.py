@@ -56,7 +56,6 @@ import reg_alerts
 from ccus_metrics_loader import (
     load_ccus_metrics as _load_ccus_metrics_raw,
     get_tech_data,
-    get_tech_coca,
     list_techs_by_trl,
     techs_for_capacity,
 )
@@ -363,6 +362,99 @@ def ccus_tech_applies(tdata: dict, ccus_sector: str) -> bool:
 
 
 # ─────────────────────────────────────────────
+# CCS 비용 — 자매 CCUS 벤치마크(evaluate_tech·calc_COCA)와 같은 계산.
+# JSON의 CAPEX는 NOAK·2018년 달러·발전소·3.7 Mt/yr 기준값이라 업종·retrofit·규모·성숙도 보정을 여기서 한다.
+# 계수를 바꿀 때는 CCUS_benchmark app.py의 같은 상수(SOURCE_SECTORS·PROJECT_SCENARIOS·FOAK_MULT 등)도 함께.
+# ─────────────────────────────────────────────
+CCS_COST = {
+    "cpi_factor": 130.5 / 100.0,    # US CPI 2026 ÷ 2018 (CCUS 비용 기준 연도 기본값 2026)
+    "location_factor": 1.00,        # 한국 건설비 계수 (미국 걸프 = 1.00, CCUS 가정)
+    "ref_capture_t_yr": 3.7e6,      # NETL B12B 기준 규모
+    "scale_exp": 0.65,              # CAPEX 규모 지수 — 계열 안에서만
+    "multi_train_exp": 0.9,         # 계열 n개 총비용 = 1계열 × n^0.9
+    "min_scale_t_yr": 1e4,          # 규모 보정 하한 (CCUS 입력 하한 0.01 Mt/yr)
+    "srd_per_decade": 0.10,         # 규모 10배 → 재생 열 +10% (IEAGHG 2013/04)
+    "we_comp_per_decade": 0.06,     # 규모 10배 → 압축 전력 −6%
+    "clip": (0.85, 1.20),
+    "p_final_bar": 152.0,           # 저장용 압축 최종 압력
+    "p_ref_bar": 1.8,
+    "boiler_eff": 0.85,             # 가스 보일러 (연료 → 증기)
+    "steam_om_usd_gj": 0.5,
+}
+# CBAM 업종(ccus_sector) → (CAPEX 업종 계수, 재생 열 업종 계수, 프로젝트 유형 계수)
+# = CCUS SOURCE_SECTORS(steel_bf·cement·h2_smr·power_subc) × PROJECT_SCENARIOS(기존 공장 retrofit: 산업 1.20, 발전 1.00).
+# 전기로·알루미늄은 CCUS에 해당 업종이 없어 발전 기준 계수를 씀
+CCS_SECTOR_COST = {
+    "steel_BF_BOF":   (1.25, 0.90, 1.20),
+    "steel_EAF":      (1.00, 1.00, 1.20),
+    "cement":         (1.20, 0.95, 1.20),
+    "aluminum":       (1.00, 1.00, 1.20),
+    "fertilizer_NH3": (0.90, 0.80, 1.20),
+    "hydrogen_SMR":   (0.90, 0.80, 1.20),
+    "power":          (1.00, 1.00, 1.00),
+}
+
+
+def ccs_steam_price_usd_gj(gas_usd_gj: float) -> float:
+    """재생 증기 단가 [USD/GJ] = 가스 단가 ÷ 보일러 효율 + O&M (CCUS default_heat_price와 같음)."""
+    return gas_usd_gj / CCS_COST["boiler_eff"] + CCS_COST["steam_om_usd_gj"]
+
+
+def ccs_unit_cost(tdata: dict, ccus_sector: str, plant_capture_t_yr: float,
+                  foak_mult: float = 1.0, elec_usd_mwh: float = 133.0,
+                  steam_usd_gj: float = 19.1, discount: float = 0.08,
+                  lifetime: int = 25) -> dict:
+    """CCUS JSON 기술 하나의 포집 톤당 비용 (자매 CCUS 도구와 같은 식).
+
+    CAPEX [USD/(t/yr)] = JSON(NOAK) × CPI × 업종 × 지역 × FOAK × 프로젝트 유형
+                         × (3.7 Mt ÷ 계열당 규모)^0.35 × 계열 수^(0.9−1)
+    OPEX [USD/t] = 용매·기타 + 전력(We × 전기 단가) + 재생 증기(SRD × 업종·규모 보정 × 증기 단가)
+    LCOC = CAPEX × CRF(discount, lifetime) + OPEX
+    plant_capture_t_yr는 사업장 전체 포집량 — 규모의 경제는 설비 크기로 정해짐.
+    """
+    m = CCS_COST
+    capex_mult, srd_mult, proj_mult = CCS_SECTOR_COST.get(ccus_sector, (1.0, 1.0, 1.20))
+    eco = tdata.get("economics", {})
+    perf = tdata.get("performance", {})
+    en = tdata.get("energy_components_GJe_per_tCO2", {})
+    ref = m["ref_capture_t_yr"]
+    cap = max(plant_capture_t_yr, m["min_scale_t_yr"])
+
+    max_train = (tdata.get("operations", {}).get("max_train_mt_yr") or ref / 1e6) * 1e6
+    n_trains = 1 if cap <= max_train else int(math.ceil(cap / max_train - 1e-9))
+    base = (eco.get("CAPEX_USD_per_tCO2_yr", 0.0) * m["cpi_factor"] * capex_mult
+            * m["location_factor"] * foak_mult * proj_mult)
+    capex = (base * (ref / (cap / n_trains)) ** (1 - m["scale_exp"])
+             * n_trains ** (m["multi_train_exp"] - 1))
+
+    lo, hi = m["clip"]
+    decades = math.log10(cap / ref)
+    srd = (perf.get("SRD_GJ_per_tCO2", 0.0) * srd_mult
+           * min(max(1 + m["srd_per_decade"] * decades, lo), hi))
+    p_regen = perf.get("p_regen_bar") or m["p_ref_bar"]
+    p_factor = max(math.log(m["p_final_bar"] / p_regen)
+                   / math.log(m["p_final_bar"] / m["p_ref_bar"]), 0.3)
+    we_comp = (en.get("We_comp", 0.0) * p_factor
+               * min(max(1 - m["we_comp_per_decade"] * decades, lo), hi))
+    we_elec = en.get("We_pump", 0.0) + we_comp + en.get("We_chill", 0.0) + en.get("We_aux", 0.0)
+
+    elec_cost = we_elec * 277.78 / 1000 * elec_usd_mwh     # GJe → MWh
+    steam_cost = srd * steam_usd_gj
+    opex = (eco.get("OPEX_solvent_USD_per_tCO2", 0.0) + eco.get("OPEX_other_USD_per_tCO2", 0.0)
+            + elec_cost + steam_cost)
+    crf = discount * (1 + discount) ** lifetime / ((1 + discount) ** lifetime - 1)
+    return {
+        "capex_per_tpy": capex,
+        "annual_capex": capex * crf,
+        "elec_cost": elec_cost,
+        "steam_cost": steam_cost,
+        "opex": opex,
+        "lcoc": capex * crf + opex,
+        "n_trains": n_trains,
+    }
+
+
+# ─────────────────────────────────────────────
 # CCUS Metrics — 자매 도구 ccus_metrics_loader 사용 (Phase 2)
 # loader는 자매 도구가 master, 본 도구도 같은 파일 mirror
 # 자매 도구 갱신 시 양쪽 push 필요 (Single Source of Truth 원칙)
@@ -390,26 +482,13 @@ def load_ccus_metrics():
 
 # ─────────────────────────────────────────────
 # loader.py에 없는 본 도구 전용 thin wrapper
-# (NPV 분석에 raw CAPEX·OPEX 직접 필요)
+# (CAPEX·OPEX는 JSON 원값을 그대로 쓰지 말고 ccs_unit_cost로 보정해서 씀)
 # ─────────────────────────────────────────────
 
 def get_tech_capture_rate(metrics: dict, tech_key: str) -> float:
     """기본 capture_rate 반환 (default 0.90)."""
     return get_tech_data(metrics, tech_key).get(
         "performance", {}).get("capture_rate_default", 0.90)
-
-
-def get_tech_capex(metrics: dict, tech_key: str) -> float:
-    """CAPEX (USD per tCO₂/yr capacity) — NPV 분석에 분리 필요."""
-    return get_tech_data(metrics, tech_key).get(
-        "economics", {}).get("CAPEX_USD_per_tCO2_yr", 0.0)
-
-
-def get_tech_opex(metrics: dict, tech_key: str) -> float:
-    """OPEX (solvent + other, USD/tCO₂) — NPV 분석에 분리 필요."""
-    eco = get_tech_data(metrics, tech_key).get("economics", {})
-    return (eco.get("OPEX_solvent_USD_per_tCO2", 0.0)
-            + eco.get("OPEX_other_USD_per_tCO2", 0.0))
 
 
 # ======================================================================
@@ -1271,6 +1350,38 @@ REFS = {
                 "CCS, 0.4 Mt/yr, ~€500M CAPEX.",
         "url": "https://www.heidelbergmaterials.com/en/sustainability/ccus",
         "used_for": "시멘트 CCS retrofit benchmark",
+    },
+    "NETL_Rev4a": {
+        "cat": "report",
+        "date": "2022 (Rev. 4a)",
+        "cite": "DOE/NETL (2022). Cost and Performance Baseline for Fossil Energy Plants, Vol. 1, Rev. 4a "
+                "(OSTI 1893822). Case B12A/B12B.90 (SC PC 650 MWnet, Shell Cansolv, Dec 2018$): "
+                "포집 증분 TOC $1,070M ÷ 포집 4.31 Mt/yr.",
+        "url": "https://www.osti.gov/biblio/1893822",
+        "used_for": "CCS 기준 CAPEX(NOAK) — 자매 CCUS 도구 JSON 값의 근거",
+    },
+    "NETL_QGESS_FOAK": {
+        "cat": "report",
+        "date": "2012",
+        "cite": "DOE/NETL (2012). Quality Guidelines for Energy System Studies: Technology Learning Curve "
+                "(FOAK to NOAK). DOE/NETL-341/042211.",
+        "url": "https://webarchive.library.unt.edu/web/20130215181625/http://www.netl.doe.gov/energy-analyses/quality_guidelines.html",
+        "used_for": "기준 CAPEX = NOAK, 첫 상용 플랜트는 FOAK 배수 (배수 2.0은 자매 도구가 실측 4곳에 맞춘 값)",
+    },
+    "KEPCO_Industrial_2025": {
+        "cat": "report",
+        "date": "2026-02",
+        "cite": "KEPCO 산업용 전력 판매단가 2025년 평균 181.9원/kWh (전력통계월보 인용 보도, 2026-02).",
+        "url": "https://epsis.kepco.co.kr/",
+        "used_for": "CCS 포집 설비 전기 단가 기본값",
+    },
+    "KOGAS_Industrial_Gas": {
+        "cat": "report",
+        "date": "2026",
+        "cite": "한국가스공사 산업용 도매요금 약 19.2원/MJ + 지역 공급비용 약 2.5원/MJ (2026) ≈ 21.7원/MJ. "
+                "연료비 연동으로 매달 바뀜.",
+        "url": "https://www.kogas.or.kr/",
+        "used_for": "CCS 재생 증기(가스 보일러) 연료 단가 기본값",
     },
     "IEAGHG_Cement": {
         "cat": "report",
@@ -2715,6 +2826,41 @@ with TAB_ACTION:
         unsafe_allow_html=True,
     )
 
+    # CCS 비용 가정 — 자매 CCUS 도구와 같은 계산 (ccs_unit_cost)
+    ccs_c1, ccs_c2, ccs_c3 = st.columns(3)
+    with ccs_c1:
+        ccs_maturity = st.selectbox(
+            "CCS 플랜트 성숙도", ["NOAK", "FOAK"], key="ccs_maturity",
+            format_func=lambda k: {"NOAK": "NOAK — 성숙 기술 비용 (기본)",
+                                   "FOAK": f"FOAK — 첫 상용 플랜트 (CAPEX ×{rv('param.ccs_foak_mult'):g})"}[k],
+            help=("기준 CAPEX는 NETL 기준 NOAK(같은 설비를 여러 번 지은 뒤의 비용). "
+                  "국내 첫 CCS처럼 첫 상용 플랜트라면 FOAK를 고르세요 — 배수는 자매 도구가 "
+                  "실제 플랜트 4곳 사업비에 맞춘 값."),
+        )
+    with ccs_c2:
+        ccs_elec_krw_kwh = st.number_input(
+            "포집 설비 전기 (원/kWh)", min_value=50.0, max_value=400.0,
+            value=rv("param.ccs_elec_krw_kwh"), step=5.0, format="%.1f", key="ccs_elec_krw_kwh",
+            help=f"펌프·압축·보조 전력 단가. 기본값: {rv_meta('param.ccs_elec_krw_kwh')['note']}",
+        )
+    with ccs_c3:
+        ccs_gas_krw_mj = st.number_input(
+            "재생 증기 연료 — 가스 (원/MJ)", min_value=5.0, max_value=60.0,
+            value=rv("param.ccs_gas_krw_mj"), step=0.5, format="%.1f", key="ccs_gas_krw_mj",
+            help=("흡수제 재생 증기를 가스 보일러로 만든다고 보고, 증기 단가 = 가스 ÷ 0.85 + O&M $0.5/GJ. "
+                  "폐열을 쓸 수 있으면 낮춰 입력."),
+        )
+    ccs_foak = rv("param.ccs_foak_mult") if ccs_maturity == "FOAK" else 1.0
+    ccs_elec_usd_mwh = ccs_elec_krw_kwh * 1000 / fx_usd_krw
+    ccs_steam_usd_gj = ccs_steam_price_usd_gj(ccs_gas_krw_mj * 1000 / fx_usd_krw)
+
+    def ccs_cost_for(tk: str) -> dict:
+        """사업장 전체 포집량 규모로 지은 CCS의 톤당 비용 (EU 수출분에 배분해 씀)."""
+        _plant_t = user_SEE * get_tech_capture_rate(ccus_data, tk) * annual_production_mt * 1e6
+        return ccs_unit_cost(ccus_data["technologies"][tk], sector["ccus_sector"], _plant_t,
+                             foak_mult=ccs_foak, elec_usd_mwh=ccs_elec_usd_mwh,
+                             steam_usd_gj=ccs_steam_usd_gj)
+
     bep_rows = []
     for tk in all_techs:
         tdata = ccus_data["technologies"].get(tk)
@@ -2729,8 +2875,8 @@ with TAB_ACTION:
             mark_up_pct=mark_up_pct,
             k_ets_credit_eur=k_ets_credit_eur, scenario=reg_scenario,
         )
-        # COCA helper로 자동 계산 (CAPEX 분할상각 + OPEX)
-        coca_usd_per_t = get_tech_coca(ccus_data, tk)
+        # 포집 톤당 비용 LCOC = CAPEX × CRF + OPEX(용매·기타·전기·증기)
+        coca_usd_per_t = ccs_cost_for(tk)["lcoc"]
         ccs_cost_usd = coca_usd_per_t * avoided["captured_co2_t"]
         ccs_cost_eur = ccs_cost_usd / fx_eur_usd               # 달러 → 유로 (1유로 = fx_eur_usd 달러)
         net_eur = avoided["avoided_annual_eur"] - ccs_cost_eur
@@ -2739,7 +2885,7 @@ with TAB_ACTION:
             "CCUS 기술": tdata.get("name", tk),
             "Short": tdata.get("short_name", ""),
             "Capture η": f"{cap_rate*100:.0f}%",
-            "COCA (USD/t)": f"${coca_usd_per_t:.0f}",
+            "LCOC (USD/t)": f"${coca_usd_per_t:.0f}",
             "포집 CO₂ (t/yr)": f"{avoided['captured_co2_t']:,.0f}",
             "CCS 비용 (연)": money(ccs_cost_eur),
             "CBAM 회피 (연)": money(avoided["avoided_annual_eur"]),
@@ -2757,7 +2903,10 @@ with TAB_ACTION:
         f"""
 > **해석**: 자매 CCUS 도구의 **{n_total_techs}개 기술 모두** live fetch (마지막 갱신: `{last_updated}`).
 > ⭐는 본 sector 적합 기술 ({n_recommended}개). 순익 내림차순 정렬 — 가장 위가 가장 경제적.
-> COCA = CAPEX × 0.10 (CRF 근사) + OPEX. 자세한 기술 비교는 [자매 도구 ↗]({CCUS_APP_URL}) 참조.
+> LCOC(포집 톤당 비용) = CAPEX × CRF(8%, 25년) + OPEX(용매·기타 + 전기 + 재생 증기) — [자매 도구 ↗]({CCUS_APP_URL})와 같은 계산.
+> CAPEX는 업종·기존 공장 retrofit·성숙도({ccs_maturity})·설비 규모를 보정하며, 규모는 **사업장 전체 포집량**
+> (포집률 90%면 {user_SEE * 0.9 * annual_production_mt:,.2f} Mt/yr)으로 잡고 비용은 EU 수출분 포집량에만 배분합니다.
+> 수송·저장(한국은 선박 수출 저장) 비용은 넣지 않았습니다.
 > 단, 위 분석은 **단년도 정태 분석** — 가동개시·ramping·할인율은 아래 4-D 참조.
 """
     )
@@ -2801,13 +2950,14 @@ with TAB_ACTION:
         key="npv_tech_select",
     )
     npv_tdata = ccus_data["technologies"][npv_tech]
+    npv_cost = ccs_cost_for(npv_tech)
     npv_result = ccs_npv_analysis(
         SEE=user_SEE, benchmark=active_benchmark,
         capture_rate=get_tech_capture_rate(ccus_data, npv_tech),
         eua_price_eur=eua_price,
         eu_export_t=result["eu_export_t"],
-        ccs_capex_usd_per_tpy=get_tech_capex(ccus_data, npv_tech),
-        ccs_opex_usd_per_tco2=get_tech_opex(ccus_data, npv_tech),
+        ccs_capex_usd_per_tpy=npv_cost["capex_per_tpy"],
+        ccs_opex_usd_per_tco2=npv_cost["opex"],
         fx_eur_usd=fx_eur_usd,
         start_year=2026,
         ccs_online_year=int(ccs_online_year),
@@ -2879,7 +3029,9 @@ with TAB_ACTION:
 
     st.caption(
         f"가정: 분석기간 2026 ~ {int(ccs_online_year) + int(ccs_lifetime)}년 · "
-        f"가동개시 일시 CAPEX (단순화) · ramping 1년차 70% / 2년차 85% / 3년차+ 100% · "
+        f"가동개시 일시 CAPEX ${npv_cost['capex_per_tpy']:,.0f}/(t/yr) ({ccs_maturity}, 단순화) · "
+        f"OPEX ${npv_cost['opex']:.1f}/t (전기 {npv_cost['elec_cost']:.1f} · 증기 {npv_cost['steam_cost']:.1f} 포함) · "
+        f"ramping 1년차 70% / 2년차 85% / 3년차+ 100% · "
         f"phase-in factor 연도별 자동 적용 · "
         f"K-ETS 차감 {'적용' if use_kets else '미적용'} · "
         f"할인율 {discount_rate_pct:.1f}%."
@@ -2925,16 +3077,15 @@ with TAB_ACTION:
         if not tdata:
             continue
         is_recommended = tk in fit_techs
-        coca = get_tech_coca(ccus_data, tk)
-        capex = get_tech_capex(ccus_data, tk)
-        opex = get_tech_opex(ccus_data, tk)
+        _cc = ccs_cost_for(tk)
+        coca, capex, opex = _cc["lcoc"], _cc["capex_per_tpy"], _cc["opex"]
         cap_rate = get_tech_capture_rate(ccus_data, tk)
         rec_rows.append({
             "추천": "⭐" if is_recommended else "",
             "기술": tdata.get("name", tk),
             "Short": tdata.get("short_name", ""),
             "Category": tdata.get("category", "-"),
-            "COCA (USD/t)": f"${coca:.0f}",
+            "LCOC (USD/t)": f"${coca:.0f}",
             "CAPEX (USD/tpy)": f"${capex:.0f}",
             "OPEX (USD/t)": f"${opex:.1f}",
             "Capture η": f"{cap_rate*100:.0f}%",
@@ -2946,7 +3097,8 @@ with TAB_ACTION:
     n_recommended = len(fit_techs)
     st.caption(
         f"⭐ 표시: 현재 sector({sector['name']})에 적합한 기술 {n_recommended}개. "
-        f"COCA 오름차순 정렬 — 가장 저렴한 기술이 위. "
+        f"LCOC 오름차순 정렬 — 가장 저렴한 기술이 위. CAPEX·OPEX는 ④ 4-C와 같은 보정값 "
+        f"({ccs_maturity} · 업종·retrofit·사업장 규모 · 전기·증기 포함). "
         f"적합도는 sector별 flue gas 농도·온도·열원 가용성 기반."
     )
 

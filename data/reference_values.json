@@ -697,6 +697,30 @@
    "source": null,
    "as_of": "",
    "note": "수출가 인상률 KPI 분모용 대략값 — 회사 실제 수출가로 바꿔 쓰세요"
+  },
+  "param.ccs_elec_krw_kwh": {
+   "value": 181.9,
+   "unit": "원/kWh",
+   "status": "secondary",
+   "source": "KEPCO_Industrial_2025",
+   "as_of": "2026-02",
+   "note": "한전 산업용 판매단가 2025년 평균 — 포집 설비 전력(펌프·압축·보조) 단가"
+  },
+  "param.ccs_gas_krw_mj": {
+   "value": 21.7,
+   "unit": "원/MJ",
+   "status": "secondary",
+   "source": "KOGAS_Industrial_Gas",
+   "as_of": "2026",
+   "note": "산업용 도매 19.2 + 지역 공급비 2.5원/MJ. 증기 단가 = 가스 ÷ 보일러 효율 0.85 + O&M $0.5/GJ"
+  },
+  "param.ccs_foak_mult": {
+   "value": 2.0,
+   "unit": "배",
+   "status": "derived",
+   "source": "NETL_QGESS_FOAK",
+   "as_of": "2026-11",
+   "note": "자매 CCUS 도구가 실측 4곳(Boundary Dam·Petra Nova·Quest·Brevik)에 맞춘 첫 상용 플랜트 배수 — 아민 3곳 0.84~1.02, Brevik 2.5"
   }
  }
 }

@@ -31,6 +31,10 @@ CALC_NAMES = (
     "ccs_npv_analysis",
     "CBAM_TO_CCUS_SOURCE",
     "ccus_tech_applies",
+    "CCS_COST",
+    "CCS_SECTOR_COST",
+    "ccs_steam_price_usd_gj",
+    "ccs_unit_cost",
 )
 
 
@@ -56,6 +60,7 @@ def calc(app_tree):
     # 상수 일부(CSCF·인증서 가격)는 data/reference_values.json에서 읽으므로 rv를 넣어 둔다
     sys.path.insert(0, str(APP_PATH.parent))
     from reference_values import rv
-    ns = {"rv": rv}
+    import math
+    ns = {"rv": rv, "math": math}
     exec(compile(ast.Module(body=picked, type_ignores=[]), str(APP_PATH), "exec"), ns)
     return SimpleNamespace(**{name: ns[name] for name in CALC_NAMES})
