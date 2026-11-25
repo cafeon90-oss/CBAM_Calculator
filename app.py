@@ -3029,8 +3029,8 @@ with TAB_ACTION:
 
     st.caption(
         f"가정: 분석기간 2026 ~ {int(ccs_online_year) + int(ccs_lifetime)}년 · "
-        f"가동개시 일시 CAPEX ${npv_cost['capex_per_tpy']:,.0f}/(t/yr) ({ccs_maturity}, 단순화) · "
-        f"OPEX ${npv_cost['opex']:.1f}/t (전기 {npv_cost['elec_cost']:.1f} · 증기 {npv_cost['steam_cost']:.1f} 포함) · "
+        f"가동개시 일시 CAPEX \\${npv_cost['capex_per_tpy']:,.0f}/(t/yr) ({ccs_maturity}, 단순화) · "
+        f"OPEX \\${npv_cost['opex']:.1f}/t (전기 {npv_cost['elec_cost']:.1f} · 증기 {npv_cost['steam_cost']:.1f} 포함) · "
         f"ramping 1년차 70% / 2년차 85% / 3년차+ 100% · "
         f"phase-in factor 연도별 자동 적용 · "
         f"K-ETS 차감 {'적용' if use_kets else '미적용'} · "
