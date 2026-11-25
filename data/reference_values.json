@@ -624,7 +624,7 @@
    "status": "derived",
    "source": "TTI_Korea_CBAM",
    "as_of": "2026",
-   "note": "K-ETS 무상할당 약 69%를 뺀 실제 지불분 가정 (Art.9 시행규정 미채택)"
+   "note": "K-ETS 무상할당 약 69%를 뺀 실제 지불분으로 잡은 가정 — IR 2026/2498은 무상할당분을 차감에서 빼며, 4차 계획기간(2026~) 철강·시멘트 등은 100% 무상할당이라 실제 지불분은 할당 초과 구매분뿐 (점검 필요)"
   },
   "param.export_price_usd.steel_BF_BOF": {
    "value": 700,

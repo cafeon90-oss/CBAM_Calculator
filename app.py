@@ -1448,6 +1448,16 @@ REFS = {
         "url": "https://www.motie.go.kr/",
         "used_for": "한국 정부 CBAM 대응",
     },
+    "EU_IR_2026_2498": {
+        "cat": "regulation",
+        "date": "2026-11-16 (OJ L 2026/2498)",
+        "cite": "Commission Implementing Regulation (EU) 2026/2498 — deduction of carbon prices effectively paid "
+                "in third countries (CBAM Art.9). Annex II lists K-ETS (rebate form: free allowances). "
+                "Reduction = €EFF_CP × Q ÷ yearly reference CBAM certificate price; yearly average FX; "
+                "international credits only Art.6-authorised, max 10%.",
+        "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=OJ:L_202602498",
+        "used_for": "K-ETS 차감 방법",
+    },
     "ME_K_ETS": {
         "cat": "report",
         "date": "2024 (운영 현황) · 가격 2026-10",
@@ -2118,11 +2128,11 @@ with st.sidebar:
     with st.expander("3. K-ETS 차감 · 수출가", expanded=False):
         # ─── K-ETS 차감 (한국 할당대상업체) ─────────────────────
         use_kets = st.checkbox(
-            "K-ETS 지불액 차감 (Reg 2023/956 Art.9)",
+            "K-ETS 지불액 차감 (Art.9 · IR 2026/2498)",
             value=False,
-            help=("한국 K-ETS 할당대상업체는 K-ETS에서 이미 지불한 carbon price를 "
-                  "EU CBAM에서 verified 차감 가능. Reg 2023/956 Art.9. "
-                  "POSCO·현대제철 등 대형 배출원에 적용."),
+            help=("K-ETS에서 실제로 낸 탄소가격은 인증을 받아 CBAM 인증서 수에서 뺄 수 있음 "
+                  "(Reg 2023/956 Art.9, 세부 규칙 IR 2026/2498 — K-ETS는 인정 제도 목록에 포함). "
+                  "무상할당분은 빠지고, 원화는 연평균 환율로 환산."),
         )
         if use_kets:
             kets_price_krw = st.number_input(
@@ -2134,10 +2144,10 @@ with st.sidebar:
             kets_credit_share = st.slider(
                 "Verified 차감 비율 (%)",
                 min_value=0, max_value=100, value=int(rv("param.kets_credit_share_pct")), step=5,
-                help=("K-ETS 가격 중 차감이 인정되는 비율. Art.9는 '실제 지불한' 탄소가격만 "
-                      "차감하므로 무상할당분은 빠진다. 기본 30% ≈ 철강 무상할당(~69%)을 뺀 몫 "
-                      "(TTI Korea 2026 추정: 차감액 €2.92/tCO₂, EU 가격의 3.4%). "
-                      "낙관적: 50~100%, 비관적: 0%."),
+                help=("배출량 중 실제로 돈을 내고 산 배출권의 비율. IR 2026/2498 Art.9는 무상할당분을 "
+                      "차감에서 뺀다. 4차 계획기간(2026~2030) 철강·시멘트·석유화학 등은 100% 무상할당이라 "
+                      "할당량을 넘겨 사들인 몫만 인정됨 — 회사 실제 구매 비율로 바꿔 쓰세요. "
+                      "기본 30%는 3차 기간 기준 가정 (TTI Korea 2026 추정: 차감액 €2.92/tCO₂)."),
             )
             k_ets_credit_eur = calc_kets_credit(
                 user_SEE, kets_price_krw,
@@ -3205,7 +3215,7 @@ with DOC_METHOD:
 3. **EUA 가격 변동성**: 매주 평균 변동. 본 도구는 사용자 슬라이더 + 자동 fetch 옵션 제공.
 4. **기본값·benchmark 갱신**: 기본값은 IR 2026/1740 정정본(2026-08 Excel), benchmark는 2026-02 집행위 Excel 기준. 향후 EU 갱신 시 LIT 업데이트 필요.
 5. **Mark-up 진화**: 철강·시멘트·알루미늄·수소 2026 10% → 2027 20% → 2028 30%. 본 도구는 'EU Default 사용' 선택 시 분석 연도에 맞춰 자동 적용.
-6. **K-ETS 차감**: 사이드바에서 선택 적용 (Art.9). 차감액 = SEE × K-ETS 가격 × 차감 비율(기본 30%, 무상할당분 제외 가정)로 단순화 — 실제 인정액은 EU 이행규정·검증 결과에 따름. {ref_link("ME_K_ETS")} 참조.
+6. **K-ETS 차감**: 사이드바에서 선택 적용 (Art.9). 차감액 = SEE × K-ETS 가격 × 차감 비율(무상할당분 제외)로 단순화. 실제 규칙({ref_link("EU_IR_2026_2498", "IR 2026/2498")})은 인증서 감면량 = 실제 지불 탄소가격(€/t 제품, 연평균 환율 환산) × 수량 ÷ 연 기준 인증서 가격이며, 무상할당분은 빠지고 인증기관 확인이 필요. {ref_link("ME_K_ETS")} 참조.
 7. **CSCF**: 2026~2030은 100%(1.0)로 확정 ({ref_link("EU_DEC_2026_1862")}). 2031년 이후(개편안 시나리오의 15% 잔여 공제 구간)는 달라질 수 있으나 미반영.
 
 ##### 자동 데이터 갱신

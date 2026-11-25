@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "last_updated": "2026-10-25",
+  "last_updated": "2026-11-26",
   "last_fetched": "2026-11-01T03:14:30Z",
   "source": "manual_curation",
   "automation": "partial",
@@ -21,6 +21,42 @@
     }
   ],
   "items": [
+    {
+      "id": "eu-ir-2026-2498-carbon-price-deduction-2026-11-16",
+      "date": "2026-11-16",
+      "category": "regulation",
+      "importance": "high",
+      "important": true,
+      "title_ko": "EU 집행위, 수출국 탄소가격 차감 규정(IR 2026/2498) 공포",
+      "title_en": "Implementing Regulation (EU) 2026/2498 on deduction of carbon prices paid in third countries",
+      "summary_ko": "CBAM Art.9 차감의 세부 규칙. K-ETS가 인정 제도 목록(Annex II)에 포함. 무상할당분은 차감에서 빠지고, 외화는 연평균 환율(ECB 기준)로 환산, 인증서 감면량 = 실제 지불 탄소가격 × 수량 ÷ 연 기준 인증서 가격. 국제 크레딧은 파리협정 6조 승인분만, 배출량의 10% 한도. 2026~2027년은 기존 CBAM 검증기관이 인증 가능. 국가별 기본 탄소가격은 CBAM 레지스트리에 공개 예정(첫 신고 2027-09-30).",
+      "url": "https://taxation-customs.ec.europa.eu/news/cbam-commission-adopts-rules-recognition-carbon-prices-paid-non-eu-countries-2026-11-16_en",
+      "source": "European Commission (DG TAXUD)"
+    },
+    {
+      "id": "cjeu-poland-cbam-dismissed-2026-11-12",
+      "date": "2026-11-12",
+      "category": "milestone",
+      "importance": "medium",
+      "important": false,
+      "title_ko": "EU 사법재판소, 폴란드의 CBAM 무효 소송 기각",
+      "title_en": "CJEU dismisses Poland's actions against Fit for 55 acts, including CBAM",
+      "summary_ko": "폴란드가 낸 Fit for 55 관련 소송 7건을 모두 기각. CBAM을 조세로 보고 법적 근거가 틀렸다는 주장도 받아들이지 않아 제도의 법적 불확실성이 해소됨.",
+      "url": "https://curia.europa.eu/site/upload/docs/application/pdf/2026-11/cp260163en.pdf",
+      "source": "Court of Justice of the EU (보도자료 163/26)"
+    },
+    {
+      "id": "kr-nz-sg-gepa-trade-climate-principles-2026-11-05",
+      "date": "2026-11-05",
+      "category": "notice",
+      "importance": "medium",
+      "important": false,
+      "title_ko": "한국·뉴질랜드·싱가포르, CBAM 등 기후무역조치 설계원칙 공동 마련 합의",
+      "title_en": "Korea, New Zealand and Singapore agree to develop shared design principles for trade-related climate measures",
+      "summary_ko": "그린경제협정(GEPA) 고위급 회의에서 CBAM 같은 무역 관련 기후조치의 설계 원칙과 저탄소 철강 교역 확대를 논의. EU CBAM 자체에는 직접 영향 없음.",
+      "url": "https://www.fnnews.com/news/202611050959591749",
+      "source": "파이낸셜뉴스"
+    },
     {
       "id": "kr-motie-cbam-downstream-briefing-2026-10-23",
       "date": "2026-10-23",
