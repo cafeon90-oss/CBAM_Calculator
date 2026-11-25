@@ -747,11 +747,12 @@ EU_GRID_FACTOR = 0.230    # 2024 EU 평균
 LIT = {
     # ─────────────── 철강 ───────────────
     "steel_BF_BOF": {
-        "name": "철강 (BF-BOF, HRC)",
+        "name": "철강 (BF-BOF)",
         "name_en": "Steel (Blast Furnace + Basic Oxygen Furnace)",
         "sector_key": "steel",
         "process": "BF-BOF",
         "product": "Hot-rolled coil",
+        "bm_route": "C",
         "default_SEE": rv("sector.steel_BF_BOF.default_SEE"),         # 한국 7208 (HRC) 기본값, 경로 (C)
         # POSCO 2024 ESG Factbook: 직접배출(Scope 1) 69.67 Mt ÷ 조강 35.0 Mt = 1.99 (공시 원단위 2.03은 Scope 1+2).
         # Scope 1에 코크스로·자가발전이 들어 있어 CBAM 경계 기준으로는 상한값
@@ -770,6 +771,7 @@ LIT = {
         "sector_key": "steel",
         "process": "DRI-EAF",
         "product": "Steel (DRI)",
+        "bm_route": "D",
         "default_SEE": rv("sector.steel_DRI_EAF.default_SEE"),          # 한국 7208 기본값은 경로 (C) 하나뿐 — 공정 무관
         "default_benchmark": rv("sector.steel_DRI_EAF.default_benchmark"),    # 기본값 경로 (C)의 benchmark
         "kr_avg_SEE": rv("sector.steel_DRI_EAF.kr_avg_SEE"),             # IEA 철강 로드맵: 천연가스 DRI-EAF 직접배출 1.0 (전력 포함 1.4). 국내 DRI 없음
@@ -787,6 +789,7 @@ LIT = {
         "sector_key": "steel",
         "process": "Scrap-EAF",
         "product": "Steel (EAF)",
+        "bm_route": "E",
         "default_SEE": rv("sector.steel_scrap_EAF.default_SEE"),          # 한국 7208 기본값 (경로 (C))
         "default_benchmark": rv("sector.steel_scrap_EAF.default_benchmark"),    # 기본값 경로 (C)의 benchmark
         # 직접배출만: 전기로 조강 0.04~0.1 (IEA) + 열연 가열로 ~0.08. 이전 0.40은 전력 배출이 대부분
@@ -825,6 +828,7 @@ LIT = {
         "sector_key": "aluminum",
         "process": "Hall-Héroult",
         "product": "Primary aluminum ingot",
+        "bm_route": "K",
         # CBAM은 알루미늄의 직접배출만 센다 (전력 간접배출 제외) — IAI 14.8 같은
         # 전력 포함 전 과정 값과 다르다.
         # 한국은 primary smelter가 없어 한국 7601 기본값은 경로 (L) 재생(2차) 알루미늄 값이다.
@@ -910,6 +914,63 @@ LIT = {
     },
 }
 
+# 제품(CN)별 값 — 같은 업종이라도 제품마다 benchmark·한국 기본값이 다르다.
+# bm: IR 2025/2620 Annex 5절 Column B (전구체 포함) 생산경로별. default_SEE: IR 2026/1740 한국 표.
+# 첫 항목이 업종 대표값(LIT)과 같다. 기본값은 모두 한 생산경로(default_route) 기준.
+PRODUCTS = {
+    "steel": {
+        "7208": {"name": "열연 (HRC, 7208)", "short": "열연",
+                 "bm": {"C": rv("sector.steel_BF_BOF.eu_benchmark"), "D": rv("sector.steel_DRI_EAF.eu_benchmark"),
+                        "E": rv("sector.steel_scrap_EAF.eu_benchmark")},
+                 "default_SEE": rv("sector.steel_BF_BOF.default_SEE"), "default_route": "C"},
+        "7209": {"name": "냉연 (7209)", "short": "냉연",
+                 "bm": {"C": rv("product.steel_7209.bm_C"), "D": rv("product.steel_7209.bm_D"),
+                        "E": rv("product.steel_7209.bm_E")},
+                 "default_SEE": rv("product.steel_7209.default_SEE"), "default_route": "C"},
+        "7210": {"name": "도금·코팅재 (7210)", "short": "도금재",
+                 "bm": {"C": rv("product.steel_7210.bm_C"), "D": rv("product.steel_7210.bm_D"),
+                        "E": rv("product.steel_7210.bm_E")},
+                 "default_SEE": rv("product.steel_7210.default_SEE"), "default_route": "C"},
+        "7213": {"name": "선재·철근·형강 (7213·7214 20·7216)", "short": "봉형강",
+                 "bm": {"C": rv("product.steel_7213.bm_C"), "D": rv("product.steel_7213.bm_D"),
+                        "E": rv("product.steel_7213.bm_E")},
+                 "default_SEE": rv("product.steel_7213.default_SEE"), "default_route": "C"},
+    },
+    "aluminum": {
+        "7601": {"name": "괴 (Unwrought, 7601)", "short": "괴",
+                 "bm": {"K": rv("sector.aluminum_primary.eu_benchmark"), "L": rv("sector.aluminum_primary.default_benchmark")},
+                 "default_SEE": rv("sector.aluminum_primary.default_SEE"), "default_route": "L"},
+        "7606": {"name": "판·스트립 (7606)", "short": "판",
+                 "bm": {"K": rv("product.al_7606.bm_K"), "L": rv("product.al_7606.bm_L")},
+                 "default_SEE": rv("product.al_7606.default_SEE"), "default_route": "L"},
+        "7607": {"name": "박 (Foil, 7607)", "short": "박",
+                 "bm": {"K": rv("product.al_7607.bm_K"), "L": rv("product.al_7607.bm_L")},
+                 "default_SEE": rv("product.al_7607.default_SEE"), "default_route": "L"},
+    },
+}
+
+
+def product_sector(sector_lit, cn=None):
+    """업종 값에 제품(CN)별 기본값·benchmark를 덮어쓴 사본. 제품 구분이 없는 업종은 그대로."""
+    base = LIT[sector_lit]
+    prods = PRODUCTS.get(base["sector_key"])
+    if not prods:
+        return base
+    cn = cn if cn in prods else next(iter(prods))
+    p = prods[cn]
+    out = dict(base)
+    out["cn"] = cn
+    out["product"] = p["name"]
+    out["name"] = f"{base['name']} · {p['short']}"
+    out["default_SEE"] = p["default_SEE"]
+    out["eu_benchmark"] = p["bm"][base["bm_route"]]
+    if p["default_route"] != base["bm_route"]:
+        out["default_benchmark"] = p["bm"][p["default_route"]]
+    else:
+        out.pop("default_benchmark", None)
+    return out
+
+
 SHORT_NAMES = {
     "steel_BF_BOF":     "BF-BOF",
     "steel_DRI_EAF":    "DRI-EAF",
@@ -988,6 +1049,7 @@ PRESETS = {
         "label": "🇰🇷 노벨리스 코리아 (Al, ~1.0 Mt/yr)",
         "description": "알루미늄 압연 (영주·울산 약 100만t) · 재활용 비중 60% 가정 · EU 수출",
         "sector_lit": "aluminum_primary",
+        "product": "7606",   # 주력 제품 = 압연판
         "settings": {
             "annual_production_mt": rv("preset.kr_novelis.annual_production_mt"),
             "eu_export_share_pct": rv("preset.kr_novelis.eu_export_share_pct"),
@@ -1074,6 +1136,9 @@ def apply_preset():
     if not p:
         return
     st.session_state["sector_lit"] = p["sector_lit"]
+    prods = PRODUCTS.get(LIT[p["sector_lit"]]["sector_key"])
+    if prods:
+        st.session_state["product_cn"] = p.get("product", next(iter(prods)))
     for k, v in p["settings"].items():
         st.session_state[k] = v
 
@@ -2039,7 +2104,21 @@ with st.sidebar:
             key="sector_lit",
             help="EU CBAM 6개 sector 중 선택. 공정별 default benchmark 자동 적용.",
         )
-        sector = LIT[sector_lit]
+        _prods = PRODUCTS.get(LIT[sector_lit]["sector_key"])
+        product_cn = None
+        if _prods:
+            if st.session_state.get("product_cn") not in _prods:
+                st.session_state["product_cn"] = next(iter(_prods))
+            product_cn = st.selectbox(
+                "제품 (CN 코드)",
+                options=list(_prods),
+                format_func=lambda c: _prods[c]["name"],
+                key="product_cn",
+                help=("제품마다 EU benchmark(IR 2025/2620)와 한국 기본값(IR 2026/1740)이 다르다. "
+                      "냉연·도금재는 열연보다 benchmark가 크고, 알루미늄 판·박은 한국 기본값이 괴보다 훨씬 크다. "
+                      "Verified SEE는 고른 제품 1톤 기준으로 넣을 것."),
+            )
+        sector = product_sector(sector_lit, product_cn)
 
         # 회사명 (자동·직접 입력) — key 위젯은 session_state로만 값을 준다 (value= 동시 지정 시 경고)
         st.session_state.setdefault("company_name", "Custom Company")
@@ -2676,7 +2755,7 @@ with TAB_COMPARE:
         if pkey in ("custom", "kr_industry_steel"):
             continue
         slit = pdata["sector_lit"]
-        s = LIT[slit]
+        s = product_sector(slit, pdata.get("product"))
         settings = pdata["settings"]
         prod_mt = settings.get("annual_production_mt", 1.0)
         # Bug fix #1: electricity sector는 GWh → Mt-MWh 등가로 환산

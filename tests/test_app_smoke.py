@@ -114,6 +114,38 @@ def test_eaf_default_uses_default_route_benchmark(calc):
     assert _unit_kpi(at) == _krw_per_t(at, expected)
 
 
+def test_steel_product_uses_its_benchmark(calc):
+    # 도금재(7210)를 고르면 무상할당 공제 benchmark가 열연 1.370 → 1.491
+    at = _new_app()
+    at.selectbox(key="product_cn").set_value("7210")
+    _run(at)
+    expected = calc.calc_unit_cbam(1.99, 1.491, _eua_price(), 2026)["unit_cost_eur"]
+    assert _unit_kpi(at) == _krw_per_t(at, expected)
+    # 기본값 모드면 한국 7210 기본값 2.144 · 경로 (C)
+    at.radio(key="see_mode_radio").set_value("EU Default 사용 (mark-up 적용)")
+    _run(at)
+    expected = calc.calc_unit_cbam(2.144, 1.491, _eua_price(), 2026,
+                                   mark_up_pct=calc.get_markup("steel", 2026))["unit_cost_eur"]
+    assert _unit_kpi(at) == _krw_per_t(at, expected)
+
+
+def test_novelis_preset_is_rolled_sheet(calc):
+    # 노벨리스 주력 = 압연판 7606: 한국 기본값 1.950, 기본값 경로 (L) benchmark 0.148
+    at = _new_app()
+    at.selectbox(key="preset_select").select("kr_novelis")
+    _run(at)
+    assert at.selectbox(key="product_cn").value == "7606"
+    at.radio(key="see_mode_radio").set_value("EU Default 사용 (mark-up 적용)")
+    _run(at)
+    expected = calc.calc_unit_cbam(1.950, 0.148, _eua_price(), 2026,
+                                   mark_up_pct=calc.get_markup("aluminum", 2026))["unit_cost_eur"]
+    assert _unit_kpi(at) == _krw_per_t(at, expected)
+    # 철강으로 돌아가면 제품도 철강 첫 항목(열연)으로
+    at.selectbox(key="sector_lit").set_value("steel_BF_BOF")
+    _run(at)
+    assert at.selectbox(key="product_cn").value == "7208"
+
+
 def test_reform_scenario_matches_calc(calc):
     # 규제 시나리오 전환이 계산까지 전달되는지 (개편안 2034년 = 공제 15% 잔존)
     at = _new_app()

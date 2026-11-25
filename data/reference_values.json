@@ -721,6 +721,150 @@
    "source": "NETL_QGESS_FOAK",
    "as_of": "2026-11",
    "note": "자매 CCUS 도구가 실측 4곳(Boundary Dam·Petra Nova·Quest·Brevik)에 맞춘 첫 상용 플랜트 배수 — 아민 3곳 0.84~1.02, Brevik 2.5"
+  },
+  "product.steel_7209.bm_C": {
+   "value": 1.458,
+   "unit": "tCO₂/t",
+   "status": "original",
+   "source": "EU_IR_2025_2620",
+   "as_of": "2025-12",
+   "note": "냉연 7209 Column B 경로 (C)"
+  },
+  "product.steel_7209.bm_D": {
+   "value": 0.533,
+   "unit": "tCO₂/t",
+   "status": "original",
+   "source": "EU_IR_2025_2620",
+   "as_of": "2025-12",
+   "note": "냉연 7209 Column B 경로 (D)"
+  },
+  "product.steel_7209.bm_E": {
+   "value": 0.108,
+   "unit": "tCO₂/t",
+   "status": "original",
+   "source": "EU_IR_2025_2620",
+   "as_of": "2025-12",
+   "note": "냉연 7209 Column B 경로 (E)"
+  },
+  "product.steel_7209.default_SEE": {
+   "value": 2.144,
+   "unit": "tCO₂/t",
+   "status": "original",
+   "source": "EU_IR_2026_1740",
+   "as_of": "2026-07",
+   "note": "한국 냉연 7209 기본값 (직접배출), 경로 (C)"
+  },
+  "product.steel_7210.bm_C": {
+   "value": 1.491,
+   "unit": "tCO₂/t",
+   "status": "original",
+   "source": "EU_IR_2025_2620",
+   "as_of": "2025-12",
+   "note": "도금·코팅 7210 Column B 경로 (C)"
+  },
+  "product.steel_7210.bm_D": {
+   "value": 0.567,
+   "unit": "tCO₂/t",
+   "status": "original",
+   "source": "EU_IR_2025_2620",
+   "as_of": "2025-12",
+   "note": "도금·코팅 7210 Column B 경로 (D)"
+  },
+  "product.steel_7210.bm_E": {
+   "value": 0.141,
+   "unit": "tCO₂/t",
+   "status": "original",
+   "source": "EU_IR_2025_2620",
+   "as_of": "2025-12",
+   "note": "도금·코팅 7210 Column B 경로 (E)"
+  },
+  "product.steel_7210.default_SEE": {
+   "value": 2.144,
+   "unit": "tCO₂/t",
+   "status": "original",
+   "source": "EU_IR_2026_1740",
+   "as_of": "2026-07",
+   "note": "한국 도금·코팅 7210 기본값 (직접배출), 경로 (C)"
+  },
+  "product.steel_7213.bm_C": {
+   "value": 1.364,
+   "unit": "tCO₂/t",
+   "status": "original",
+   "source": "EU_IR_2025_2620",
+   "as_of": "2025-12",
+   "note": "선재 7213 (7214 20 철근·7216 형강도 같은 값) Column B 경로 (C)"
+  },
+  "product.steel_7213.bm_D": {
+   "value": 0.475,
+   "unit": "tCO₂/t",
+   "status": "original",
+   "source": "EU_IR_2025_2620",
+   "as_of": "2025-12",
+   "note": "선재 7213 (7214 20 철근·7216 형강도 같은 값) Column B 경로 (D)"
+  },
+  "product.steel_7213.bm_E": {
+   "value": 0.066,
+   "unit": "tCO₂/t",
+   "status": "original",
+   "source": "EU_IR_2025_2620",
+   "as_of": "2025-12",
+   "note": "선재 7213 (7214 20 철근·7216 형강도 같은 값) Column B 경로 (E)"
+  },
+  "product.steel_7213.default_SEE": {
+   "value": 2.118,
+   "unit": "tCO₂/t",
+   "status": "original",
+   "source": "EU_IR_2026_1740",
+   "as_of": "2026-07",
+   "note": "한국 선재 7213 (7214 20 철근·7216 형강도 같은 값) 기본값 (직접배출), 경로 (C)"
+  },
+  "product.al_7606.bm_K": {
+   "value": 1.485,
+   "unit": "tCO₂/t",
+   "status": "original",
+   "source": "EU_IR_2025_2620",
+   "as_of": "2025-12",
+   "note": "판·스트립 7606 Column B 경로 (K) primary"
+  },
+  "product.al_7606.bm_L": {
+   "value": 0.148,
+   "unit": "tCO₂/t",
+   "status": "original",
+   "source": "EU_IR_2025_2620",
+   "as_of": "2025-12",
+   "note": "판·스트립 7606 Column B 경로 (L) 재생"
+  },
+  "product.al_7606.default_SEE": {
+   "value": 1.95,
+   "unit": "tCO₂/t",
+   "status": "original",
+   "source": "EU_IR_2026_1740",
+   "as_of": "2026-07",
+   "note": "한국 판·스트립 7606 기본값 (직접배출), 경로 (L) — 7601 괴(0.36)보다 훨씬 큼"
+  },
+  "product.al_7607.bm_K": {
+   "value": 1.599,
+   "unit": "tCO₂/t",
+   "status": "original",
+   "source": "EU_IR_2025_2620",
+   "as_of": "2025-12",
+   "note": "박 7607 Column B 경로 (K) primary"
+  },
+  "product.al_7607.bm_L": {
+   "value": 0.258,
+   "unit": "tCO₂/t",
+   "status": "original",
+   "source": "EU_IR_2025_2620",
+   "as_of": "2025-12",
+   "note": "박 7607 Column B 경로 (L) 재생"
+  },
+  "product.al_7607.default_SEE": {
+   "value": 1.95,
+   "unit": "tCO₂/t",
+   "status": "original",
+   "source": "EU_IR_2026_1740",
+   "as_of": "2026-07",
+   "note": "한국 박 7607 기본값 (직접배출), 경로 (L) — 7601 괴(0.36)보다 훨씬 큼"
   }
  }
 }

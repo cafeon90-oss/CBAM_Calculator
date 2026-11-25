@@ -63,6 +63,7 @@ def test_every_rv_id_in_app_exists_and_every_value_is_used():
 @pytest.mark.parametrize("dict_name, fields", [
     ("LIT", ("default_SEE", "default_benchmark", "kr_avg_SEE", "eu_benchmark", "kr_eu_export_usd_2021")),
     ("PRESETS", ("annual_production_mt", "eu_export_share_pct", "user_SEE")),
+    ("PRODUCTS", ("default_SEE", "C", "D", "E", "K", "L")),
 ])
 def test_no_raw_numbers_in_lit_and_presets(dict_name, fields):
     raw = []
@@ -86,6 +87,14 @@ def test_known_verified_values():
     assert refv.rv("preset.kr_hyundai_BF.annual_production_mt") == 12.449
     assert refv.rv("preset.kr_hyundai_EAF.annual_production_mt") == 5.645
     assert refv.rv("preset.kr_cement.annual_production_mt") == 8.156
+    # 2026-11-26 제품(CN)별 값 (EUR-Lex IR 2025/2620 Annex 5절 Column B, IR 2026/1740 한국 표)
+    assert refv.rv("product.steel_7209.bm_C") == 1.458
+    assert refv.rv("product.steel_7210.bm_C") == 1.491
+    assert refv.rv("product.steel_7210.default_SEE") == 2.144
+    assert refv.rv("product.steel_7213.bm_E") == 0.066
+    assert refv.rv("product.al_7606.bm_K") == 1.485
+    assert refv.rv("product.al_7606.bm_L") == 0.148
+    assert refv.rv("product.al_7606.default_SEE") == 1.950
 
 
 def test_no_unverified_values_left():
